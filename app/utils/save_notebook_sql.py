@@ -1,7 +1,7 @@
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session
 
-from app.models.model import (
+from app.models.sql_model import (
     Workflow,
     Stage,
     Step,

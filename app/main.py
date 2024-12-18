@@ -2,13 +2,14 @@ import json
 
 from pathlib import Path
 
-from fastapi import FastAPI, UploadFile
+from fastapi import BackgroundTasks, FastAPI, UploadFile
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
-from app.models.model import Base
+from app.models.sql_model import Base
 from app.utils.save_notebook_sql import save_notebook_as_sql
 from app.utils.convert_ppm_to_sql import convert_ppm_to_sql_query
+from app.utils.save_notebook_graph import save_notebook_as_graph
 
 app = FastAPI()
 
@@ -23,12 +24,19 @@ Base.metadata.create_all(engine)
 
 
 @app.post("/api/profile/import")
-async def import_profile(profile_files: list[UploadFile]):
+async def import_profile(
+    profile_files: list[UploadFile], background_tasks: BackgroundTasks
+):
     for profile_file in profile_files:
         profile_path = Path(profile_file.filename)
         profile_content = await profile_file.read()
         profile = json.loads(profile_content)
         save_notebook_as_sql(profile_path.stem, profile, engine)
+        background_tasks.add_task(
+            save_notebook_as_graph,
+            notebook_name=profile_path.stem,
+            profile=profile,
+        )
     return {"status": "ok"}
 
 

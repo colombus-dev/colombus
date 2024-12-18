@@ -1,4 +1,5 @@
 **/*.sqlite
 mysql-config/
 db_data/
+graph_data/
 **/__pycache__
