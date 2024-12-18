@@ -1,0 +1,4 @@
+**/*.sqlite
+mysql-config/
+db_data/
+**/__pycache__

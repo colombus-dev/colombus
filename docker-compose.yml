@@ -1,0 +1,28 @@
+services:
+  colombus_app:
+    build: .
+    # expose:
+    #   - 8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./app:/code/app:rw
+    depends_on:
+      colombus_mysql:
+        condition: service_healthy
+  colombus_mysql:
+    image: mysql:lts
+    environment:
+      MYSQL_ROOT_PASSWORD: nina
+      MYSQL_DATABASE: colombusdb
+      MYSQL_USER: christopher
+      MYSQL_PASSWORD: pinta
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db_data:/var/lib/mysql:rw
+      - ./mysql-config:/etc/mysql/conf.d:rw
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 10s
+      retries: 10
