@@ -30,7 +30,7 @@ class MetaInstruction(StructuredNode):
 class Step(StructuredNode):
     name = StringProperty(index=True, required=True)
     nextStep = RelationshipFrom("Step", "PRECEDES")
-    metaInstruction = RelationshipFrom("MetaInstruction", "REFERS_TO")
+    metaInstruction = RelationshipTo("MetaInstruction", "REFERS_TO")
 
 
 class Stage(StructuredNode):
