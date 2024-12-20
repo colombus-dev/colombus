@@ -13,14 +13,12 @@ export default function RootLayout() {
 				<div className="container-wrapper">
 					<div className="container flex h-14 items-center">
 						<div className="mr-4 md:flex">
-							<a>Colombus 🌄</a>
+							<a href="/">Colombus 🌄</a>
 							<nav>
 								<NavigationMenu>
 									<NavigationMenuList>
 										<NavigationMenuItem>
-											<a href="/explorer">
-												<NavigationMenuLink>Explorer</NavigationMenuLink>
-											</a>
+											<NavigationMenuLink href="/explorer">Explorer</NavigationMenuLink>
 										</NavigationMenuItem>
 									</NavigationMenuList>
 								</NavigationMenu>

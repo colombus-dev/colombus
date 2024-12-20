@@ -1,3 +1,10 @@
+import {
+	type Neo4JGraphDefinition,
+	getAllProfiles,
+	getNodesFromNeo4J,
+	postPpmFilter,
+	postProfiles,
+} from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -10,67 +17,15 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import useGraph from "@/useGraph";
-import axios from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-
-const config = {
-	headers: { Authorization: `Basic ${btoa("neo4j:pinta_nina")}` },
-};
-
-async function getNodesFromNeo4J(workflowNames?: string[]) {
-	if (workflowNames?.length === 0) {
-		return;
-	}
-	return await axios.post(
-		"http://localhost:7474/db/neo4j/query/v2",
-		{
-			statement: `MATCH (w:Workflow)-[wsa]->(sa:Stage)-[sase]->(se:Step)-[sem]->(m:MetaInstruction)-[mc]->(c:Code) OPTIONAL MATCH (sa)-[sasp:PRECEDES]->(:Stage) OPTIONAL MATCH (se)-[sesp:PRECEDES]->(:Step) OPTIONAL MATCH (m)-[mp:PRECEDES]->(:MetaInstruction) OPTIONAL MATCH (c)-[cp:PRECEDES]->(:Code) WHERE ANY (name in w.name WHERE name IN ${JSON.stringify(workflowNames)}) RETURN w, sa, se, m, c, wsa, sase, sem, mc, sasp, sesp, mp, cp`,
-		},
-		config,
-	);
-}
-
-async function postProfiles(files: File[]) {
-	const formData = new FormData();
-	for (const file of files) {
-		formData.append("profile_files", file);
-	}
-	return await axios.post(
-		"http://localhost:8080/api/profile/import/multiple",
-		formData,
-		{
-			headers: {
-				...config.headers,
-				accept: "application/json",
-				"Content-Type": "multipart/form-data",
-			},
-		},
-	);
-}
-
-async function postPpmFilter(file: File) {
-	const formData = new FormData();
-	formData.append("ppm_file", file);
-	return await axios.post("http://localhost:8080/api/ppm/execute", formData, {
-		headers: {
-			...config.headers,
-			accept: "application/json",
-			"Content-Type": "multipart/form-data",
-		},
-	});
-}
-
-async function getAllProfiles() {
-	return await axios.post("http://localhost:8080/api/profile/getAll");
-}
 
 export default function ExplorerPage() {
 	const [graphContainerId, setGraphContainerId] = useState<
 		string | undefined
 	>();
 	const [filteredWorkflowsNodes, setFilteredWorkflowsNodes] = useState<
-		unknown[] | undefined
+		Neo4JGraphDefinition | undefined
 	>();
 	const [allWorkflows, setAllWorkflows] = useState<string[] | undefined>();
 	const [filteredWorkflows, setFilteredWorkflows] = useState<
@@ -78,48 +33,59 @@ export default function ExplorerPage() {
 	>();
 	const [displayedLevel, setDisplayedLevel] = useState<number>(3); // default display to step
 	const [currentPpm, setCurrentPpm] = useState<File | undefined>();
-	const [postedProfiles, setPostedProfiles] = useState<File | undefined>();
+	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
 
 	useGraph(
 		graphContainerId,
-		filteredWorkflowsNodes?.data,
+		filteredWorkflowsNodes,
 		filteredWorkflows,
 		displayedLevel,
 	);
 
-	const handlePpmFormSubmit = async (e) => {
-		e.preventDefault();
-		setCurrentPpm(e.target[0].files[0]);
-	};
-
 	useEffect(() => {
+		const updateAndMergeWithPosted = async (workflows: string[]) => {
+			setAllWorkflows(workflows);
+			// we prioritize newly posted profiles
+			const reducedWorkflows = new Set(postedProfiles).union(
+				new Set(workflows.slice(0, 5)),
+			);
+			setFilteredWorkflows([...reducedWorkflows]);
+			await getNodesFromNeo4J(workflows).then((r) =>
+				setFilteredWorkflowsNodes(r),
+			);
+		};
 		// TODO: solve double query issue
 		if (currentPpm) {
-			postPpmFilter(currentPpm).then(async (res) => {
-				setAllWorkflows(res.data);
-				setFilteredWorkflows(res.data.slice(0, 5));
-				await getNodesFromNeo4J(res.data).then((r) =>
-					setFilteredWorkflowsNodes(r.data),
-				);
-			});
+			postPpmFilter(currentPpm).then(updateAndMergeWithPosted);
 		} else {
-			getAllProfiles().then(async (allProfiles) => {
-				setAllWorkflows(allProfiles.data);
-				setFilteredWorkflows(allProfiles.data.slice(0, 5));
-				await getNodesFromNeo4J(allProfiles.data).then((r) =>
-					setFilteredWorkflowsNodes(r.data),
-				);
-			});
+			getAllProfiles().then(updateAndMergeWithPosted);
 		}
 	}, [currentPpm, postedProfiles]);
 
-	const handleProfileFormSubmit = async (e) => {
-		e.preventDefault();
-		await postProfiles(e.target[0].files).then((r) => {
-			toast("Profile(s) successfuly imported.");
-			setPostedProfiles(r);
-		});
-	};
+	const handlePpmFormSubmit: React.FormEventHandler<HTMLFormElement> =
+		useCallback(async (e) => {
+			e.preventDefault();
+			const files = ((e.target as HTMLFormElement)[0] as HTMLInputElement)
+				.files;
+			if (!files) {
+				return;
+			}
+			setCurrentPpm(files[0]);
+		}, []);
+
+	const handleProfileFormSubmit: React.FormEventHandler<HTMLFormElement> =
+		useCallback(async (e) => {
+			e.preventDefault();
+			const files = ((e.target as HTMLFormElement)[0] as HTMLInputElement)
+				.files;
+			if (!files) {
+				return;
+			}
+			await postProfiles(files).then((r) => {
+				toast("Profile(s) successfuly imported.");
+				setPostedProfiles(r);
+			});
+		}, []);
 
 	useEffect(() => {
 		setGraphContainerId("graph-container");
