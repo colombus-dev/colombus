@@ -1,11 +1,18 @@
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import useGraph from "@/useGraph";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Button } from "./components/ui/button";
 
 const config = {
 	headers: { Authorization: `Basic ${btoa("neo4j:pinta_nina")}` },
@@ -62,8 +69,14 @@ export default function App() {
 	const [filteredWorkflows, setFilteredWorkflows] = useState<
 		string[] | undefined
 	>();
+	const [displayedLevel, setDisplayedLevel] = useState<number>(3); // default display to step
 
-	useGraph(graphContainerId, filteredWorkflowsNodes?.data, filteredWorkflows);
+	useGraph(
+		graphContainerId,
+		filteredWorkflowsNodes?.data,
+		filteredWorkflows,
+		displayedLevel,
+	);
 
 	const handleProfileFormSubmit = async (e) => {
 		e.preventDefault();
@@ -76,7 +89,7 @@ export default function App() {
 		e.preventDefault();
 		const res = await postPpmFilter(e.target[0].files[0]);
 		setAllWorkflows(res.data);
-		setFilteredWorkflows(res.data);
+		setFilteredWorkflows(res.data.slice(0, 5));
 		await getNodesFromNeo4J(res.data).then((r) =>
 			setFilteredWorkflowsNodes(r.data),
 		);
@@ -99,7 +112,13 @@ export default function App() {
 								<Label htmlFor="profile-form">
 									Import a new profile (JSON)
 								</Label>
-								<Input id="profile-form" type="file" accept=".json" multiple name="profile-form" />
+								<Input
+									id="profile-form"
+									type="file"
+									accept=".json"
+									multiple
+									name="profile-form"
+								/>
 								<Button type="submit">Submit Profile</Button>
 							</div>
 						</form>
@@ -108,7 +127,12 @@ export default function App() {
 								<Label htmlFor="ppm-form">
 									Select a pattern to apply (JSON)
 								</Label>
-								<Input id="ppm-form" type="file" accept=".json" name="ppm-form" />
+								<Input
+									id="ppm-form"
+									type="file"
+									accept=".json"
+									name="ppm-form"
+								/>
 								<Button type="submit">Submit PPM filter</Button>
 							</div>
 						</form>
@@ -117,10 +141,24 @@ export default function App() {
 				<div className="grid grid-cols-6">
 					<div className="col-span-1">
 						{allWorkflows && (
-							<div>
-								<p>
-									<b>Results:</b>
-								</p>
+							<div className="space-y-2">
+								<p className="font-bold">Displayed levels:</p>
+								<Select
+									onValueChange={(v) => setDisplayedLevel(Number.parseInt(v))}
+									defaultValue="3"
+								>
+									<SelectTrigger>
+										<SelectValue placeholder="Level to display" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="1">Workflow</SelectItem>
+										<SelectItem value="2">Stage</SelectItem>
+										<SelectItem value="3">Step</SelectItem>
+										<SelectItem value="4">MetaInstruction</SelectItem>
+										<SelectItem value="5">Code</SelectItem>
+									</SelectContent>
+								</Select>
+								<p className="font-bold">Results:</p>
 								{allWorkflows.map((w) => (
 									<div className="items-top flex space-x-2" key={w}>
 										<Checkbox

@@ -7,6 +7,7 @@ export default function useGraph(
 	containerId: string | undefined,
 	data: any,
 	filteredNodes: string[] | undefined,
+	displayedLevel: number,
 ) {
 	const graph = useRef<Graph>(new Graph());
 	const renderer = useRef<Sigma | undefined>();
@@ -32,13 +33,12 @@ export default function useGraph(
 		const colors = ["#C990C0", "#F79767", "#57C7E3", "#F16667", "#D9C8AE"];
 		for (const v of data.values) {
 			if (filteredNodes && !filteredNodes.includes(v[0].properties.name)) {
-				console.log("FILTERING");
 				// filtering workflow nodes
 				continue;
 			}
 			for (let i = 0; i < 13; i++) {
 				try {
-					if (i < 5) {
+					if (i < displayedLevel) {
 						graph.current.addNode(v[i].elementId, {
 							label: v[i].properties.name,
 							x: Math.random(),
@@ -59,8 +59,8 @@ export default function useGraph(
 				}
 			}
 		}
-		forceAtlas2.assign(graph.current, 500);
-	}, [data, filteredNodes]);
+		forceAtlas2.assign(graph.current, 200);
+	}, [data, filteredNodes, displayedLevel]);
 
 	useEffect(() => {
 		renderer.current?.kill();
