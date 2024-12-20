@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
 	Select,
 	SelectContent,
@@ -34,6 +35,7 @@ export default function ExplorerPage() {
 	const [displayedLevel, setDisplayedLevel] = useState<number>(3); // default display to step
 	const [currentPpm, setCurrentPpm] = useState<File | undefined>();
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
+	const [resultSearchFilter, setResultSearchFilter] = useState<string>("");
 
 	useGraph(
 		graphContainerId,
@@ -135,32 +137,42 @@ export default function ExplorerPage() {
 							</SelectContent>
 						</Select>
 						<p className="font-bold">Results:</p>
-						{allWorkflows.map((w) => (
-							<div className="items-top flex space-x-2" key={w}>
-								<Checkbox
-									id={`cb_${w}`}
-									checked={filteredWorkflows?.includes(w)}
-									onCheckedChange={(c) => {
-										if (!filteredWorkflows) {
-											return;
-										}
-										setFilteredWorkflows(
-											c
-												? [...filteredWorkflows, w]
-												: filteredWorkflows.filter((fw) => fw !== w),
-										);
-									}}
-								/>
-								<div className="grid gap-1.5 leading-none">
-									<label
-										htmlFor={`cb_${w}`}
-										className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-									>
-										{w}
-									</label>
+						<Input
+							id="filter-results"
+							type="text"
+							placeholder="Filter results"
+							onChange={(e) =>
+								setResultSearchFilter(e.target.value.toLowerCase())
+							}
+						/>
+						{allWorkflows
+							.filter((w) => w.toLowerCase().includes(resultSearchFilter))
+							.map((w) => (
+								<div className="flex space-x-2" key={w}>
+									<Checkbox
+										id={`cb_${w}`}
+										checked={filteredWorkflows?.includes(w)}
+										onCheckedChange={(c) => {
+											if (!filteredWorkflows) {
+												return;
+											}
+											setFilteredWorkflows(
+												c
+													? [...filteredWorkflows, w]
+													: filteredWorkflows.filter((fw) => fw !== w),
+											);
+										}}
+									/>
+									<div className="grid gap-1.5 leading-none">
+										<label
+											htmlFor={`cb_${w}`}
+											className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+										>
+											{w}
+										</label>
+									</div>
 								</div>
-							</div>
-						))}
+							))}
 					</div>
 				)}
 			</div>

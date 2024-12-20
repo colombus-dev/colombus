@@ -18,7 +18,9 @@ export default function RootLayout() {
 								<NavigationMenu>
 									<NavigationMenuList>
 										<NavigationMenuItem>
-											<NavigationMenuLink href="/explorer">Explorer</NavigationMenuLink>
+											<NavigationMenuLink href="/explorer">
+												Explorer
+											</NavigationMenuLink>
 										</NavigationMenuItem>
 									</NavigationMenuList>
 								</NavigationMenu>
