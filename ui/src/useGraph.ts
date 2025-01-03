@@ -69,6 +69,8 @@ export default function useGraph(
 	}, [graphDefinition, filteredNodes, displayedLevel]);
 
 	useEffect(() => {
-		renderer.current?.kill();
+		return () => {
+			renderer.current?.kill();
+		};
 	}, []);
 }
