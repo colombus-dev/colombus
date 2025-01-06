@@ -12,14 +12,19 @@ export default function RootLayout() {
 			<header className="border-grid sticky top-0 z-50 w-full border-b">
 				<div className="container-wrapper">
 					<div className="container flex h-14 items-center">
-						<div className="mr-4 md:flex">
+						<div className="mr-4 md:flex space-x-10 p-5">
 							<a href="/">Colombus 🌄</a>
 							<nav>
 								<NavigationMenu>
-									<NavigationMenuList>
+									<NavigationMenuList className="space-x-5">
 										<NavigationMenuItem>
 											<NavigationMenuLink href="/explorer">
 												Explorer
+											</NavigationMenuLink>
+										</NavigationMenuItem>
+										<NavigationMenuItem>
+											<NavigationMenuLink href="/editor">
+												Editor
 											</NavigationMenuLink>
 										</NavigationMenuItem>
 									</NavigationMenuList>
