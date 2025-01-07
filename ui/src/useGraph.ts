@@ -1,9 +1,8 @@
 import type { Neo4JEdge, Neo4JGraphDefinition, Neo4JNode } from "@/api/client";
 import Graph from "graphology";
-import forceAtlas2 from "graphology-layout-forceatlas2";
+import groupBy from "lodash/groupBy";
 import { useEffect, useRef } from "react";
 import Sigma from "sigma";
-import groupBy from "lodash/groupBy";
 
 const maxDisplayedLevel = 5;
 
@@ -32,47 +31,57 @@ export default function useGraph(
 			return;
 		}
 		const colors = ["#C990C0", "#F79767", "#57C7E3", "#F16667", "#D9C8AE"];
-		const groupedBy = groupBy(graphDefinition, (v) => v[0].elementId);
+		const groupedBy = groupBy(
+			graphDefinition,
+			(v) => (v[0] as Neo4JNode).properties.name,
+		);
 		// TODO: to improve
-		for (const [_, ve] of Object.entries(groupedBy)) {
+		let x = 1;
+		for (const [vn, ve] of Object.entries(groupedBy)) {
+			if (filteredNodes && !filteredNodes.includes(vn)) {
+				// filtering workflow nodes
+				continue;
+			}
 			for (const [vi, v] of ve.entries()) {
-				if (
-					filteredNodes &&
-					!filteredNodes.includes((v[0] as Neo4JNode).properties.name)
-				) {
-					// filtering workflow nodes
-					continue;
-				}
 				for (const [i, e] of v.entries()) {
 					try {
 						if (i < displayedLevel) {
-							const {elementId, properties: {name: label}} = e as Neo4JNode;
+							const {
+								elementId,
+								properties: { name: label },
+							} = e as Neo4JNode;
 							graph.current.addNode(elementId, {
 								label,
-								x: Math.random(),
-								y: Math.random(),
+								x: x,
+								y: i * 50, // (vi + 1) * i + 5,
 								size: 5,
 								color: colors[i],
 								forceLabel: i === 0, // always displaying workflow node name
 							});
 						} else {
-							const {startNodeElementId, endNodeElementId, type: label} = e as Neo4JEdge;
-							if (vi < ve.length - 1 && i === maxDisplayedLevel) {
-								continue;
-							}
-							graph.current.addEdge(
+							const {
 								startNodeElementId,
 								endNodeElementId,
-								{ label, size: 1, type: "arrow" },
-							);
+								type: label,
+							} = e as Neo4JEdge;
+							if (vi < ve.length - 1 && i === maxDisplayedLevel) {
+								// we only connect the workflow node to the first stage node
+								continue;
+							}
+							graph.current.addEdge(startNodeElementId, endNodeElementId, {
+								label,
+								size: 1,
+								type: "arrow",
+							});
 						}
 					} catch (error) {
 						// error raised when duplicated nodes
 					}
 				}
+				x += 5;
 			}
+			x += 100;
 		}
-		forceAtlas2.assign(graph.current, 100);
 	}, [graphDefinition, filteredNodes, displayedLevel]);
 
 	useEffect(() => {
