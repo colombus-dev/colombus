@@ -1,8 +1,9 @@
 import type { Neo4JEdge, Neo4JGraphDefinition, Neo4JNode } from "@/api/client";
 import Graph from "graphology";
 import groupBy from "lodash/groupBy";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import Sigma from "sigma";
+import { colors } from "./configuration";
 
 const maxDisplayedLevel = 5;
 
@@ -14,6 +15,7 @@ export default function useGraph(
 ) {
 	const graph = useRef<Graph>(new Graph());
 	const renderer = useRef<Sigma | undefined>();
+	const displayedNodes = useRef<string[]>([]);
 
 	useEffect(() => {
 		if (containerId) {
@@ -25,24 +27,10 @@ export default function useGraph(
 		}
 	}, [containerId]);
 
-	useEffect(() => {
-		graph.current?.clear();
-		if (!graphDefinition || !renderer.current || !graph.current) {
-			return;
-		}
-		const colors = ["#C990C0", "#F79767", "#57C7E3", "#F16667", "#D9C8AE"];
-		const groupedBy = groupBy(
-			graphDefinition,
-			(v) => (v[0] as Neo4JNode).properties.name,
-		);
-		// TODO: to improve
-		let x = 1;
-		for (const [vn, ve] of Object.entries(groupedBy)) {
-			if (filteredNodes && !filteredNodes.includes(vn)) {
-				// filtering workflow nodes
-				continue;
-			}
-			for (const [vi, v] of ve.entries()) {
+	const addNewWorkflow = useCallback(
+		(wfGraphDefinition: Neo4JGraphDefinition, x: number) => {
+			let addedX = 0;
+			for (const [vi, v] of wfGraphDefinition.entries()) {
 				for (const [i, e] of v.entries()) {
 					try {
 						if (i < displayedLevel) {
@@ -52,7 +40,7 @@ export default function useGraph(
 							} = e as Neo4JNode;
 							graph.current.addNode(elementId, {
 								label,
-								x: x,
+								x: x + addedX,
 								y: i * 50, // (vi + 1) * i + 5,
 								size: 5,
 								color: colors[i],
@@ -64,7 +52,7 @@ export default function useGraph(
 								endNodeElementId,
 								type: label,
 							} = e as Neo4JEdge;
-							if (vi < ve.length - 1 && i === maxDisplayedLevel) {
+							if (vi < wfGraphDefinition.length - 1 && i === maxDisplayedLevel) {
 								// we only connect the workflow node to the first stage node
 								continue;
 							}
@@ -78,15 +66,39 @@ export default function useGraph(
 						// error raised when duplicated nodes
 					}
 				}
-				x += 5;
+				addedX += 5;
 			}
-			x += 100;
+			return addedX;
+		},
+		[displayedLevel],
+	);
+
+	useEffect(() => {
+		graph.current?.clear();
+		if (!graphDefinition || !renderer.current || !graph.current) {
+			return;
 		}
-	}, [graphDefinition, filteredNodes, displayedLevel]);
+		const groupedBy = groupBy(
+			graphDefinition,
+			(v) => (v[0] as Neo4JNode).properties.name,
+		);
+		let x = 1;
+		// TODO: to improve
+		for (const [wfName, wfGraphDefinition] of Object.entries(groupedBy)) {
+			if (filteredNodes && !filteredNodes.includes(wfName)) {
+				// filtering workflow nodes
+				continue;
+			}
+			x += addNewWorkflow(wfGraphDefinition, x) + 100;
+		}
+		displayedNodes.current = Object.keys(groupedBy);
+	}, [graphDefinition, filteredNodes, addNewWorkflow]);
 
 	useEffect(() => {
 		return () => {
 			renderer.current?.kill();
 		};
 	}, []);
+
+	return { renderer };
 }

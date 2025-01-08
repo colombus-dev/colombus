@@ -5,6 +5,7 @@ import {
 	postPpmFilter,
 	postProfiles,
 } from "@/api/client";
+import ProfilePattern from "@/components/profile-pattern";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -16,12 +17,11 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { specialStages } from "@/configuration";
 import useGraph from "@/useGraph";
+import { CircleX } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CircleX } from "lucide-react";
-import ProfilePattern from "@/components/profile-pattern";
-import { specialStages } from "@/configuration";
 
 export default function ExplorerPage() {
 	const [graphContainerId, setGraphContainerId] = useState<
@@ -40,12 +40,14 @@ export default function ExplorerPage() {
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
 	const [resultSearchFilter, setResultSearchFilter] = useState<string>("");
 
-	useGraph(
+	const { renderer } = useGraph(
 		graphContainerId,
 		filteredWorkflowsNodes,
 		filteredWorkflows,
 		displayedLevel,
 	);
+
+	// renderer.current?.emit("", {node: "", event: Event()})
 
 	useEffect(() => {
 		const updateAndMergeWithPosted = async (workflows: string[]) => {

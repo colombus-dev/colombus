@@ -9,3 +9,7 @@ export const supportedStages = [
 	"Others",
 ];
 export const specialStages = ["*"];
+
+// graph styling configuration
+
+export const colors = ["#C990C0", "#F79767", "#57C7E3", "#F16667", "#D9C8AE"];
