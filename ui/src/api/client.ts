@@ -18,7 +18,7 @@ export type Neo4JEdge = {
 	type: string;
 };
 
-export type Neo4JGraphDefinition = (Neo4JNode | Neo4JEdge)[][];
+export type Neo4JGraphDefinition = (Neo4JNode | Neo4JEdge | number)[][];
 
 export interface GetNodesFromNeo4JResponse {
 	bookmarks: string[];
@@ -36,7 +36,7 @@ export async function getNodesFromNeo4J(workflowNames?: string[]) {
 		.post<GetNodesFromNeo4JResponse>(
 			"http://localhost:7474/db/neo4j/query/v2",
 			{
-				statement: `MATCH (w:Workflow)-[wsa]->(sa:Stage)-[sase]->(se:Step)-[sem]->(m:MetaInstruction)-[mc]->(c:Code) OPTIONAL MATCH (sa)-[sasp:PRECEDES]->(:Stage) OPTIONAL MATCH (se)-[sesp:PRECEDES]->(:Step) OPTIONAL MATCH (m)-[mp:PRECEDES]->(:MetaInstruction) OPTIONAL MATCH (c)-[cp:PRECEDES]->(:Code) WHERE ANY (name in w.name WHERE name IN ${JSON.stringify(workflowNames)}) RETURN w, sa, se, m, c, wsa, sase, sem, mc, sasp, sesp, mp, cp`,
+				statement: `MATCH (w:Workflow)-[wsa]->(sa:Stage)-[sase]->(se:Step)-[sem]->(m:MetaInstruction)-[mc]->(c:Code) OPTIONAL MATCH (sa)-[sasp:PRECEDES]->(:Stage) OPTIONAL MATCH (se)-[sesp:PRECEDES]->(:Step) OPTIONAL MATCH (m)-[mp:PRECEDES]->(:MetaInstruction) OPTIONAL MATCH (c)-[cp:PRECEDES]->(:Code) MATCH (sa)-[cosase:CONTAINS]->(:Step) WITH w, sa, se, m, c, wsa, sase, sem, mc, sasp, sesp, mp, cp, count(cosase) AS count_sa_se_children MATCH (se)-[cosem:REFERS_TO]->(:MetaInstruction) WITH w, sa, se, m, c, wsa, sase, sem, mc, sasp, sesp, mp, cp, count_sa_se_children, count(cosem) AS count_se_m_children WHERE ANY (name in w.name WHERE name IN ${JSON.stringify(workflowNames)}) RETURN w, sa, se, m, c, wsa, sase, sem, mc, sasp, sesp, mp, cp, count_sa_se_children, count_se_m_children`,
 			},
 			config,
 		)

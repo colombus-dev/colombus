@@ -8,13 +8,12 @@ import { colors } from "./configuration";
 const maxDisplayedLevel = 5;
 const maxRowLength = 1000;
 
-let displayedNodes: string[] = [];
-
 export default function useGraph(
 	containerId: string | undefined,
 	graphDefinition: Neo4JGraphDefinition | undefined,
 	filteredNodes: string[] | undefined,
-	displayedLevel: number = maxDisplayedLevel,
+	displayedLevel = maxDisplayedLevel,
+	weightedNodes = true,
 ) {
 	const graph = useRef<Graph>(new Graph());
 	const renderer = useRef<Sigma | undefined>();
@@ -33,7 +32,9 @@ export default function useGraph(
 		(wfGraphDefinition: Neo4JGraphDefinition, x: number, y: number) => {
 			let addedX = 0;
 			for (const [vi, v] of wfGraphDefinition.entries()) {
-				for (const [i, e] of v.entries()) {
+				const stageSize = v[v.length - 2] as number;
+				const stepSize = v[v.length - 1] as number;
+				for (const [i, e] of v.slice(0, v.length - 2).entries()) {
 					const isNotLastNode = vi < wfGraphDefinition.length - 1;
 					try {
 						if (i < displayedLevel) {
@@ -43,15 +44,28 @@ export default function useGraph(
 								// (first nodes in the array are the last nodes in the profile)
 								continue;
 							}
+							let nodeSize = 5;
+							if (weightedNodes) {
+								switch (i) {
+									case 1:
+										nodeSize += stageSize;
+										break;
+									case 2:
+										nodeSize += stepSize;
+										break;
+									default:
+										break;
+								}
+							}
 							const {
 								elementId,
 								properties: { name: label },
 							} = e as Neo4JNode;
 							graph.current.addNode(elementId, {
 								label,
-								x: x - addedX,
+								x: x + addedX,
 								y: y - i * 50, // (vi + 1) * i + 5,
-								size: 5,
+								size: nodeSize,
 								color: colors[i],
 								forceLabel: i === 0, // always displaying workflow node name
 							});
@@ -80,7 +94,7 @@ export default function useGraph(
 			}
 			return addedX;
 		},
-		[displayedLevel],
+		[displayedLevel, weightedNodes],
 	);
 
 	useEffect(() => {
@@ -99,14 +113,13 @@ export default function useGraph(
 				// filtering workflow nodes
 				continue;
 			}
-			x += addNewWorkflow(wfGraphDefinition, x, y) + 100;
+			x += addNewWorkflow(wfGraphDefinition, x, y) + 250;
 			if (x >= maxRowLength) {
 				// we create a grid of profiles with maxRowLength
 				y += 50 * displayedLevel;
 				x = 1;
 			}
 		}
-		displayedNodes = Object.keys(groupedBy);
 	}, [graphDefinition, filteredNodes, displayedLevel, addNewWorkflow]);
 
 	useEffect(() => {

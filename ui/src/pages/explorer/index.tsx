@@ -41,12 +41,15 @@ export default function ExplorerPage() {
 	const [ppmJson, setPpmJson] = useState<string[]>([]); // currently only supporting stages
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
 	const [resultSearchFilter, setResultSearchFilter] = useState<string>("");
+	const [isWeightedNodesChecked, setIsWeightedNodesChecked] =
+		useState<boolean>(true);
 
 	const { renderer } = useGraph(
 		graphContainerId,
 		filteredWorkflowsNodes,
 		filteredWorkflows,
 		displayedLevel,
+		isWeightedNodesChecked,
 	);
 
 	useEffect(() => {
@@ -150,6 +153,22 @@ export default function ExplorerPage() {
 								<SelectItem value="5">Code</SelectItem>
 							</SelectContent>
 						</Select>
+						<p className="font-bold">Customization:</p>
+						<div className="flex space-x-2" key="check-weighted-nodes-div">
+							<Checkbox
+								id="check-weighted-nodes"
+								checked={isWeightedNodesChecked}
+								onCheckedChange={(c) => setIsWeightedNodesChecked(!!c)}
+							/>
+							<div className="grid gap-1.5 leading-none">
+								<label
+									htmlFor="check-weighted-nodes"
+									className="text-sm font-medium"
+								>
+									Use weighted nodes
+								</label>
+							</div>
+						</div>
 						<p className="font-bold">Results:</p>
 						<Input
 							id="filter-results"
