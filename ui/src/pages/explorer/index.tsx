@@ -19,6 +19,9 @@ import {
 import useGraph from "@/useGraph";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { CircleX } from "lucide-react";
+import ProfilePattern from "@/components/profile-pattern";
+import { specialStages } from "@/configuration";
 
 export default function ExplorerPage() {
 	const [graphContainerId, setGraphContainerId] = useState<
@@ -33,6 +36,7 @@ export default function ExplorerPage() {
 	>();
 	const [displayedLevel, setDisplayedLevel] = useState<number>(3); // default display to step
 	const [currentPpm, setCurrentPpm] = useState<File | undefined>();
+	const [ppmJson, setPpmJson] = useState<string[]>([]); // currently only supporting stages
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
 	const [resultSearchFilter, setResultSearchFilter] = useState<string>("");
 
@@ -92,6 +96,22 @@ export default function ExplorerPage() {
 		setGraphContainerId("graph-container");
 	}, []);
 
+	useEffect(() => {
+		if (currentPpm) {
+			currentPpm.text().then((r) => {
+				setPpmJson(
+					(JSON.parse(r) as (string | { name: string })[]).map((sa) =>
+						specialStages.includes(sa as string)
+							? (sa as string)
+							: (sa as { name: string }).name,
+					),
+				);
+			});
+		} else {
+			setPpmJson([]);
+		}
+	}, [currentPpm]);
+
 	return (
 		<section className="grid grid-cols-6 space-x-4 h-full">
 			<div className="col-span-1">
@@ -107,13 +127,6 @@ export default function ExplorerPage() {
 								name="profile-form"
 							/>
 							<Button type="submit">Submit Profile</Button>
-						</div>
-					</form>
-					<form onSubmit={handlePpmFormSubmit}>
-						<div className="grid w-full max-w-sm items-center gap-1.5">
-							<Label htmlFor="ppm-form">Select a pattern to apply (JSON)</Label>
-							<Input id="ppm-form" type="file" accept=".json" name="ppm-form" />
-							<Button type="submit">Submit PPM filter</Button>
 						</div>
 					</form>
 				</div>
@@ -175,11 +188,29 @@ export default function ExplorerPage() {
 					</div>
 				)}
 			</div>
-			<div
-				className="col-span-5 border-gray-500 border"
-				id="graph-container"
-				style={{ height: "99%", width: "98%" }}
-			/>
+			<div className="col-span-5 grid grid-rows-6 items-center">
+				{ppmJson.length === 0 ? (
+					<form onSubmit={handlePpmFormSubmit} className="row-span-1">
+						<div className="grid w-full max-w-sm items-center gap-1.5">
+							<Label htmlFor="ppm-form">Select a pattern to apply (JSON)</Label>
+							<Input id="ppm-form" type="file" accept=".json" name="ppm-form" />
+							<Button type="submit">Submit PPM filter</Button>
+						</div>
+					</form>
+				) : (
+					<div className="row-span-1">
+						<Button variant="ghost" onClick={() => setCurrentPpm(undefined)}>
+							<CircleX /> Remove pattern
+						</Button>
+						<ProfilePattern stages={ppmJson} />
+					</div>
+				)}
+				<div
+					className="row-span-5 border-gray-500 border"
+					id="graph-container"
+					style={{ height: "99%", width: "98%" }}
+				/>
+			</div>
 		</section>
 	);
 }
