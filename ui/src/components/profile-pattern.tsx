@@ -43,7 +43,7 @@ const ProfilePattern: React.FunctionComponent<
 							})
 						}
 					>
-						<SelectTrigger className="w-[180px]">
+						<SelectTrigger>
 							<SelectValue placeholder="Select stage..." />
 						</SelectTrigger>
 						<SelectContent>
