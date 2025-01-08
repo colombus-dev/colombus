@@ -23,6 +23,8 @@ import { CircleX } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
+let beforeAllChecked: string[] | undefined = undefined;
+
 export default function ExplorerPage() {
 	const [graphContainerId, setGraphContainerId] = useState<
 		string | undefined
@@ -46,8 +48,6 @@ export default function ExplorerPage() {
 		filteredWorkflows,
 		displayedLevel,
 	);
-
-	// renderer.current?.emit("", {node: "", event: Event()})
 
 	useEffect(() => {
 		const updateAndMergeWithPosted = async (workflows: string[]) => {
@@ -159,6 +159,28 @@ export default function ExplorerPage() {
 								setResultSearchFilter(e.target.value.toLowerCase())
 							}
 						/>
+						<div className="flex space-x-2" key="check-all-div">
+							<Checkbox
+								id="check-all"
+								checked={filteredWorkflows?.length === allWorkflows.length}
+								onCheckedChange={(c) => {
+									if (c) {
+										beforeAllChecked = filteredWorkflows;
+										setFilteredWorkflows(allWorkflows);
+									} else {
+										setFilteredWorkflows(beforeAllChecked);
+									}
+								}}
+							/>
+							<div className="grid gap-1.5 leading-none">
+								<label
+									htmlFor="check-all"
+									className="text-sm font-medium italic"
+								>
+									Check all
+								</label>
+							</div>
+						</div>
 						{allWorkflows
 							.filter((w) => w.toLowerCase().includes(resultSearchFilter))
 							.map((w) => (

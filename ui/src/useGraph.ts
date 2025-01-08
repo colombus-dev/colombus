@@ -6,6 +6,9 @@ import Sigma from "sigma";
 import { colors } from "./configuration";
 
 const maxDisplayedLevel = 5;
+const maxRowLength = 1000;
+
+let displayedNodes: string[] = [];
 
 export default function useGraph(
 	containerId: string | undefined,
@@ -15,7 +18,6 @@ export default function useGraph(
 ) {
 	const graph = useRef<Graph>(new Graph());
 	const renderer = useRef<Sigma | undefined>();
-	const displayedNodes = useRef<string[]>([]);
 
 	useEffect(() => {
 		if (containerId) {
@@ -28,20 +30,27 @@ export default function useGraph(
 	}, [containerId]);
 
 	const addNewWorkflow = useCallback(
-		(wfGraphDefinition: Neo4JGraphDefinition, x: number) => {
+		(wfGraphDefinition: Neo4JGraphDefinition, x: number, y: number) => {
 			let addedX = 0;
 			for (const [vi, v] of wfGraphDefinition.entries()) {
 				for (const [i, e] of v.entries()) {
+					const isNotLastNode = vi < wfGraphDefinition.length - 1;
 					try {
 						if (i < displayedLevel) {
+							if (i === 0 && isNotLastNode) {
+								// we add the workflow node at the beginning of the profile graph
+								// correponding to the last node as the node array is reversed
+								// (first nodes in the array are the last nodes in the profile)
+								continue;
+							}
 							const {
 								elementId,
 								properties: { name: label },
 							} = e as Neo4JNode;
 							graph.current.addNode(elementId, {
 								label,
-								x: x + addedX,
-								y: i * 50, // (vi + 1) * i + 5,
+								x: x - addedX,
+								y: y - i * 50, // (vi + 1) * i + 5,
 								size: 5,
 								color: colors[i],
 								forceLabel: i === 0, // always displaying workflow node name
@@ -52,8 +61,9 @@ export default function useGraph(
 								endNodeElementId,
 								type: label,
 							} = e as Neo4JEdge;
-							if (vi < wfGraphDefinition.length - 1 && i === maxDisplayedLevel) {
-								// we only connect the workflow node to the first stage node
+							if (isNotLastNode && i === maxDisplayedLevel) {
+								// we only connect the workflow node (e.g. last node of the array)
+								// to the first stage node
 								continue;
 							}
 							graph.current.addEdge(startNodeElementId, endNodeElementId, {
@@ -83,16 +93,21 @@ export default function useGraph(
 			(v) => (v[0] as Neo4JNode).properties.name,
 		);
 		let x = 1;
-		// TODO: to improve
+		let y = 1;
 		for (const [wfName, wfGraphDefinition] of Object.entries(groupedBy)) {
 			if (filteredNodes && !filteredNodes.includes(wfName)) {
 				// filtering workflow nodes
 				continue;
 			}
-			x += addNewWorkflow(wfGraphDefinition, x) + 100;
+			x += addNewWorkflow(wfGraphDefinition, x, y) + 100;
+			if (x >= maxRowLength) {
+				// we create a grid of profiles with maxRowLength
+				y += 50 * displayedLevel;
+				x = 1;
+			}
 		}
-		displayedNodes.current = Object.keys(groupedBy);
-	}, [graphDefinition, filteredNodes, addNewWorkflow]);
+		displayedNodes = Object.keys(groupedBy);
+	}, [graphDefinition, filteredNodes, displayedLevel, addNewWorkflow]);
 
 	useEffect(() => {
 		return () => {
