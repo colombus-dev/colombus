@@ -5,10 +5,10 @@ from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import create_engine, text, select
+from sqlalchemy import text, select
 from sqlalchemy.orm import Session
 
-from app.models.sql_model import Base, Workflow
+from app.models.sql_model import Base, Profile, engine
 from app.utils.save_notebook_sql import save_notebook_as_sql
 from app.utils.convert_ppm_to_sql import convert_ppm_to_sql_query
 from app.utils.save_notebook_graph import save_notebook_as_graph
@@ -29,19 +29,22 @@ app.add_middleware(
 )
 
 
-engine = create_engine(
-    "mysql+pymysql://christopher:pinta@colombus_mysql:3306/colombusdb",
-    echo=False,
-)
-# engine = create_engine("sqlite:///db.sqlite", echo=False)
-
-Base.metadata.create_all(engine)
-
-
 @app.get("/api/profile/getAll")
 async def get_all_profile() -> list[str]:
     with Session(engine) as session:
-        return session.execute(select(Workflow.name)).scalars().all()
+        return session.execute(select(Profile.name)).scalars().all()
+
+
+@app.get("/api/profile/getJson")
+async def get_json_profile(profile_name: str):
+    with Session(engine) as session:
+        return (
+            session.execute(
+                select(Profile.json_profile).where(Profile.name == profile_name)
+            )
+            .scalars()
+            .all()
+        )
 
 
 @app.post("/api/profile/import/multiple")
@@ -57,7 +60,7 @@ async def import_multiple_profile(
         background_tasks.add_task(
             save_notebook_as_graph,
             notebook_name=profile_path.stem,
-            profile=profile,
+            raw_profile=profile,
         )
         all_imported_profiles.append(profile_path.stem)
     return all_imported_profiles

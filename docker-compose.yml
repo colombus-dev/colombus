@@ -1,12 +1,13 @@
 services:
   colombus_app:
     build: .
-    # expose:
-    #   - 8080
     ports:
       - "8080:8080"
     volumes:
       - ./app:/code/app:rw
+    environment:
+      NEO4J_BOLT_FULL_URL: bolt://neo4j:pinta_nina@colombus_neo4j:7687
+      MYSQL_FULL_URL: mysql+pymysql://christopher:pinta@colombus_mysql:3306/colombusdb
     depends_on:
       colombus_mysql:
         condition: service_healthy

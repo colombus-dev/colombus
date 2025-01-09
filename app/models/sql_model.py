@@ -1,4 +1,8 @@
-from sqlalchemy import ForeignKey
+import os
+
+from typing import Any
+
+from sqlalchemy import create_engine, ForeignKey
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -6,7 +10,7 @@ from sqlalchemy.orm import (
     relationship,
 )
 from sqlalchemy.dialects import mysql
-from sqlalchemy.types import String
+from sqlalchemy.types import String, JSON
 
 
 # TODO: consider using https://sqlmodel.tiangolo.com/#write-to-the-database for pydantic compatibility
@@ -95,8 +99,8 @@ class Stage(Base):
         back_populates="stage", cascade="all, delete, delete-orphan, merge, save-update"
     )
 
-    workflow_id: Mapped[int] = mapped_column(ForeignKey("workflow.id"))
-    workflow: Mapped["Workflow"] = relationship(
+    profile_id: Mapped[int] = mapped_column(ForeignKey("profile.id"))
+    profile: Mapped["Profile"] = relationship(
         back_populates="stages",
         cascade="delete, delete-orphan, merge, save-update",
         single_parent=True,
@@ -106,16 +110,25 @@ class Stage(Base):
         return f"Stage(id={self.id!r}, name={self.name!r}, position={self.position!r})"
 
 
-class Workflow(Base):
-    __tablename__ = "workflow"
+class Profile(Base):
+    __tablename__ = "profile"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(StandardString, index=True, unique=True)
+    json_profile: Mapped[dict[str, Any]] = mapped_column(type_=JSON)
 
     stages: Mapped[list["Stage"]] = relationship(
-        back_populates="workflow",
+        back_populates="profile",
         cascade="all, delete, delete-orphan, merge, save-update",
     )
 
     def __repr__(self) -> str:
-        return f"Workflow(id={self.id!r}, name={self.name!r})"
+        return f"Profile(id={self.id!r}, name={self.name!r})"
+
+
+engine = create_engine(
+    os.getenv("MYSQL_FULL_URL"),
+    echo=False,
+)
+
+Base.metadata.create_all(engine)

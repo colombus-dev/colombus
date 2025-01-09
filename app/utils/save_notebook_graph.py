@@ -6,19 +6,19 @@ from app.models.graph_model import (
     Step,
     MetaInstruction,
     Code,
-    Workflow,
+    Profile,
 )  # TODO: execute directly instead of importing
 
 
-def save_notebook_as_graph(notebook_name: str, profile: list[dict[str, dict]]):
+def save_notebook_as_graph(notebook_name: str, raw_profile: list[dict[str, dict]]):
     prev_sa: Stage | None = None
     prev_se: Step | None = None
     prev_mi: MetaInstruction | None = None
     prev_code: Code | None = None
-    workflow = Workflow(name=notebook_name).save()
-    for sa in profile:
+    profile = Profile(name=notebook_name).save()
+    for sa in raw_profile:
         stage = Stage(name=sa["name"]).save()
-        workflow.stage.connect(stage)
+        profile.stage.connect(stage)
         if prev_sa:
             stage.nextStage.connect(prev_sa)
         prev_sa = stage

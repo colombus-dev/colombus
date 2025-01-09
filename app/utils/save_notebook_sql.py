@@ -2,7 +2,7 @@ from sqlalchemy import Engine
 from sqlalchemy.orm import Session
 
 from app.models.sql_model import (
-    Workflow,
+    Profile,
     Stage,
     Step,
     MetaInstruction,
@@ -43,6 +43,6 @@ def save_notebook_as_sql(
                     )
                 )
             all_stages.append(Stage(name=sa["name"], position=sa_i, steps=all_steps))
-        workflow = Workflow(name=notebook_name, stages=all_stages)
-        session.add(workflow)
+        profile = Profile(name=notebook_name, stages=all_stages, json_profile=profile)
+        session.add(profile)
         session.commit()

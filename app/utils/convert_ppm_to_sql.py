@@ -66,7 +66,7 @@ def convert_steps_to_sql_query(
 
 def convert_stages_to_sql_query(pattern: list[str | dict[str, Any]]) -> str:
     names_to_pos = {}
-    query = "SELECT DISTINCT w.name from workflow AS w"
+    query = "SELECT DISTINCT p.name from profile AS p"
     all_steps_where_queries = []
 
     for sa_i, stage in enumerate(pattern):
@@ -74,7 +74,7 @@ def convert_stages_to_sql_query(pattern: list[str | dict[str, Any]]) -> str:
             continue
         names_to_pos[sa_i] = stage["name"]
 
-        query += f"\nINNER JOIN stage AS s{sa_i} ON w.id = s{sa_i}.workflow_id"
+        query += f"\nINNER JOIN stage AS s{sa_i} ON p.id = s{sa_i}.profile_id"
         steps_join_query, steps_where_query = convert_steps_to_sql_query(
             stage["tasks"], sa_i
         )
@@ -100,12 +100,3 @@ def convert_stages_to_sql_query(pattern: list[str | dict[str, Any]]) -> str:
 
 def convert_ppm_to_sql_query(pattern: list[str | dict[str, Any]]):
     return convert_stages_to_sql_query(pattern)
-
-
-"""
-SELECT DISTINCT workflow.name
-FROM workflow
-INNER JOIN stage AS s0 ON workflow.id = s0.workflow_id
-INNER JOIN stage AS s1 ON workflow.id = s1.workflow_id
-WHERE s0.name = "Library Loading" AND s1.name = "Data Preparation" AND s0.position < s1.position
-"""

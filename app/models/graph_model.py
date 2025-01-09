@@ -1,4 +1,7 @@
+import os
+
 from neomodel import (
+    db,
     config,
     StructuredNode,
     StringProperty,
@@ -8,7 +11,7 @@ from neomodel import (
     RelationshipFrom,
 )
 
-config.DATABASE_URL = "bolt://neo4j:pinta_nina@colombus_neo4j:7687"
+config.DATABASE_URL = os.getenv("NEO4J_BOLT_FULL_URL")
 
 
 class Code(StructuredNode):
@@ -39,6 +42,10 @@ class Stage(StructuredNode):
     steps = RelationshipTo("Step", "CONTAINS")
 
 
-class Workflow(StructuredNode):
+class Profile(StructuredNode):
     name = StringProperty(unique_index=True, required=True)
     stage = RelationshipTo("Stage", "CONTAINS")
+
+
+# Enabling automatic index and constraint creation
+db.install_all_labels()
