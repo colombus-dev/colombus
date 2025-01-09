@@ -1,5 +1,6 @@
 import ProfilePattern from "@/components/profile-pattern";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { specialStages } from "@/configuration";
 import { cn } from "@/lib/utils";
 import Graph from "graphology";
 import { Download } from "lucide-react";
@@ -31,7 +32,10 @@ export default function EditorPage() {
 	}, []);
 
 	const jsonPattern = useMemo(
-		() => selectedStages.map((s) => ({ name: s, tasks: ["*"] })),
+		() =>
+			selectedStages.map((s) =>
+				specialStages.includes(s) ? s : { name: s, tasks: ["*"] },
+			),
 		[selectedStages],
 	);
 
