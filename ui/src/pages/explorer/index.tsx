@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
 	Select,
 	SelectContent,
@@ -241,12 +242,13 @@ export default function ExplorerPage() {
 						</div>
 					</form>
 				) : (
-					<div className="row-span-1">
+					<ScrollArea className="row-span-1 h-full mr-8 rounded-md">
 						<Button variant="ghost" onClick={() => setCurrentPpm(undefined)}>
 							<CircleX /> Remove pattern
 						</Button>
-						<ProfilePattern stages={ppmJson} />
-					</div>
+						<ProfilePattern stages={ppmJson} className="overflow-x-auto" />
+						<ScrollBar orientation="horizontal" />
+					</ScrollArea>
 				)}
 				<div
 					className="row-span-5 border-gray-500 border"
