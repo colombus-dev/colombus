@@ -19,7 +19,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { specialStages } from "@/configuration";
-import useGraph from "@/useGraph";
+import useGraph from "@/hooks/useGraph";
 import { CircleX } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -120,8 +120,8 @@ export default function ExplorerPage() {
 
 	return (
 		<section className="grid grid-cols-6 space-x-4 h-full">
-			<div className="col-span-1">
-				<div className="p-4 space-y-4">
+			<div className="col-span-1 space-y-2 p-2">
+				<div className="row-span-1">
 					<form onSubmit={handleProfileFormSubmit}>
 						<div className="grid w-full max-w-sm items-center gap-1.5">
 							<Label htmlFor="profile-form">Import a new profile (JSON)</Label>
@@ -137,7 +137,7 @@ export default function ExplorerPage() {
 					</form>
 				</div>
 				{allWorkflows && (
-					<div className="p-4 space-y-2">
+					<div className="space-y-2">
 						<p className="font-bold">Displayed levels:</p>
 						<Select
 							onValueChange={(v) => setDisplayedLevel(Number.parseInt(v))}
@@ -154,6 +154,10 @@ export default function ExplorerPage() {
 								<SelectItem value="5">Code</SelectItem>
 							</SelectContent>
 						</Select>
+					</div>
+				)}
+				{allWorkflows && (
+					<div className="space-y-2">
 						<p className="font-bold">Customization:</p>
 						<div className="flex space-x-2" key="check-weighted-nodes-div">
 							<Checkbox
@@ -170,6 +174,10 @@ export default function ExplorerPage() {
 								</label>
 							</div>
 						</div>
+					</div>
+				)}
+				{allWorkflows && (
+					<div className="space-y-2">
 						<p className="font-bold">Results:</p>
 						<Input
 							id="filter-results"
@@ -201,34 +209,39 @@ export default function ExplorerPage() {
 								</label>
 							</div>
 						</div>
-						{allWorkflows
-							.filter((w) => w.toLowerCase().includes(resultSearchFilter))
-							.map((w) => (
-								<div className="flex space-x-2" key={w}>
-									<Checkbox
-										id={`cb_${w}`}
-										checked={filteredWorkflows?.includes(w)}
-										onCheckedChange={(c) => {
-											if (!filteredWorkflows) {
-												return;
-											}
-											setFilteredWorkflows(
-												c
-													? [...filteredWorkflows, w]
-													: filteredWorkflows.filter((fw) => fw !== w),
-											);
-										}}
-									/>
-									<div className="grid gap-1.5 leading-none">
-										<label
-											htmlFor={`cb_${w}`}
-											className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-										>
-											{w}
-										</label>
-									</div>
-								</div>
-							))}
+						<ScrollArea className="h-[45vh]">
+							<div className="space-y-1">
+								{allWorkflows
+									.filter((w) => w.toLowerCase().includes(resultSearchFilter))
+									.map((w) => (
+										<div className="flex space-x-2" key={w}>
+											<Checkbox
+												id={`cb_${w}`}
+												checked={filteredWorkflows?.includes(w)}
+												onCheckedChange={(c) => {
+													if (!filteredWorkflows) {
+														return;
+													}
+													setFilteredWorkflows(
+														c
+															? [...filteredWorkflows, w]
+															: filteredWorkflows.filter((fw) => fw !== w),
+													);
+												}}
+											/>
+											<div className="grid gap-1.5 leading-none">
+												<label
+													htmlFor={`cb_${w}`}
+													className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+												>
+													{w}
+												</label>
+											</div>
+										</div>
+									))}
+							</div>
+							<ScrollBar />
+						</ScrollArea>
 					</div>
 				)}
 			</div>
@@ -242,7 +255,7 @@ export default function ExplorerPage() {
 						</div>
 					</form>
 				) : (
-					<ScrollArea className="row-span-1 h-full mr-8 rounded-md">
+					<ScrollArea className="row-span-1 h-full mr-8">
 						<Button variant="ghost" onClick={() => setCurrentPpm(undefined)}>
 							<CircleX /> Remove pattern
 						</Button>
