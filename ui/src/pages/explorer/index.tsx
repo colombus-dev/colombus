@@ -232,7 +232,7 @@ export default function ExplorerPage() {
 					</div>
 				)}
 			</div>
-			<div className="col-span-5 grid grid-rows-6 items-center">
+			<div className="col-span-5 grid grid-rows-8 items-center">
 				{ppmJson.length === 0 ? (
 					<form onSubmit={handlePpmFormSubmit} className="row-span-1">
 						<div className="grid w-full max-w-sm items-center gap-1.5">
@@ -251,7 +251,7 @@ export default function ExplorerPage() {
 					</ScrollArea>
 				)}
 				<div
-					className="row-span-5 border-gray-500 border"
+					className="row-span-7 border-gray-500 border"
 					id="graph-container"
 					style={{ height: "99%", width: "98%" }}
 				/>
