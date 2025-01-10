@@ -32,9 +32,7 @@ export default function useGraph(
 		(wfGraphDefinition: Neo4JGraphDefinition, x: number, y: number) => {
 			let addedX = 0;
 			for (const [vi, v] of wfGraphDefinition.entries()) {
-				const stageSize = v[v.length - 2] as number;
-				const stepSize = v[v.length - 1] as number;
-				for (const [i, e] of v.slice(0, v.length - 2).entries()) {
+				for (const [i, e] of v.entries()) {
 					const isNotLastNode = vi < wfGraphDefinition.length - 1;
 					try {
 						if (i < displayedLevel) {
@@ -48,10 +46,13 @@ export default function useGraph(
 							if (weightedNodes) {
 								switch (i) {
 									case 1:
-										nodeSize += stageSize;
+										nodeSize +=
+											(v[1] as Neo4JNode).properties.numberRelatedSteps ?? 0;
 										break;
 									case 2:
-										nodeSize += stepSize;
+										nodeSize +=
+											(v[2] as Neo4JNode).properties
+												.numberRelatedMetaInstructions ?? 0;
 										break;
 									default:
 										break;

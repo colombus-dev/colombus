@@ -7,7 +7,13 @@ const config = {
 export type Neo4JNode = {
 	elementId: string;
 	labels: string[];
-	properties: { name: string; cross_db_uuid?: string };
+	properties: {
+		name: string;
+		cross_db_uuid?: string;
+		numberRelatedSteps?: number;
+		numberRelatedMetaInstructions?: number;
+		position?: number;
+	};
 };
 
 export type Neo4JEdge = {
@@ -18,7 +24,7 @@ export type Neo4JEdge = {
 	type: string;
 };
 
-export type Neo4JGraphDefinition = (Neo4JNode | Neo4JEdge | number)[][];
+export type Neo4JGraphDefinition = (Neo4JNode | Neo4JEdge)[][];
 
 export interface GetNodesFromNeo4JResponse {
 	bookmarks: string[];
@@ -36,7 +42,7 @@ export async function getNodesFromNeo4J(profilesNames?: string[]) {
 		.post<GetNodesFromNeo4JResponse>(
 			"http://localhost:7474/db/neo4j/query/v2",
 			{
-				statement: `MATCH (p:Profile)-[psa]->(sa:Stage)-[sase]->(se:Step)-[sem]->(m:MetaInstruction)-[mc]->(c:Code) OPTIONAL MATCH (sa)-[sasp:PRECEDES]->(:Stage) OPTIONAL MATCH (se)-[sesp:PRECEDES]->(:Step) OPTIONAL MATCH (m)-[mp:PRECEDES]->(:MetaInstruction) OPTIONAL MATCH (c)-[cp:PRECEDES]->(:Code) WHERE ANY (name in p.name WHERE name IN ${JSON.stringify(profilesNames)}) RETURN p, sa, se, m, c, psa, sase, sem, mc, sasp, sesp, mp, cp, sa.numberRelatedSteps, se.numberRelatedMetaInstructions ORDER BY p DESC, sa.position DESC, se.position DESC, m.position DESC, c.position DESC`,
+				statement: `MATCH (p:Profile)-[psa]->(sa:Stage)-[sase]->(se:Step)-[sem]->(m:MetaInstruction)-[mc]->(c:Code) OPTIONAL MATCH (sa)-[sasp:PRECEDES]->(:Stage) OPTIONAL MATCH (se)-[sesp:PRECEDES]->(:Step) OPTIONAL MATCH (m)-[mp:PRECEDES]->(:MetaInstruction) OPTIONAL MATCH (c)-[cp:PRECEDES]->(:Code) WHERE ANY (name in p.name WHERE name IN ${JSON.stringify(profilesNames)}) RETURN p, sa, se, m, c, psa, sase, sem, mc, sasp, sesp, mp, cp ORDER BY p DESC, sa.position DESC, se.position DESC, m.position DESC, c.position DESC`,
 			},
 			config,
 		)
