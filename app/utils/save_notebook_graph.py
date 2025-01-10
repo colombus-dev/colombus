@@ -21,7 +21,10 @@ def save_notebook_as_graph(notebook_name: str, raw_profile: list[dict[str, dict]
     c_i = 0
     for sa_i, sa in enumerate(raw_profile):
         stage = Stage(
-            name=sa["name"], cross_db_uuid=sa["cross_db_uuid"], position=sa_i
+            name=sa["name"],
+            cross_db_uuid=sa["cross_db_uuid"],
+            position=sa_i,
+            numberRelatedSteps=len(sa["tasks"]),
         ).save()
         profile.stage.connect(stage)
         if prev_sa:
@@ -29,7 +32,10 @@ def save_notebook_as_graph(notebook_name: str, raw_profile: list[dict[str, dict]
         prev_sa = stage
         for se in sa["tasks"]:
             step = Step(
-                name=se["name"], cross_db_uuid=se["cross_db_uuid"], position=se_i
+                name=se["name"],
+                cross_db_uuid=se["cross_db_uuid"],
+                position=se_i,
+                numberRelatedMetaInstructions=len(se["tasks"]),
             ).save()
             se_i += 1
             stage.steps.connect(step)
