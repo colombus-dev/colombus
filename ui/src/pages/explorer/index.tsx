@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
 	Select,
@@ -19,6 +20,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { specialStages } from "@/configuration";
+import type { PpmNodesDisplayMode } from "@/configuration";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import { CircleX } from "lucide-react";
@@ -48,6 +50,8 @@ export default function ExplorerPage() {
 	const [resultSearchFilter, setResultSearchFilter] = useState<string>("");
 	const [isWeightedNodesChecked, setIsWeightedNodesChecked] =
 		useState<boolean>(true);
+	const [ppmNodesDisplayMode, setPpmNodesDisplayMode] =
+		useState<PpmNodesDisplayMode>("show-all");
 
 	const { renderer } = useGraph(
 		graphContainerId,
@@ -57,7 +61,7 @@ export default function ExplorerPage() {
 		isWeightedNodesChecked,
 	);
 
-	useGraphPpm(renderer.current, allWorkflowsWithPpmData);
+	useGraphPpm(ppmNodesDisplayMode, renderer.current, allWorkflowsWithPpmData);
 
 	useEffect(() => {
 		const updateAndMergeWithPosted = async (
@@ -188,6 +192,27 @@ export default function ExplorerPage() {
 									Use weighted nodes
 								</label>
 							</div>
+						</div>
+						<div className="flex space-x-2" key="radio-ppm-nodes-display-div">
+							<RadioGroup
+								value={ppmNodesDisplayMode}
+								onValueChange={(v) =>
+									setPpmNodesDisplayMode(v as PpmNodesDisplayMode)
+								}
+							>
+								<div className="flex items-center space-x-2">
+									<RadioGroupItem value="show-all" id="show-all" />
+									<Label htmlFor="show-all">Show all nodes</Label>
+								</div>
+								<div className="flex items-center space-x-2">
+									<RadioGroupItem value="show-fixed" id="show-fixed" />
+									<Label htmlFor="show-fixed">Show fixed nodes</Label>
+								</div>
+								<div className="flex items-center space-x-2">
+									<RadioGroupItem value="show-variable" id="show-variable" />
+									<Label htmlFor="show-variable">Show variable nodes</Label>
+								</div>
+							</RadioGroup>
 						</div>
 					</div>
 				)}

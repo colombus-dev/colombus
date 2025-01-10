@@ -1,8 +1,23 @@
+import type { PpmNodesDisplayMode } from "@/configuration";
 import groupBy from "lodash/groupBy";
 import { useEffect } from "react";
 import type Sigma from "sigma";
 
+const shouldHideNodeForModeMapping = {
+	"show-all": () => false,
+	"show-fixed": (allUuids, nodeUuid) =>
+		nodeUuid && !allUuids.includes(nodeUuid),
+	"show-variable": (allUuids, nodeUuid) =>
+		nodeUuid && allUuids.includes(nodeUuid),
+} as {
+	[mode in PpmNodesDisplayMode]: (
+		allUuids: string[],
+		nodeUuid: string | undefined,
+	) => boolean;
+};
+
 export default function useGraphPpm(
+	ppmNodesDisplayMode: PpmNodesDisplayMode,
 	graphRenderer?: Sigma,
 	workflowsWithPpmData?: string[][],
 ) {
@@ -20,7 +35,12 @@ export default function useGraphPpm(
 
 			graphRenderer.setSetting("nodeReducer", (_, data) => {
 				const res = { ...data };
-				if (res.crossDbUuid && !allUuidsToDisplay.includes(res.crossDbUuid)) {
+				if (
+					shouldHideNodeForModeMapping[ppmNodesDisplayMode](
+						allUuidsToDisplay,
+						res.crossDbUuid,
+					)
+				) {
 					res.color = "#f6f6f6";
 					res.forceLabel = false;
 				}
@@ -31,5 +51,5 @@ export default function useGraphPpm(
 			// We don't touch the graph data so we can skip its reindexation
 			skipIndexation: true,
 		});
-	}, [workflowsWithPpmData, graphRenderer]);
+	}, [workflowsWithPpmData, graphRenderer, ppmNodesDisplayMode]);
 }
