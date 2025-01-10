@@ -16,14 +16,22 @@ def save_notebook_as_graph(notebook_name: str, raw_profile: list[dict[str, dict]
     prev_mi: MetaInstruction | None = None
     prev_code: Code | None = None
     profile = Profile(name=notebook_name).save()
-    for sa in raw_profile:
-        stage = Stage(name=sa["name"], cross_db_uuid=sa["cross_db_uuid"]).save()
+    se_i = 0
+    mi_i = 0
+    c_i = 0
+    for sa_i, sa in enumerate(raw_profile):
+        stage = Stage(
+            name=sa["name"], cross_db_uuid=sa["cross_db_uuid"], position=sa_i
+        ).save()
         profile.stage.connect(stage)
         if prev_sa:
             stage.nextStage.connect(prev_sa)
         prev_sa = stage
         for se in sa["tasks"]:
-            step = Step(name=se["name"], cross_db_uuid=se["cross_db_uuid"]).save()
+            step = Step(
+                name=se["name"], cross_db_uuid=se["cross_db_uuid"], position=se_i
+            ).save()
+            se_i += 1
             stage.steps.connect(step)
             if prev_se:
                 step.nextStep.connect(prev_se)
@@ -35,15 +43,20 @@ def save_notebook_as_graph(notebook_name: str, raw_profile: list[dict[str, dict]
                     library=mi["library"],
                     function=mi["function"],
                     cross_db_uuid=mi["cross_db_uuid"],
+                    position=mi_i,
                 ).save()
+                mi_i += 1
                 step.metaInstruction.connect(meta_instruction)
                 if prev_mi:
                     meta_instruction.nextMetaInstruction.connect(prev_mi)
                 prev_mi = meta_instruction
                 for c in mi["tasks"]:
                     code = Code(
-                        content=c["name"], cross_db_uuid=c["cross_db_uuid"]
+                        content=c["name"],
+                        cross_db_uuid=c["cross_db_uuid"],
+                        position=c_i,
                     ).save()
+                    c_i += 1
                     meta_instruction.code.connect(code)
                     if prev_code:
                         code.nextCode.connect(prev_code)
