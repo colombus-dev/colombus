@@ -199,6 +199,7 @@ export default function ExplorerPage() {
 								onValueChange={(v) =>
 									setPpmNodesDisplayMode(v as PpmNodesDisplayMode)
 								}
+								disabled={ppmJson.length === 0}
 							>
 								<div className="flex items-center space-x-2">
 									<RadioGroupItem value="show-all" id="show-all" />

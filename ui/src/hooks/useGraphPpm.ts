@@ -1,6 +1,6 @@
 import type { PpmNodesDisplayMode } from "@/configuration";
 import groupBy from "lodash/groupBy";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import type Sigma from "sigma";
 
 const shouldHideNodeForModeMapping = {
@@ -21,19 +21,19 @@ export default function useGraphPpm(
 	graphRenderer?: Sigma,
 	workflowsWithPpmData?: string[][],
 ) {
-	useEffect(() => {
-		if (!graphRenderer) {
-			return;
-		}
-		if (!workflowsWithPpmData) {
-			graphRenderer.setSetting("nodeReducer", (_, data) => data);
-		} else {
-			// TODO: improve readability
-			const allUuidsToDisplay = Object.entries(
+	const allUuidsToDisplay = useMemo(
+		() =>
+			Object.entries(
 				groupBy(workflowsWithPpmData, ([wfName]) => wfName),
-			).flatMap(([, [, [, ...wfPpmDataArray]]]) => wfPpmDataArray);
+			).flatMap(([, v]) => v[0].slice(1)),
+		[workflowsWithPpmData],
+	);
 
-			graphRenderer.setSetting("nodeReducer", (_, data) => {
+	useEffect(() => {
+		if (!workflowsWithPpmData) {
+			graphRenderer?.setSetting("nodeReducer", (_, data) => data);
+		} else {
+			graphRenderer?.setSetting("nodeReducer", (_, data) => {
 				const res = { ...data };
 				if (
 					shouldHideNodeForModeMapping[ppmNodesDisplayMode](
@@ -47,9 +47,14 @@ export default function useGraphPpm(
 				return res;
 			});
 		}
-		graphRenderer.refresh({
+		graphRenderer?.refresh({
 			// We don't touch the graph data so we can skip its reindexation
 			skipIndexation: true,
 		});
-	}, [workflowsWithPpmData, graphRenderer, ppmNodesDisplayMode]);
+	}, [
+		graphRenderer,
+		ppmNodesDisplayMode,
+		workflowsWithPpmData,
+		allUuidsToDisplay,
+	]);
 }
