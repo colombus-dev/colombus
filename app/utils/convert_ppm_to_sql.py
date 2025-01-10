@@ -5,6 +5,7 @@ def convert_meta_instructions_to_sql_query(
     meta_instructions: list[dict[str, Any]], stage_pos: int, step_pos: int
 ) -> tuple[str, str]:
     names_to_pos = {}
+    prefix_query = ""
     join_query = ""
     where_query = ""
     for mi_i, mi in enumerate(meta_instructions):
@@ -12,6 +13,7 @@ def convert_meta_instructions_to_sql_query(
             continue
         names_to_pos[mi_i] = mi
 
+        prefix_query += f", mi{stage_pos}_{step_pos}_{mi_i}.cross_db_uuid"
         join_query += f"\nINNER JOIN meta_instruction AS mi{stage_pos}_{step_pos}_{mi_i} ON se{stage_pos}_{step_pos}.id = mi{stage_pos}_{step_pos}_{mi_i}.step_id"
 
     prev_pos = -1
@@ -26,14 +28,16 @@ def convert_meta_instructions_to_sql_query(
         if mi_i < len(meta_instructions) - 1:
             where_query += " AND"
 
-    return join_query, where_query
+    return prefix_query, join_query, where_query
 
 
 def convert_steps_to_sql_query(
     steps: list[dict[str, Any]], stage_pos: int
 ) -> tuple[str, str]:
     names_to_pos = {}
+    prefix_query = ""
     all_meta_instructions_where_queries = []
+    all_meta_instructions_prefix_queries = []
     join_query = ""
     where_query = ""
     for se_i, step in enumerate(steps):
@@ -41,13 +45,18 @@ def convert_steps_to_sql_query(
             continue
         names_to_pos[se_i] = step["name"]
 
+        prefix_query += f", se{stage_pos}_{se_i}.cross_db_uuid"
         join_query += f"\nINNER JOIN step AS se{stage_pos}_{se_i} ON s{stage_pos}.id = se{stage_pos}_{se_i}.stage_id"
-        meta_instructions_join_query, meta_instructions_where_query = (
-            convert_meta_instructions_to_sql_query(step["tasks"], stage_pos, se_i)
-        )
+        (
+            meta_instructions_prefix_query,
+            meta_instructions_join_query,
+            meta_instructions_where_query,
+        ) = convert_meta_instructions_to_sql_query(step["tasks"], stage_pos, se_i)
         join_query += meta_instructions_join_query
         if meta_instructions_where_query:
             all_meta_instructions_where_queries.append(meta_instructions_where_query)
+        if meta_instructions_prefix_query:
+            all_meta_instructions_prefix_queries.append(meta_instructions_prefix_query)
 
     prev_pos = -1
     for se_i, step_name in names_to_pos.items():
@@ -61,26 +70,35 @@ def convert_steps_to_sql_query(
 
     where_query += "".join(all_meta_instructions_where_queries)
 
-    return join_query, where_query
+    return (
+        prefix_query + "".join(all_meta_instructions_prefix_queries),
+        join_query,
+        where_query,
+    )
 
 
 def convert_stages_to_sql_query(pattern: list[str | dict[str, Any]]) -> str:
     names_to_pos = {}
-    query = "SELECT DISTINCT p.name from profile AS p"
+    prefix_query = "SELECT DISTINCT p.name"
+    query = " from profile AS p"
     all_steps_where_queries = []
+    all_steps_prefix_queries = []
 
     for sa_i, stage in enumerate(pattern):
         if stage == "*":
             continue
         names_to_pos[sa_i] = stage["name"]
 
+        prefix_query += f", s{sa_i}.cross_db_uuid"
         query += f"\nINNER JOIN stage AS s{sa_i} ON p.id = s{sa_i}.profile_id"
-        steps_join_query, steps_where_query = convert_steps_to_sql_query(
-            stage["tasks"], sa_i
+        steps_prefix_query, steps_join_query, steps_where_query = (
+            convert_steps_to_sql_query(stage["tasks"], sa_i)
         )
         query += steps_join_query
         if steps_where_query:
             all_steps_where_queries.append(steps_where_query)
+        if steps_prefix_query:
+            all_steps_prefix_queries.append(steps_prefix_query)
 
     query += "\nWHERE"
     prev_pos = -1
@@ -95,7 +113,7 @@ def convert_stages_to_sql_query(pattern: list[str | dict[str, Any]]) -> str:
 
     query += "".join(all_steps_where_queries)
 
-    return query + ";"
+    return prefix_query + "".join(all_steps_prefix_queries) + query + ";"
 
 
 def convert_ppm_to_sql_query(pattern: list[str | dict[str, Any]]):

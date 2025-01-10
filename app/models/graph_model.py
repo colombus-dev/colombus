@@ -5,7 +5,6 @@ from neomodel import (
     config,
     StructuredNode,
     StringProperty,
-    IntegerProperty,
     UniqueIdProperty,
     RelationshipTo,
     RelationshipFrom,
@@ -15,31 +14,33 @@ config.DATABASE_URL = os.getenv("NEO4J_BOLT_FULL_URL")
 
 
 class Code(StructuredNode):
-    uid = UniqueIdProperty()
     content = StringProperty(index=True, required=True)  # TODO: rename name field
     nextCode = RelationshipFrom("Code", "PRECEDES")
+    cross_db_uuid = StringProperty(required=True)
 
 
 class MetaInstruction(StructuredNode):
-    uid = UniqueIdProperty()
     algoFamily = StringProperty(index=True, required=True)
     algoName = StringProperty(index=True, required=True)
     library = StringProperty(index=True, required=True)
     function = StringProperty(index=True, required=True)
     nextMetaInstruction = RelationshipFrom("MetaInstruction", "PRECEDES")
     code = RelationshipTo("Code", "REFERS_TO")
+    cross_db_uuid = StringProperty(required=True)
 
 
 class Step(StructuredNode):
     name = StringProperty(index=True, required=True)
     nextStep = RelationshipFrom("Step", "PRECEDES")
     metaInstruction = RelationshipTo("MetaInstruction", "REFERS_TO")
+    cross_db_uuid = StringProperty(required=True)
 
 
 class Stage(StructuredNode):
     name = StringProperty(index=True, required=True)
     nextStage = RelationshipFrom("Stage", "PRECEDES")
     steps = RelationshipTo("Step", "CONTAINS")
+    cross_db_uuid = StringProperty(required=True)
 
 
 class Profile(StructuredNode):

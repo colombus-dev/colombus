@@ -67,9 +67,9 @@ async def import_multiple_profile(
 
 
 @app.post("/api/ppm/execute")
-async def execute_ppm(ppm_file: Annotated[UploadFile, File()]) -> list[str]:
+async def execute_ppm(ppm_file: Annotated[UploadFile, File()]) -> list[tuple[str, ...]]:
     ppm_content = await ppm_file.read()
     ppm = json.loads(ppm_content)
     query = convert_ppm_to_sql_query(ppm)
     with Session(engine) as session:
-        return session.execute(text(query)).scalars().all()
+        return session.execute(text(query)).all()

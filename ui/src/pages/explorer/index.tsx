@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { specialStages } from "@/configuration";
 import useGraph from "@/hooks/useGraph";
+import useGraphPpm from "@/hooks/useGraphPpm";
 import { CircleX } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -37,6 +38,9 @@ export default function ExplorerPage() {
 	const [filteredWorkflows, setFilteredWorkflows] = useState<
 		string[] | undefined
 	>();
+	const [allWorkflowsWithPpmData, setAllWorkflowsWithPpmData] = useState<
+		string[][] | undefined
+	>();
 	const [displayedLevel, setDisplayedLevel] = useState<number>(3); // default display to step
 	const [currentPpm, setCurrentPpm] = useState<File | undefined>();
 	const [ppmJson, setPpmJson] = useState<string[]>([]); // currently only supporting stages
@@ -53,23 +57,34 @@ export default function ExplorerPage() {
 		isWeightedNodesChecked,
 	);
 
+	useGraphPpm(renderer.current, allWorkflowsWithPpmData);
+
 	useEffect(() => {
-		const updateAndMergeWithPosted = async (workflows: string[]) => {
-			setAllWorkflows(workflows);
+		const updateAndMergeWithPosted = async (
+			workflowsNames: string[],
+			workflowsPpmData: string[][] | undefined,
+		) => {
+			setAllWorkflows(workflowsNames);
 			// we prioritize newly posted profiles
-			const reducedWorkflows = new Set(postedProfiles).union(
-				new Set(workflows.slice(0, 5)),
-			);
+			const reducedWorkflows = new Set(
+				workflowsNames.filter(([w]) => postedProfiles?.includes(w)),
+			).union(new Set(workflowsNames.slice(0, 5)));
 			setFilteredWorkflows([...reducedWorkflows]);
-			await getNodesFromNeo4J(workflows).then((r) =>
+			setAllWorkflowsWithPpmData(workflowsPpmData);
+			await getNodesFromNeo4J(workflowsNames).then((r) =>
 				setFilteredWorkflowsNodes(r),
 			);
 		};
 		// TODO: solve double query issue
 		if (currentPpm) {
-			postPpmFilter(currentPpm).then(updateAndMergeWithPosted);
+			postPpmFilter(currentPpm).then((workflowsWithData) =>
+				updateAndMergeWithPosted(
+					[...new Set(workflowsWithData.map(([n]) => n))].sort(),
+					workflowsWithData,
+				),
+			);
 		} else {
-			getAllProfiles().then(updateAndMergeWithPosted);
+			getAllProfiles().then((wfs) => updateAndMergeWithPosted(wfs, undefined));
 		}
 	}, [currentPpm, postedProfiles]);
 
@@ -178,7 +193,7 @@ export default function ExplorerPage() {
 				)}
 				{allWorkflows && (
 					<div className="space-y-2">
-						<p className="font-bold">Results:</p>
+						<p className="font-bold">Results: {allWorkflows.length} matches</p>
 						<Input
 							id="filter-results"
 							type="text"

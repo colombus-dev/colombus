@@ -59,7 +59,7 @@ export default function useGraph(
 							}
 							const {
 								elementId,
-								properties: { name: label },
+								properties: { name: label, cross_db_uuid: crossDbUuid },
 							} = e as Neo4JNode;
 							graph.current.addNode(elementId, {
 								label,
@@ -68,6 +68,7 @@ export default function useGraph(
 								size: nodeSize,
 								color: colors[i],
 								forceLabel: i === 0, // always displaying workflow node name
+								crossDbUuid,
 							});
 						} else {
 							const {

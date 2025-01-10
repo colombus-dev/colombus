@@ -16,6 +16,7 @@ from sqlalchemy.types import String, JSON
 # TODO: consider using https://sqlmodel.tiangolo.com/#write-to-the-database for pydantic compatibility
 
 StandardString = String(80).with_variant(mysql.VARCHAR(80), "mysql", "mariadb")
+Uuid4String = String(36).with_variant(mysql.VARCHAR(36), "mysql", "mariadb")
 LongString = String().with_variant(mysql.LONGTEXT(), "mysql", "mariadb")
 
 
@@ -35,6 +36,8 @@ class Code(Base):
         cascade="delete, delete-orphan, merge, save-update",
         single_parent=True,
     )
+
+    cross_db_uuid: Mapped[str] = mapped_column(Uuid4String)
 
     def __repr__(self) -> str:
         return f"Code(id={self.id!r}, content={self.content!r})"
@@ -62,6 +65,8 @@ class MetaInstruction(Base):
         single_parent=True,
     )
 
+    cross_db_uuid: Mapped[str] = mapped_column(Uuid4String)
+
     def __repr__(self) -> str:
         return f"Step(id={self.id!r}, algoFamily={self.algoFamily!r}, algoName={self.algoName!r}, library={self.library!r}, function={self.function!r})"
 
@@ -84,6 +89,8 @@ class Step(Base):
         single_parent=True,
     )
 
+    cross_db_uuid: Mapped[str] = mapped_column(Uuid4String)
+
     def __repr__(self) -> str:
         return f"Step(id={self.id!r}, name={self.name!r}, position={self.position!r})"
 
@@ -105,6 +112,8 @@ class Stage(Base):
         cascade="delete, delete-orphan, merge, save-update",
         single_parent=True,
     )
+
+    cross_db_uuid: Mapped[str] = mapped_column(Uuid4String)
 
     def __repr__(self) -> str:
         return f"Stage(id={self.id!r}, name={self.name!r}, position={self.position!r})"

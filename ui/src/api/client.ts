@@ -7,7 +7,7 @@ const config = {
 export type Neo4JNode = {
 	elementId: string;
 	labels: string[];
-	properties: { name: string };
+	properties: { name: string; cross_db_uuid?: string };
 };
 
 export type Neo4JEdge = {
@@ -73,7 +73,7 @@ export async function postPpmFilter(file: File) {
 	const formData = new FormData();
 	formData.append("ppm_file", file);
 	return await axios
-		.post<string[]>("http://localhost:8080/api/ppm/execute", formData, {
+		.post<string[][]>("http://localhost:8080/api/ppm/execute", formData, {
 			headers: {
 				...config.headers,
 				accept: "application/json",
