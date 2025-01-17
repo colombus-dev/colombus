@@ -19,10 +19,11 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { specialStages } from "@/configuration";
+import { specialStages, stepsColorsMapping } from "@/configuration";
 import type { PpmNodesDisplayMode } from "@/configuration";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
+import useGraphStyle from "@/hooks/useGraphStyle";
 import { CircleX } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -62,6 +63,7 @@ export default function ExplorerPage() {
 	);
 
 	useGraphPpm(ppmNodesDisplayMode, renderer.current, allWorkflowsWithPpmData);
+	useGraphStyle(renderer.current);
 
 	useEffect(() => {
 		const updateAndMergeWithPosted = async (
@@ -308,6 +310,23 @@ export default function ExplorerPage() {
 					id="graph-container"
 					style={{ height: "99%", width: "98%" }}
 				/>
+				<table className="relative text-sm">
+					<thead className="font-bold">
+						<tr>
+							<td colSpan={2}>Legend</td>
+						</tr>
+					</thead>
+					<tbody>
+						{Object.entries(stepsColorsMapping).map(([n, c]) => (
+							<tr key={`legend_color_${c}`}>
+								<td
+									style={{ backgroundColor: c, width: "20px", height: "20px" }}
+								/>
+								<td>{n}</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
 			</div>
 		</section>
 	);

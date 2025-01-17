@@ -1,9 +1,9 @@
 import type { Neo4JEdge, Neo4JGraphDefinition, Neo4JNode } from "@/api/client";
+import { colors, stepsColorsMapping } from "@/configuration";
 import Graph from "graphology";
 import groupBy from "lodash/groupBy";
 import { useCallback, useEffect, useRef } from "react";
 import Sigma from "sigma";
-import { colors } from "../configuration";
 
 const maxDisplayedLevel = 4;
 const maxRowLength = 1000;
@@ -57,9 +57,17 @@ export default function useGraph(
 								x: x + addedX,
 								y: y - i * 50, // (vi + 1) * i + 5,
 								size: nodeSize,
-								color: colors[i],
+								color:
+									i === 1
+										? (stepsColorsMapping[label] ?? colors[i])
+										: colors[i],
 								forceLabel: i === 0, // always displaying workflow node name
 								crossDbUuid,
+								fullLabel: label,
+								shortLabel: label
+									.split(" ")
+									.map(([l]) => l)
+									.join(""),
 							});
 						} else if (i < maxDisplayedLevel - 1) {
 							// still a node but we don't display it as it is below the displayed level
