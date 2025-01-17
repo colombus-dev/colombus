@@ -23,10 +23,10 @@ class Code(StructuredNode):
 
 
 class MetaInstruction(StructuredNode):
-    algoFamily = StringProperty(index=True, required=True)
-    algoName = StringProperty(index=True, required=True)
-    library = StringProperty(index=True, required=True)
-    function = StringProperty(index=True, required=True)
+    algoFamily = StringProperty(index=True, required=False)
+    algoName = StringProperty(index=True, required=False)
+    library = StringProperty(index=True, required=False)
+    function = StringProperty(index=True, required=False)
     position = IntegerProperty(required=True)
     # UUID used to identify a metainstruction accross different databases (e.g. neo4j and mysql)
     cross_db_uuid = StringProperty(required=True)
@@ -45,20 +45,9 @@ class Step(StructuredNode):
     metaInstruction = RelationshipTo("MetaInstruction", "REFERS_TO")
 
 
-class Stage(StructuredNode):
-    name = StringProperty(index=True, required=True)
-    position = IntegerProperty(required=True)
-    # caching the number of related steps as it should not change overtime
-    numberRelatedSteps = IntegerProperty(required=True)
-    # UUID used to identify a stage accross different databases (e.g. neo4j and mysql)
-    cross_db_uuid = StringProperty(required=True)
-    nextStage = RelationshipFrom("Stage", "PRECEDES")
-    steps = RelationshipTo("Step", "CONTAINS")
-
-
 class Profile(StructuredNode):
     name = StringProperty(unique_index=True, required=True)
-    stage = RelationshipTo("Stage", "CONTAINS")
+    steps = RelationshipTo("Step", "CONTAINS")
 
 
 # Enabling automatic index and constraint creation

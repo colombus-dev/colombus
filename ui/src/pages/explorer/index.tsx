@@ -43,7 +43,7 @@ export default function ExplorerPage() {
 	const [allWorkflowsWithPpmData, setAllWorkflowsWithPpmData] = useState<
 		string[][] | undefined
 	>();
-	const [displayedLevel, setDisplayedLevel] = useState<number>(3); // default display to step
+	const [displayedLevel, setDisplayedLevel] = useState<number>(2); // default display to step
 	const [currentPpm, setCurrentPpm] = useState<File | undefined>();
 	const [ppmJson, setPpmJson] = useState<string[]>([]); // currently only supporting stages
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
@@ -160,17 +160,16 @@ export default function ExplorerPage() {
 						<p className="font-bold">Displayed levels:</p>
 						<Select
 							onValueChange={(v) => setDisplayedLevel(Number.parseInt(v))}
-							defaultValue="3"
+							defaultValue="2"
 						>
 							<SelectTrigger>
 								<SelectValue placeholder="Level to display" />
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="1">Workflow</SelectItem>
-								<SelectItem value="2">Stage</SelectItem>
-								<SelectItem value="3">Step</SelectItem>
-								<SelectItem value="4">MetaInstruction</SelectItem>
-								<SelectItem value="5">Code</SelectItem>
+								<SelectItem value="2">Step</SelectItem>
+								<SelectItem value="3">MetaInstruction</SelectItem>
+								<SelectItem value="4">Code</SelectItem>
 							</SelectContent>
 						</Select>
 					</div>

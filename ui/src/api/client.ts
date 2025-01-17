@@ -42,7 +42,7 @@ export async function getNodesFromNeo4J(profilesNames?: string[]) {
 		.post<GetNodesFromNeo4JResponse>(
 			"http://localhost:7474/db/neo4j/query/v2",
 			{
-				statement: `MATCH (p:Profile)-[psa]->(sa:Stage)-[sase]->(se:Step)-[sem]->(m:MetaInstruction)-[mc]->(c:Code) OPTIONAL MATCH (sa)-[sasp:PRECEDES]->(:Stage) OPTIONAL MATCH (se)-[sesp:PRECEDES]->(:Step) OPTIONAL MATCH (m)-[mp:PRECEDES]->(:MetaInstruction) OPTIONAL MATCH (c)-[cp:PRECEDES]->(:Code) WHERE ANY (name in p.name WHERE name IN ${JSON.stringify(profilesNames)}) RETURN p, sa, se, m, c, psa, sase, sem, mc, sasp, sesp, mp, cp ORDER BY p DESC, sa.position DESC, se.position DESC, m.position DESC, c.position DESC`,
+				statement: `MATCH (p:Profile)-[pse]->(se:Step)-[sem]->(m:MetaInstruction)-[mc]->(c:Code) OPTIONAL MATCH (se)-[sesp:PRECEDES]->(:Step) OPTIONAL MATCH (m)-[mp:PRECEDES]->(:MetaInstruction) OPTIONAL MATCH (c)-[cp:PRECEDES]->(:Code) WHERE ANY (name in p.name WHERE name IN ${JSON.stringify(profilesNames)}) RETURN p, se, m, c, pse, sem, mc, sesp, mp, cp ORDER BY p DESC, se.position DESC, m.position DESC, c.position DESC`,
 			},
 			config,
 		)

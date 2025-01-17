@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 
 from app.models.sql_model import (
     Profile,
-    Stage,
     Step,
     MetaInstruction,
     Code,
@@ -16,9 +15,8 @@ def save_notebook_as_sql(
     notebook_name: str, profile: list[dict[str, dict]], engine: Engine
 ):
     with Session(engine) as session:
-        all_stages = []
+        all_steps = []
         for sa_i, sa in enumerate(profile):
-            all_steps = []
             sa["cross_db_uuid"] = str(uuid4())
             for se_i, se in enumerate(sa["tasks"]):
                 se["cross_db_uuid"] = str(uuid4())
@@ -50,17 +48,9 @@ def save_notebook_as_sql(
                         cross_db_uuid=se["cross_db_uuid"],
                     )
                 )
-            all_stages.append(
-                Stage(
-                    name=sa["name"],
-                    position=sa_i,
-                    steps=all_steps,
-                    cross_db_uuid=sa["cross_db_uuid"],
-                )
-            )
         profile = Profile(
             name=notebook_name,
-            stages=all_stages,
+            steps=all_steps,
             json_profile=profile,
         )
         session.add(profile)

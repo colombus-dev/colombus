@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef } from "react";
 import Sigma from "sigma";
 import { colors } from "../configuration";
 
-const maxDisplayedLevel = 5;
+const maxDisplayedLevel = 4;
 const maxRowLength = 1000;
 
 export default function useGraph(
@@ -43,20 +43,10 @@ export default function useGraph(
 								continue;
 							}
 							let nodeSize = 5;
-							if (weightedNodes) {
-								switch (i) {
-									case 1:
-										nodeSize +=
-											(v[1] as Neo4JNode).properties.numberRelatedSteps ?? 0;
-										break;
-									case 2:
-										nodeSize +=
-											(v[2] as Neo4JNode).properties
-												.numberRelatedMetaInstructions ?? 0;
-										break;
-									default:
-										break;
-								}
+							if (weightedNodes && i === 1) {
+								nodeSize +=
+									(v[1] as Neo4JNode).properties
+										.numberRelatedMetaInstructions ?? 0;
 							}
 							const {
 								elementId,
@@ -71,6 +61,8 @@ export default function useGraph(
 								forceLabel: i === 0, // always displaying workflow node name
 								crossDbUuid,
 							});
+						} else if (i < maxDisplayedLevel - 1) {
+							// still a node but we don't display it as it is below the displayed level
 						} else {
 							const {
 								startNodeElementId,
@@ -79,7 +71,7 @@ export default function useGraph(
 							} = e as Neo4JEdge;
 							if (isNotLastNode && i === maxDisplayedLevel) {
 								// we only connect the workflow node (e.g. last node of the array)
-								// to the first stage node
+								// to the first step node
 								continue;
 							}
 							graph.current.addEdge(startNodeElementId, endNodeElementId, {

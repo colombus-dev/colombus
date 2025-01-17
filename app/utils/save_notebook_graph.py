@@ -2,7 +2,6 @@ from neomodel import db
 
 from app.models.graph_model import (
     config,
-    Stage,
     Step,
     MetaInstruction,
     Code,
@@ -11,7 +10,6 @@ from app.models.graph_model import (
 
 
 def save_notebook_as_graph(notebook_name: str, raw_profile: list[dict[str, dict]]):
-    prev_sa: Stage | None = None
     prev_se: Step | None = None
     prev_mi: MetaInstruction | None = None
     prev_code: Code | None = None
@@ -20,16 +18,6 @@ def save_notebook_as_graph(notebook_name: str, raw_profile: list[dict[str, dict]
     mi_i = 0
     c_i = 0
     for sa_i, sa in enumerate(raw_profile):
-        stage = Stage(
-            name=sa["name"],
-            cross_db_uuid=sa["cross_db_uuid"],
-            position=sa_i,
-            numberRelatedSteps=len(sa["tasks"]),
-        ).save()
-        profile.stage.connect(stage)
-        if prev_sa:
-            stage.nextStage.connect(prev_sa)
-        prev_sa = stage
         for se in sa["tasks"]:
             step = Step(
                 name=se["name"],
@@ -38,7 +26,7 @@ def save_notebook_as_graph(notebook_name: str, raw_profile: list[dict[str, dict]
                 numberRelatedMetaInstructions=len(se["tasks"]),
             ).save()
             se_i += 1
-            stage.steps.connect(step)
+            profile.steps.connect(step)
             if prev_se:
                 step.nextStep.connect(prev_se)
             prev_se = step

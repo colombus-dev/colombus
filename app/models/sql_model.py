@@ -15,7 +15,7 @@ from sqlalchemy.types import String, JSON
 
 # TODO: consider using https://sqlmodel.tiangolo.com/#write-to-the-database for pydantic compatibility
 
-StandardString = String(80).with_variant(mysql.VARCHAR(80), "mysql", "mariadb")
+StandardString = String(200).with_variant(mysql.VARCHAR(200), "mysql", "mariadb")
 Uuid4String = String(36).with_variant(mysql.VARCHAR(36), "mysql", "mariadb")
 LongString = String().with_variant(mysql.LONGTEXT(), "mysql", "mariadb")
 
@@ -47,10 +47,18 @@ class MetaInstruction(Base):
     __tablename__ = "meta_instruction"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    algoFamily: Mapped[str] = mapped_column(StandardString, index=True)
-    algoName: Mapped[str] = mapped_column(StandardString, index=True)
-    library: Mapped[str] = mapped_column(StandardString, index=True)
-    function: Mapped[str] = mapped_column(StandardString, index=True)
+    algoFamily: Mapped[str | None] = mapped_column(
+        StandardString, index=True, nullable=True
+    )
+    algoName: Mapped[str | None] = mapped_column(
+        StandardString, index=True, nullable=True
+    )
+    library: Mapped[str | None] = mapped_column(
+        StandardString, index=True, nullable=True
+    )
+    function: Mapped[str | None] = mapped_column(
+        StandardString, index=True, nullable=True
+    )
     # position: Mapped[int]
 
     code: Mapped["Code"] = relationship(
@@ -82,8 +90,8 @@ class Step(Base):
         back_populates="step", cascade="all, delete, delete-orphan, merge, save-update"
     )
 
-    stage_id: Mapped[int] = mapped_column(ForeignKey("stage.id"))
-    stage: Mapped["Stage"] = relationship(
+    profile_id: Mapped[int] = mapped_column(ForeignKey("profile.id"))
+    profile: Mapped["Profile"] = relationship(
         back_populates="steps",
         cascade="delete, delete-orphan, merge, save-update",
         single_parent=True,
@@ -95,30 +103,6 @@ class Step(Base):
         return f"Step(id={self.id!r}, name={self.name!r}, position={self.position!r})"
 
 
-class Stage(Base):
-    __tablename__ = "stage"
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(StandardString, index=True)
-    position: Mapped[int]
-
-    steps: Mapped[list["Step"]] = relationship(
-        back_populates="stage", cascade="all, delete, delete-orphan, merge, save-update"
-    )
-
-    profile_id: Mapped[int] = mapped_column(ForeignKey("profile.id"))
-    profile: Mapped["Profile"] = relationship(
-        back_populates="stages",
-        cascade="delete, delete-orphan, merge, save-update",
-        single_parent=True,
-    )
-
-    cross_db_uuid: Mapped[str] = mapped_column(Uuid4String)
-
-    def __repr__(self) -> str:
-        return f"Stage(id={self.id!r}, name={self.name!r}, position={self.position!r})"
-
-
 class Profile(Base):
     __tablename__ = "profile"
 
@@ -126,13 +110,47 @@ class Profile(Base):
     name: Mapped[str] = mapped_column(StandardString, index=True, unique=True)
     json_profile: Mapped[dict[str, Any]] = mapped_column(type_=JSON)
 
-    stages: Mapped[list["Stage"]] = relationship(
+    steps: Mapped[list["Step"]] = relationship(
         back_populates="profile",
         cascade="all, delete, delete-orphan, merge, save-update",
     )
 
     def __repr__(self) -> str:
         return f"Profile(id={self.id!r}, name={self.name!r})"
+
+
+class PatternElement(Base):
+    __tablename__ = "pattern_element"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(StandardString, index=True)
+    position: Mapped[int]
+
+    pattern_id: Mapped[int] = mapped_column(ForeignKey("pattern.id"))
+    pattern: Mapped["Pattern"] = relationship(
+        back_populates="elements",
+        cascade="delete, delete-orphan, merge, save-update",
+        single_parent=True,
+    )
+
+    def __repr__(self) -> str:
+        return f"PatternElement(id={self.id!r}, name={self.name!r}, position={self.position!r})"
+
+
+class Pattern(Base):
+    __tablename__ = "pattern"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(StandardString, index=True, unique=True)
+    json_pattern: Mapped[dict[str, Any]] = mapped_column(type_=JSON)
+
+    elements: Mapped[list["PatternElement"]] = relationship(
+        back_populates="pattern",
+        cascade="all, delete, delete-orphan, merge, save-update",
+    )
+
+    def __repr__(self) -> str:
+        return f"Pattern(id={self.id!r}, name={self.name!r})"
 
 
 engine = create_engine(
