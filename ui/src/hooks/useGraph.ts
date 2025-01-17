@@ -1,4 +1,9 @@
-import type { Neo4JEdge, Neo4JGraphDefinition, Neo4JNode } from "@/api/client";
+import type {
+	Neo4JEdge,
+	Neo4JGraphDefinition,
+	Neo4JNode,
+	Neo4jNodeProperties,
+} from "@/api/client";
 import { colors, stepsColorsMapping } from "@/configuration";
 import Graph from "graphology";
 import groupBy from "lodash/groupBy";
@@ -7,6 +12,16 @@ import Sigma from "sigma";
 
 const maxDisplayedLevel = 4;
 const maxRowLength = 1000;
+
+function extractNameFromNodeProperties(properties: Neo4jNodeProperties) {
+	if ("name" in properties) {
+		return properties.name as string;
+	}
+	if ("content" in properties) {
+		return properties.content as string;
+	}
+	return `library: ${properties.library}\nfunction: ${properties.function}`;
+}
 
 export default function useGraph(
 	containerId: string | undefined,
@@ -48,10 +63,8 @@ export default function useGraph(
 									(v[1] as Neo4JNode).properties
 										.numberRelatedMetaInstructions ?? 0;
 							}
-							const {
-								elementId,
-								properties: { name: label, cross_db_uuid: crossDbUuid },
-							} = e as Neo4JNode;
+							const { elementId, properties } = e as Neo4JNode;
+							const label = extractNameFromNodeProperties(properties);
 							graph.current.addNode(elementId, {
 								label,
 								x: x + addedX,
@@ -62,7 +75,7 @@ export default function useGraph(
 										? (stepsColorsMapping[label] ?? colors[i])
 										: colors[i],
 								forceLabel: i === 0, // always displaying workflow node name
-								crossDbUuid,
+								crossDbUuid: properties.cross_db_uuid,
 								fullLabel: label,
 								shortLabel: label
 									.split(" ")

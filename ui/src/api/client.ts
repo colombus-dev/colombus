@@ -4,16 +4,21 @@ const config = {
 	headers: { Authorization: `Basic ${btoa("neo4j:pinta_nina")}` },
 };
 
+export type Neo4jNodeProperties = {
+	name?: string; // if step or workflow root
+	library?: string; // if metainstruction
+	function?: string; // if metainstruction
+	content?: string; // if code
+	cross_db_uuid?: string;
+	numberRelatedSteps?: number;
+	numberRelatedMetaInstructions?: number;
+	position?: number;
+};
+
 export type Neo4JNode = {
 	elementId: string;
 	labels: string[];
-	properties: {
-		name: string;
-		cross_db_uuid?: string;
-		numberRelatedSteps?: number;
-		numberRelatedMetaInstructions?: number;
-		position?: number;
-	};
+	properties: Neo4jNodeProperties;
 };
 
 export type Neo4JEdge = {
