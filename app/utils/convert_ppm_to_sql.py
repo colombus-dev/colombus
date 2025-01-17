@@ -14,7 +14,7 @@ def convert_meta_instructions_to_sql_query(
         names_to_pos[mi_i] = mi
 
         prefix_query += f", mi{step_pos}_{mi_i}.cross_db_uuid"
-        join_query += f"\nINNER JOIN meta_instruction AS mi{step_pos}_{mi_i} ON se{step_pos}.id = mi{step_pos}_{mi_i}.step_id"
+        join_query += f"\nINNER JOIN meta_instruction AS mi{step_pos}_{mi_i} ON s{step_pos}.id = mi{step_pos}_{mi_i}.step_id"
 
     prev_pos = -1
     for mi_i, mi in names_to_pos.items():
@@ -38,12 +38,12 @@ def convert_steps_to_sql_query(pattern: list[str | dict[str, Any]]) -> str:
     all_meta_instructions_where_queries = []
     meta_instructions_prefix_query = []
 
-    for se_i, step in enumerate(steps):
+    for se_i, step in enumerate(pattern):
         if step == "*":
             continue
         names_to_pos[se_i] = step["name"]
 
-        prefix_query += f", se{se_i}.cross_db_uuid"
+        prefix_query += f", s{se_i}.cross_db_uuid"
         query += f"\nINNER JOIN step AS s{se_i} ON p.id = s{se_i}.profile_id"
 
         (
@@ -59,13 +59,15 @@ def convert_steps_to_sql_query(pattern: list[str | dict[str, Any]]) -> str:
 
     query += "\nWHERE"
     prev_pos = -1
+    pattern_without_stars = [e for e in pattern if e != "*"]
     for se_i, step_name in names_to_pos.items():
         query += f' s{se_i}.name = "{step_name}"'
         if prev_pos > -1:
             diff = se_i - prev_pos
             query += f" AND s{se_i}.position - s{prev_pos}.position {'=' if diff == 1 else '>='} 1"
         prev_pos = se_i
-        if se_i < len(pattern) - 1:
+        print(names_to_pos, se_i, len(pattern) - 1)
+        if se_i < len(pattern_without_stars) - 1:
             query += " AND"
 
     query += "".join(all_meta_instructions_where_queries)
@@ -74,4 +76,5 @@ def convert_steps_to_sql_query(pattern: list[str | dict[str, Any]]) -> str:
 
 
 def convert_ppm_to_sql_query(pattern: list[str | dict[str, Any]]):
+    print(convert_steps_to_sql_query(pattern))
     return convert_steps_to_sql_query(pattern)
