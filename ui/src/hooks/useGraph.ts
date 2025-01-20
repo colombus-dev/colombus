@@ -27,10 +27,12 @@ function extractNameFromNodeProperties(properties: Neo4jNodeProperties) {
 export default function useGraph(
 	containerId: string | undefined,
 	graphDefinition: Neo4JGraphDefinition | undefined,
-	filteredNodes: string[] | undefined,
 ) {
 	const displayedLevel = useColombusStore((state) => state.displayedLevel);
 	const useWeightedNodes = useColombusStore((state) => state.useWeightedNodes);
+	const filteredProfilesNames = useColombusStore(
+		(state) => state.filteredProfilesNames,
+	);
 
 	const graph = useRef<Graph>(new Graph());
 	const renderer = useRef<Sigma | undefined>();
@@ -126,7 +128,7 @@ export default function useGraph(
 		let x = 1;
 		let y = 1;
 		for (const [wfName, wfGraphDefinition] of Object.entries(groupedBy)) {
-			if (filteredNodes && !filteredNodes.includes(wfName)) {
+			if (filteredProfilesNames && !filteredProfilesNames.includes(wfName)) {
 				// filtering workflow nodes
 				continue;
 			}
@@ -137,7 +139,7 @@ export default function useGraph(
 				x = 1;
 			}
 		}
-	}, [graphDefinition, filteredNodes, displayedLevel, addNewWorkflow]);
+	}, [graphDefinition, filteredProfilesNames, displayedLevel, addNewWorkflow]);
 
 	useEffect(() => {
 		return () => {

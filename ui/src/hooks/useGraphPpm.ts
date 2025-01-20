@@ -1,4 +1,5 @@
 import type { PpmNodesDisplayMode } from "@/configuration";
+import { useColombusStore } from "@/store";
 import groupBy from "lodash/groupBy";
 import { useEffect, useMemo } from "react";
 import type Sigma from "sigma";
@@ -16,27 +17,30 @@ const shouldHideNodeForModeMapping = {
 	) => boolean;
 };
 
-export default function useGraphPpm(
-	ppmNodesDisplayMode: PpmNodesDisplayMode,
-	graphRenderer?: Sigma,
-	workflowsWithPpmData?: string[][],
-) {
+export default function useGraphPpm(graphRenderer?: Sigma) {
+	const patternCapturedNodesDisplayMode = useColombusStore(
+		(state) => state.patternCapturedNodesDisplayMode,
+	);
+	const availableProfilesWithPpmData = useColombusStore(
+		(state) => state.availableProfilesWithPpmData,
+	);
+
 	const allUuidsToDisplay = useMemo(
 		() =>
 			Object.entries(
-				groupBy(workflowsWithPpmData, ([wfName]) => wfName),
+				groupBy(availableProfilesWithPpmData, ([wfName]) => wfName),
 			).flatMap(([, v]) => v[0].slice(1)),
-		[workflowsWithPpmData],
+		[availableProfilesWithPpmData],
 	);
 
 	useEffect(() => {
-		if (!workflowsWithPpmData) {
+		if (availableProfilesWithPpmData.length > 0) {
 			graphRenderer?.setSetting("nodeReducer", (_, data) => data);
 		} else {
 			graphRenderer?.setSetting("nodeReducer", (_, data) => {
 				const res = { ...data };
 				if (
-					shouldHideNodeForModeMapping[ppmNodesDisplayMode](
+					shouldHideNodeForModeMapping[patternCapturedNodesDisplayMode](
 						allUuidsToDisplay,
 						res.crossDbUuid,
 					)
@@ -53,8 +57,8 @@ export default function useGraphPpm(
 		});
 	}, [
 		graphRenderer,
-		ppmNodesDisplayMode,
-		workflowsWithPpmData,
+		patternCapturedNodesDisplayMode,
+		availableProfilesWithPpmData,
 		allUuidsToDisplay,
 	]);
 }

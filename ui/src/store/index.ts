@@ -24,7 +24,19 @@ interface GraphCustomizationSlice {
 	setPatternCapturedNodesDisplayMode: (mode: PpmNodesDisplayMode) => void;
 }
 
-interface ColombusStore extends PatternSlice, GraphCustomizationSlice {}
+interface ProfilesSlice {
+	availableProfilesNames: string[];
+	setAvailableProfilesNames: (profiles: string[]) => void;
+	availableProfilesWithPpmData: string[][];
+	setAvailableProfilesWithPpmData: (data: string[][]) => void;
+	filteredProfilesNames: string[];
+	setFilteredProfilesNames: (profiles: string[]) => void;
+}
+
+interface ColombusStore
+	extends PatternSlice,
+		GraphCustomizationSlice,
+		ProfilesSlice {}
 
 const createPatternSlice: StateCreator<ColombusStore, [], [], PatternSlice> = (
 	set,
@@ -52,12 +64,30 @@ const createGraphCustomizationSlice: StateCreator<
 		set((state) => ({ ...state, patternCapturedNodesDisplayMode: mode })),
 });
 
+const createProfilesSlice: StateCreator<
+	ColombusStore,
+	[],
+	[],
+	ProfilesSlice
+> = (set) => ({
+	availableProfilesNames: [],
+	setAvailableProfilesNames: (profiles) =>
+		set((state) => ({ ...state, availableProfilesNames: profiles })),
+	availableProfilesWithPpmData: [],
+	setAvailableProfilesWithPpmData: (data) =>
+		set((state) => ({ ...state, availableProfilesWithPpmData: data })),
+	filteredProfilesNames: [],
+	setFilteredProfilesNames: (profiles) =>
+		set((state) => ({ ...state, filteredProfilesNames: profiles })),
+});
+
 export const useColombusStore = create<ColombusStore>()(
 	devtools(
 		persist(
 			(...a) => ({
 				...createPatternSlice(...a),
 				...createGraphCustomizationSlice(...a),
+				...createProfilesSlice(...a),
 			}),
 			{
 				name: "colombus-storage",
