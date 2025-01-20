@@ -44,7 +44,7 @@ export default function EditorPage() {
 			<ProfilePattern
 				className="row-span-2"
 				stages={selectedStages}
-				onStagesChanged={setSelectedStages}
+				onPatternChanged={setSelectedStages}
 				editable
 			/>
 			<div className="space-x-2">

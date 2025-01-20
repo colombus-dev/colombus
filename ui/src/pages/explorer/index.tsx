@@ -2,10 +2,11 @@ import {
 	type Neo4JGraphDefinition,
 	getAllProfiles,
 	getNodesFromNeo4J,
-	postPpmFilter,
+	postApplyPpmFilter,
 	postProfiles,
 } from "@/api/client";
 import ProfilePattern from "@/components/profile-pattern";
+import ProfilePatternActions from "@/components/profile-pattern-actions";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,6 @@ import type { PpmNodesDisplayMode } from "@/configuration";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import useGraphStyle from "@/hooks/useGraphStyle";
-import { CircleX } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -45,6 +45,7 @@ export default function ExplorerPage() {
 		string[][] | undefined
 	>();
 	const [displayedLevel, setDisplayedLevel] = useState<number>(2); // default display to step
+	const [currentPpmName, setCurrentPpmName] = useState<string | undefined>();
 	const [currentPpm, setCurrentPpm] = useState<File | undefined>();
 	const [ppmJson, setPpmJson] = useState<string[]>([]); // currently only supporting stages
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
@@ -81,9 +82,8 @@ export default function ExplorerPage() {
 				setFilteredWorkflowsNodes(r),
 			);
 		};
-		// TODO: solve double query issue
 		if (currentPpm) {
-			postPpmFilter(currentPpm).then((workflowsWithData) =>
+			postApplyPpmFilter(currentPpm).then((workflowsWithData) =>
 				updateAndMergeWithPosted(
 					[...new Set(workflowsWithData.map(([n]) => n))].sort(),
 					workflowsWithData,
@@ -136,6 +136,7 @@ export default function ExplorerPage() {
 			});
 		} else {
 			setPpmJson([]);
+			setCurrentPpmName(undefined);
 		}
 	}, [currentPpm]);
 
@@ -298,10 +299,20 @@ export default function ExplorerPage() {
 					</form>
 				) : (
 					<ScrollArea className="row-span-1 h-full mr-8">
-						<Button variant="ghost" onClick={() => setCurrentPpm(undefined)}>
-							<CircleX /> Remove pattern
-						</Button>
-						<ProfilePattern stages={ppmJson} className="overflow-x-auto" />
+						{currentPpm && (
+							<ProfilePatternActions
+								patternFile={currentPpm}
+								patternName={currentPpmName}
+								onSave={(name) => setCurrentPpmName(name)}
+								onReset={() => setCurrentPpm(undefined)}
+								onDelete={() => setCurrentPpm(undefined)}
+							/>
+						)}
+						<ProfilePattern
+							patternName={currentPpmName}
+							pattern={ppmJson}
+							className="overflow-x-auto"
+						/>
 						<ScrollBar orientation="horizontal" />
 					</ScrollArea>
 				)}
