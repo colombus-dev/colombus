@@ -60,6 +60,12 @@ export async function getNodesFromNeo4J(profilesNames?: string[]) {
 		);
 }
 
+export async function getAllProfiles() {
+	return await axios
+		.get<string[]>("http://localhost:8080/api/profile/getAll")
+		.then(({ data }) => data);
+}
+
 export async function postProfiles(files: FileList) {
 	const formData = new FormData();
 	for (const file of files) {
@@ -80,6 +86,14 @@ export async function postProfiles(files: FileList) {
 		.then(({ data }) => data);
 }
 
+export async function getAllPatterns() {
+	return await axios
+		.get<[string, (string | { name: string; tasks: any[] })[]][]>(
+			"http://localhost:8080/api/ppm/getAll",
+		)
+		.then(({ data }) => data);
+}
+
 export async function postApplyPpmFilter(file: File) {
 	const formData = new FormData();
 	formData.append("ppm_file", file);
@@ -91,6 +105,12 @@ export async function postApplyPpmFilter(file: File) {
 				"Content-Type": "multipart/form-data",
 			},
 		})
+		.then(({ data }) => data);
+}
+
+export async function postApplyPpmFilterByName(name: string) {
+	return await axios
+		.post<string[][]>(`http://localhost:8080/api/ppm/execute/${name}`)
 		.then(({ data }) => data);
 }
 
@@ -110,10 +130,4 @@ export async function postSavePpm(name: string, file: File) {
 
 export async function deletePpm(name: string) {
 	return await axios.delete(`http://localhost:8080/api/ppm/delete/${name}`);
-}
-
-export async function getAllProfiles() {
-	return await axios
-		.get<string[]>("http://localhost:8080/api/profile/getAll")
-		.then(({ data }) => data);
 }

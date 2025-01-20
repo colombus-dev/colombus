@@ -3,10 +3,12 @@ import {
 	getAllProfiles,
 	getNodesFromNeo4J,
 	postApplyPpmFilter,
+	postApplyPpmFilterByName,
 	postProfiles,
 } from "@/api/client";
 import ProfilePattern from "@/components/profile-pattern";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
+import ProfilePatternList from "@/components/profile-pattern-list";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -67,6 +69,29 @@ export default function ExplorerPage() {
 	useGraphStyle(renderer.current);
 
 	useEffect(() => {
+		if (currentPpm) {
+			currentPpm.text().then((r) => {
+				setPpmJson(
+					(JSON.parse(r) as (string | { name: string })[]).map((sa) =>
+						specialStages.includes(sa as string)
+							? (sa as string)
+							: (sa as { name: string }).name,
+					),
+				);
+			});
+		} else {
+			setPpmJson([]);
+			setCurrentPpmName(undefined);
+		}
+	}, [currentPpm]);
+
+	useEffect(() => {
+		if (!currentPpmName) {
+			setPpmJson([]);
+		}
+	}, [currentPpmName]);
+
+	useEffect(() => {
 		const updateAndMergeWithPosted = async (
 			workflowsNames: string[],
 			workflowsPpmData: string[][] | undefined,
@@ -89,10 +114,17 @@ export default function ExplorerPage() {
 					workflowsWithData,
 				),
 			);
+		} else if (currentPpmName) {
+			postApplyPpmFilterByName(currentPpmName).then((workflowsWithData) =>
+				updateAndMergeWithPosted(
+					[...new Set(workflowsWithData.map(([n]) => n))].sort(),
+					workflowsWithData,
+				),
+			);
 		} else {
 			getAllProfiles().then((wfs) => updateAndMergeWithPosted(wfs, undefined));
 		}
-	}, [currentPpm, postedProfiles]);
+	}, [currentPpm, currentPpmName, postedProfiles]);
 
 	const handlePpmFormSubmit: React.FormEventHandler<HTMLFormElement> =
 		useCallback(async (e) => {
@@ -122,23 +154,6 @@ export default function ExplorerPage() {
 	useEffect(() => {
 		setGraphContainerId("graph-container");
 	}, []);
-
-	useEffect(() => {
-		if (currentPpm) {
-			currentPpm.text().then((r) => {
-				setPpmJson(
-					(JSON.parse(r) as (string | { name: string })[]).map((sa) =>
-						specialStages.includes(sa as string)
-							? (sa as string)
-							: (sa as { name: string }).name,
-					),
-				);
-			});
-		} else {
-			setPpmJson([]);
-			setCurrentPpmName(undefined);
-		}
-	}, [currentPpm]);
 
 	return (
 		<section className="grid grid-cols-6 space-x-4 h-full">
@@ -288,24 +303,54 @@ export default function ExplorerPage() {
 					</div>
 				)}
 			</div>
-			<div className="col-span-5 grid grid-rows-8 items-center">
+			<div className="col-span-5 grid grid-rows-6 items-center">
 				{ppmJson.length === 0 ? (
-					<form onSubmit={handlePpmFormSubmit} className="row-span-1">
-						<div className="grid w-full max-w-sm items-center gap-1.5">
-							<Label htmlFor="ppm-form">Select a pattern to apply (JSON)</Label>
-							<Input id="ppm-form" type="file" accept=".json" name="ppm-form" />
-							<Button type="submit">Submit PPM filter</Button>
-						</div>
-					</form>
+					<div className="grid grid-cols-8 space-x-2">
+						<form
+							onSubmit={handlePpmFormSubmit}
+							className="row-span-1 col-span-2"
+						>
+							<div className="grid w-full max-w-sm items-center gap-1.5">
+								<Label htmlFor="ppm-form">
+									Select a pattern to apply (JSON)
+								</Label>
+								<Input
+									id="ppm-form"
+									type="file"
+									accept=".json"
+									name="ppm-form"
+								/>
+								<Button type="submit">Submit PPM filter</Button>
+							</div>
+						</form>
+						<Button className="row-span-1 col-span-2">
+							Create new pattern
+						</Button>
+						<ScrollArea className="row-span-1 col-span-2 h-24">
+							<p className="font-bold">Saved patterns</p>
+							<ProfilePatternList
+								onSelectedPatternChange={(n, c) => {
+									setPpmJson(c);
+									setCurrentPpmName(n);
+								}}
+							/>
+						</ScrollArea>
+					</div>
 				) : (
 					<ScrollArea className="row-span-1 h-full mr-8">
-						{currentPpm && (
+						{(currentPpm || currentPpmName) && (
 							<ProfilePatternActions
 								patternFile={currentPpm}
 								patternName={currentPpmName}
 								onSave={(name) => setCurrentPpmName(name)}
-								onReset={() => setCurrentPpm(undefined)}
-								onDelete={() => setCurrentPpm(undefined)}
+								onReset={() => {
+									setCurrentPpm(undefined);
+									setCurrentPpmName(undefined);
+								}}
+								onDelete={() => {
+									setCurrentPpm(undefined);
+									setCurrentPpmName(undefined);
+								}}
 							/>
 						)}
 						<ProfilePattern

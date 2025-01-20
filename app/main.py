@@ -84,7 +84,9 @@ async def execute_ppm(ppm_file: Annotated[UploadFile, File()]) -> list[tuple[str
 @app.post("/api/ppm/execute/{name}")
 async def execute_ppm(name: str) -> list[tuple[str, ...]]:
     with Session(engine) as session:
-        ppm = session.execute(select(Pattern.json_pattern).where(Pattern.name == name))
+        ppm = session.execute(
+            select(Pattern.json_pattern).where(Pattern.name == name)
+        ).scalar_one()
         query = convert_ppm_to_sql_query(ppm)
         with Session(engine) as session:
             return session.execute(text(query)).all()

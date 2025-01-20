@@ -16,7 +16,7 @@ import { useState } from "react";
 
 interface ProfilePatternActionsProps {
 	patternName?: string;
-	patternFile: File;
+	patternFile?: File;
 	onReset?: () => void;
 	onDelete?: () => void;
 	onSave?: (name: string) => void;
@@ -48,7 +48,7 @@ const ProfilePatternActions: React.FunctionComponent<
 				<Trash /> Delete pattern
 			</Button>
 			<Dialog>
-				<DialogTrigger asChild>
+				<DialogTrigger disabled={!patternFile} asChild>
 					<Button variant="ghost" disabled={patternName !== undefined}>
 						<Save /> Save pattern
 					</Button>
@@ -68,7 +68,7 @@ const ProfilePatternActions: React.FunctionComponent<
 							<Button
 								type="submit"
 								onClick={() => {
-									if (savePatternName) {
+									if (savePatternName && patternFile) {
 										postSavePpm(savePatternName, patternFile).then(onSave);
 										setSavePatternName(undefined);
 									}
