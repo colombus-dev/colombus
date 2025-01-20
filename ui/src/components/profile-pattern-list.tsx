@@ -5,16 +5,9 @@ import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 import type { PatternElement } from "@/lib/types";
 
-interface ProfilePatternListProps {
-	onSelectedPatternChange: (
-		selectedPatternName: string,
-		patternContent: string[],
-	) => void;
-}
-
 const ProfilePatternList: React.FunctionComponent<
-	ProfilePatternListProps & React.HTMLAttributes<HTMLDivElement>
-> = ({ onSelectedPatternChange, ...divProps }) => {
+	React.HTMLAttributes<HTMLDivElement>
+> = ({ ...divProps }) => {
 	const setCurrentPattern = useColombusStore(
 		(state) => state.setCurrentPattern,
 	);

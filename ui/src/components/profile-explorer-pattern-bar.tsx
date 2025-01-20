@@ -32,6 +32,7 @@ const ProfileExplorerPatternBar: React.FunctionComponent<
 			},
 			[setCurrentPattern],
 		);
+
 	return (
 		<div className={cn("grid grid-cols-8 space-x-2", divProps.className)}>
 			<form onSubmit={handlePpmFormSubmit} className="col-span-2">
@@ -44,14 +45,7 @@ const ProfileExplorerPatternBar: React.FunctionComponent<
 			<Button className="col-span-2">Create new pattern</Button>
 			<ScrollArea className="col-span-2 h-24">
 				<p className="font-bold">Saved patterns</p>
-				<ProfilePatternList
-					onSelectedPatternChange={(n, c) => {
-						setCurrentPattern({
-							name: n,
-							elements: c,
-						});
-					}}
-				/>
+				<ProfilePatternList />
 			</ScrollArea>
 		</div>
 	);
