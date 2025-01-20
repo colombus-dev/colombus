@@ -1,3 +1,4 @@
+import type { PatternElement } from "@/lib/types";
 import axios from "axios";
 
 const config = {
@@ -88,23 +89,13 @@ export async function postProfiles(files: FileList) {
 
 export async function getAllPatterns() {
 	return await axios
-		.get<[string, (string | { name: string; tasks: any[] })[]][]>(
-			"http://localhost:8080/api/ppm/getAll",
-		)
+		.get<[string, PatternElement[]][]>("http://localhost:8080/api/ppm/getAll")
 		.then(({ data }) => data);
 }
 
-export async function postApplyPpmFilter(file: File) {
-	const formData = new FormData();
-	formData.append("ppm_file", file);
+export async function postApplyPpmFilter(pattern: PatternElement[]) {
 	return await axios
-		.post<string[][]>("http://localhost:8080/api/ppm/execute", formData, {
-			headers: {
-				...config.headers,
-				accept: "application/json",
-				"Content-Type": "multipart/form-data",
-			},
-		})
+		.post<string[][]>("http://localhost:8080/api/ppm/execute", pattern)
 		.then(({ data }) => data);
 }
 
@@ -114,17 +105,9 @@ export async function postApplyPpmFilterByName(name: string) {
 		.then(({ data }) => data);
 }
 
-export async function postSavePpm(name: string, file: File) {
-	const formData = new FormData();
-	formData.append("ppm_file", file);
+export async function postSavePpm(name: string, pattern: PatternElement[]) {
 	return await axios
-		.post<string>(`http://localhost:8080/api/ppm/save/${name}`, formData, {
-			headers: {
-				...config.headers,
-				accept: "application/json",
-				"Content-Type": "multipart/form-data",
-			},
-		})
+		.post<string>(`http://localhost:8080/api/ppm/save/${name}`, pattern)
 		.then(({ data }) => data);
 }
 

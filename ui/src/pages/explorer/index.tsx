@@ -6,9 +6,9 @@ import {
 	postApplyPpmFilterByName,
 	postProfiles,
 } from "@/api/client";
+import ProfileExplorerPatternBar from "@/components/profile-explorer-pattern-bar";
 import ProfilePattern from "@/components/profile-pattern";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
-import ProfilePatternList from "@/components/profile-pattern-list";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -22,11 +22,12 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { specialStages, stepsColorsMapping } from "@/configuration";
+import { stepsColorsMapping } from "@/configuration";
 import type { PpmNodesDisplayMode } from "@/configuration";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import useGraphStyle from "@/hooks/useGraphStyle";
+import { useColombusStore } from "@/store";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -46,50 +47,36 @@ export default function ExplorerPage() {
 	const [allWorkflowsWithPpmData, setAllWorkflowsWithPpmData] = useState<
 		string[][] | undefined
 	>();
-	const [displayedLevel, setDisplayedLevel] = useState<number>(2); // default display to step
-	const [currentPpmName, setCurrentPpmName] = useState<string | undefined>();
-	const [currentPpm, setCurrentPpm] = useState<File | undefined>();
-	const [ppmJson, setPpmJson] = useState<string[]>([]); // currently only supporting stages
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
 	const [resultSearchFilter, setResultSearchFilter] = useState<string>("");
-	const [isWeightedNodesChecked, setIsWeightedNodesChecked] =
-		useState<boolean>(true);
-	const [ppmNodesDisplayMode, setPpmNodesDisplayMode] =
-		useState<PpmNodesDisplayMode>("show-all");
+
+	const currentPattern = useColombusStore((state) => state.currentPattern);
+	const setDisplayedLevel = useColombusStore(
+		(state) => state.setDisplayedLevel,
+	);
+	const useWeightedNodes = useColombusStore((state) => state.useWeightedNodes);
+	const setUseWeightedNodes = useColombusStore(
+		(state) => state.setUseWeightedNodes,
+	);
+	const patternCapturedNodesDisplayMode = useColombusStore(
+		(state) => state.patternCapturedNodesDisplayMode,
+	);
+	const setPatternCapturedNodesDisplayMode = useColombusStore(
+		(state) => state.setPatternCapturedNodesDisplayMode,
+	);
 
 	const { renderer } = useGraph(
 		graphContainerId,
 		filteredWorkflowsNodes,
 		filteredWorkflows,
-		displayedLevel,
-		isWeightedNodesChecked,
 	);
 
-	useGraphPpm(ppmNodesDisplayMode, renderer.current, allWorkflowsWithPpmData);
+	useGraphPpm(
+		patternCapturedNodesDisplayMode,
+		renderer.current,
+		allWorkflowsWithPpmData,
+	);
 	useGraphStyle(renderer.current);
-
-	useEffect(() => {
-		if (currentPpm) {
-			currentPpm.text().then((r) => {
-				setPpmJson(
-					(JSON.parse(r) as (string | { name: string })[]).map((sa) =>
-						specialStages.includes(sa as string)
-							? (sa as string)
-							: (sa as { name: string }).name,
-					),
-				);
-			});
-		} else {
-			setPpmJson([]);
-			setCurrentPpmName(undefined);
-		}
-	}, [currentPpm]);
-
-	useEffect(() => {
-		if (!currentPpmName) {
-			setPpmJson([]);
-		}
-	}, [currentPpmName]);
 
 	useEffect(() => {
 		const updateAndMergeWithPosted = async (
@@ -107,15 +94,15 @@ export default function ExplorerPage() {
 				setFilteredWorkflowsNodes(r),
 			);
 		};
-		if (currentPpm) {
-			postApplyPpmFilter(currentPpm).then((workflowsWithData) =>
+		if (currentPattern?.elements) {
+			postApplyPpmFilter(currentPattern.elements).then((workflowsWithData) =>
 				updateAndMergeWithPosted(
 					[...new Set(workflowsWithData.map(([n]) => n))].sort(),
 					workflowsWithData,
 				),
 			);
-		} else if (currentPpmName) {
-			postApplyPpmFilterByName(currentPpmName).then((workflowsWithData) =>
+		} else if (currentPattern?.name) {
+			postApplyPpmFilterByName(currentPattern.name).then((workflowsWithData) =>
 				updateAndMergeWithPosted(
 					[...new Set(workflowsWithData.map(([n]) => n))].sort(),
 					workflowsWithData,
@@ -124,18 +111,7 @@ export default function ExplorerPage() {
 		} else {
 			getAllProfiles().then((wfs) => updateAndMergeWithPosted(wfs, undefined));
 		}
-	}, [currentPpm, currentPpmName, postedProfiles]);
-
-	const handlePpmFormSubmit: React.FormEventHandler<HTMLFormElement> =
-		useCallback(async (e) => {
-			e.preventDefault();
-			const files = ((e.target as HTMLFormElement)[0] as HTMLInputElement)
-				.files;
-			if (!files) {
-				return;
-			}
-			setCurrentPpm(files[0]);
-		}, []);
+	}, [currentPattern, postedProfiles]);
 
 	const handleProfileFormSubmit: React.FormEventHandler<HTMLFormElement> =
 		useCallback(async (e) => {
@@ -198,8 +174,8 @@ export default function ExplorerPage() {
 						<div className="flex space-x-2" key="check-weighted-nodes-div">
 							<Checkbox
 								id="check-weighted-nodes"
-								checked={isWeightedNodesChecked}
-								onCheckedChange={(c) => setIsWeightedNodesChecked(!!c)}
+								checked={useWeightedNodes}
+								onCheckedChange={(c) => setUseWeightedNodes(!!c)}
 							/>
 							<div className="grid gap-1.5 leading-none">
 								<label
@@ -212,11 +188,11 @@ export default function ExplorerPage() {
 						</div>
 						<div className="flex space-x-2" key="radio-ppm-nodes-display-div">
 							<RadioGroup
-								value={ppmNodesDisplayMode}
-								onValueChange={(v) =>
-									setPpmNodesDisplayMode(v as PpmNodesDisplayMode)
+								value={patternCapturedNodesDisplayMode}
+								onValueChange={(v: PpmNodesDisplayMode) =>
+									setPatternCapturedNodesDisplayMode(v)
 								}
-								disabled={ppmJson.length === 0}
+								disabled={!currentPattern}
 							>
 								<div className="flex items-center space-x-2">
 									<RadioGroupItem value="show-all" id="show-all" />
@@ -304,60 +280,12 @@ export default function ExplorerPage() {
 				)}
 			</div>
 			<div className="col-span-5 grid grid-rows-6 items-center">
-				{ppmJson.length === 0 ? (
-					<div className="grid grid-cols-8 space-x-2">
-						<form
-							onSubmit={handlePpmFormSubmit}
-							className="row-span-1 col-span-2"
-						>
-							<div className="grid w-full max-w-sm items-center gap-1.5">
-								<Label htmlFor="ppm-form">
-									Select a pattern to apply (JSON)
-								</Label>
-								<Input
-									id="ppm-form"
-									type="file"
-									accept=".json"
-									name="ppm-form"
-								/>
-								<Button type="submit">Submit PPM filter</Button>
-							</div>
-						</form>
-						<Button className="row-span-1 col-span-2">
-							Create new pattern
-						</Button>
-						<ScrollArea className="row-span-1 col-span-2 h-24">
-							<p className="font-bold">Saved patterns</p>
-							<ProfilePatternList
-								onSelectedPatternChange={(n, c) => {
-									setPpmJson(c);
-									setCurrentPpmName(n);
-								}}
-							/>
-						</ScrollArea>
-					</div>
+				{!currentPattern ? (
+					<ProfileExplorerPatternBar className="row-span-1s" />
 				) : (
 					<ScrollArea className="row-span-1 h-full mr-8">
-						{(currentPpm || currentPpmName) && (
-							<ProfilePatternActions
-								patternFile={currentPpm}
-								patternName={currentPpmName}
-								onSave={(name) => setCurrentPpmName(name)}
-								onReset={() => {
-									setCurrentPpm(undefined);
-									setCurrentPpmName(undefined);
-								}}
-								onDelete={() => {
-									setCurrentPpm(undefined);
-									setCurrentPpmName(undefined);
-								}}
-							/>
-						)}
-						<ProfilePattern
-							patternName={currentPpmName}
-							pattern={ppmJson}
-							className="overflow-x-auto"
-						/>
+						{currentPattern && <ProfilePatternActions />}
+						<ProfilePattern className="overflow-x-auto" />
 						<ScrollBar orientation="horizontal" />
 					</ScrollArea>
 				)}

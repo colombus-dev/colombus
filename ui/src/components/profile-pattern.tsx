@@ -10,29 +10,31 @@ import {
 } from "@/components/ui/select";
 import { specialStages, supportedStages } from "@/configuration";
 import { cn } from "@/lib/utils";
+import { useColombusStore } from "@/store";
 import { XCircle } from "lucide-react";
 
 interface ProfilePatternProps {
-	patternName?: string;
-	pattern?: string[];
 	onPatternChanged?: (callback: (prev: string[]) => string[]) => void;
 	editable?: boolean;
 }
 
 const ProfilePattern: React.FunctionComponent<
 	ProfilePatternProps & React.HTMLAttributes<HTMLDivElement>
-> = ({
-	patternName,
-	pattern = [],
-	onPatternChanged: onStagesChanged,
-	editable = false,
-	...divProps
-}) => {
-	const selectableStages = editable ? [...pattern, undefined] : pattern;
+> = ({ onPatternChanged: onStagesChanged, editable = false, ...divProps }) => {
+	const currentPattern = useColombusStore((state) => state.currentPattern);
+	const selectableStages = editable
+		? [...(currentPattern?.elements ?? []), undefined]
+		: (currentPattern?.elements ?? []);
+	// TODO: currently only supporting first pattern layer
+	const simplifiedPattern = selectableStages.map((p) =>
+		typeof p === "string" ? p : p?.name,
+	);
 	return (
 		<div {...divProps} className={cn("flex", divProps.className)}>
-			{patternName && <p className="pt-2 px-2 font-bold">{patternName}: </p>}
-			{selectableStages.map((p, i) => (
+			{currentPattern?.name && (
+				<p className="pt-2 px-2 font-bold">{currentPattern.name}: </p>
+			)}
+			{simplifiedPattern.map((p, i) => (
 				<div key={`${i}_${p}`} className="flex items-stretch">
 					<Select
 						value={`${i}_${p}`}

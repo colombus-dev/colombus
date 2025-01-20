@@ -2,6 +2,8 @@ import { getAllPatterns } from "@/api/client";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
+import { useColombusStore } from "@/store";
+import type { PatternElement } from "@/lib/types";
 
 interface ProfilePatternListProps {
 	onSelectedPatternChange: (
@@ -13,19 +15,19 @@ interface ProfilePatternListProps {
 const ProfilePatternList: React.FunctionComponent<
 	ProfilePatternListProps & React.HTMLAttributes<HTMLDivElement>
 > = ({ onSelectedPatternChange, ...divProps }) => {
+	const setCurrentPattern = useColombusStore(
+		(state) => state.setCurrentPattern,
+	);
 	const [availablePatternsNames, setAvailablePatternsNames] = useState<
-		{ name: string; content: string[] }[]
+		{ name: string; elements: PatternElement[] }[]
 	>([]);
 
 	useEffect(() => {
 		getAllPatterns().then((res) => {
 			setAvailablePatternsNames(
-				res.map(([name, content]) => ({
+				res.map(([name, elements]) => ({
 					name,
-					content: content.map((c) =>
-						// TODO: currently only supporting the first layer of ppm
-						typeof c === "string" ? c : (c as { name: string }).name,
-					),
+					elements,
 				})),
 			);
 		});
@@ -33,10 +35,15 @@ const ProfilePatternList: React.FunctionComponent<
 
 	return (
 		<div {...divProps} className={cn("space-x-1", divProps.className)}>
-			{availablePatternsNames.map(({ name, content }) => (
+			{availablePatternsNames.map(({ name, elements }) => (
 				<Button
 					key={name}
-					onClick={() => onSelectedPatternChange(name, content)}
+					onClick={() => {
+						setCurrentPattern({
+							name,
+							elements,
+						});
+					}}
 				>
 					{name}
 				</Button>

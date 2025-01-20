@@ -3,7 +3,7 @@ import json
 from typing import Annotated, Any
 from pathlib import Path
 
-from fastapi import BackgroundTasks, FastAPI, UploadFile, File
+from fastapi import BackgroundTasks, FastAPI, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text, select, delete
 from sqlalchemy.orm import Session
@@ -73,10 +73,8 @@ async def get_all_ppm() -> list[tuple[str, list[str | dict[str, Any]]]]:
 
 
 @app.post("/api/ppm/execute")
-async def execute_ppm(ppm_file: Annotated[UploadFile, File()]) -> list[tuple[str, ...]]:
-    ppm_content = await ppm_file.read()
-    ppm = json.loads(ppm_content)
-    query = convert_ppm_to_sql_query(ppm)
+async def execute_ppm(pattern: list[str | dict[str, Any]]) -> list[tuple[str, ...]]:
+    query = convert_ppm_to_sql_query(pattern)
     with Session(engine) as session:
         return session.execute(text(query)).all()
 
@@ -93,11 +91,9 @@ async def execute_ppm(name: str) -> list[tuple[str, ...]]:
 
 
 @app.post("/api/ppm/save/{name}")
-async def save_ppm(name: str, ppm_file: Annotated[UploadFile, File()]) -> str:
-    ppm_content = await ppm_file.read()
-    ppm = json.loads(ppm_content)
+async def save_ppm(name: str, pattern: list[str | dict[str, Any]]) -> str:
     with Session(engine) as session:
-        pattern = Pattern(name=name, json_pattern=ppm)
+        pattern = Pattern(name=name, json_pattern=pattern)
         session.add(pattern)
         session.commit()
         return pattern.name

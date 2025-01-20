@@ -13,25 +13,26 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-
-interface ProfilePatternActionsProps {
-	patternName?: string;
-	patternFile?: File;
-	onReset?: () => void;
-	onDelete?: () => void;
-	onSave?: (name: string) => void;
-}
+import { useColombusStore } from "@/store";
 
 const ProfilePatternActions: React.FunctionComponent<
-	ProfilePatternActionsProps & React.HTMLAttributes<HTMLDivElement>
-> = ({ patternName, patternFile, onReset, onDelete, onSave, ...divProps }) => {
+	React.HTMLAttributes<HTMLDivElement>
+> = ({ ...divProps }) => {
+	const currentPattern = useColombusStore((state) => state.currentPattern);
+	const setCurrentPattern = useColombusStore(
+		(state) => state.setCurrentPattern,
+	);
+	const resetCurrentPattern = useColombusStore(
+		(state) => state.resetCurrentPattern,
+	);
 	const [savePatternName, setSavePatternName] = useState<string>();
+
 	return (
 		<div {...divProps} className={cn("flex", divProps.className)}>
 			<Button
 				variant="ghost"
 				onClick={() => {
-					onReset?.();
+					resetCurrentPattern();
 				}}
 			>
 				<CircleX /> Reset pattern
@@ -39,17 +40,17 @@ const ProfilePatternActions: React.FunctionComponent<
 			<Button
 				variant="ghost"
 				onClick={() => {
-					if (patternName) {
-						deletePpm(patternName).then(onDelete);
+					if (currentPattern?.name) {
+						deletePpm(currentPattern.name).then(resetCurrentPattern);
 					}
 				}}
-				disabled={patternName === undefined}
+				disabled={currentPattern?.name === undefined}
 			>
 				<Trash /> Delete pattern
 			</Button>
 			<Dialog>
-				<DialogTrigger disabled={!patternFile} asChild>
-					<Button variant="ghost" disabled={patternName !== undefined}>
+				<DialogTrigger disabled={!currentPattern?.elements} asChild>
+					<Button variant="ghost" disabled={currentPattern?.name !== undefined}>
 						<Save /> Save pattern
 					</Button>
 				</DialogTrigger>
@@ -68,8 +69,14 @@ const ProfilePatternActions: React.FunctionComponent<
 							<Button
 								type="submit"
 								onClick={() => {
-									if (savePatternName && patternFile) {
-										postSavePpm(savePatternName, patternFile).then(onSave);
+									if (savePatternName && currentPattern?.elements) {
+										postSavePpm(savePatternName, currentPattern.elements).then(
+											(name) =>
+												setCurrentPattern({
+													...currentPattern,
+													name,
+												}),
+										);
 										setSavePatternName(undefined);
 									}
 								}}

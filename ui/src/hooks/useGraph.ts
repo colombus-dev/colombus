@@ -5,6 +5,7 @@ import type {
 	Neo4jNodeProperties,
 } from "@/api/client";
 import { colors, stepsColorsMapping } from "@/configuration";
+import { useColombusStore } from "@/store";
 import Graph from "graphology";
 import groupBy from "lodash/groupBy";
 import { useCallback, useEffect, useRef } from "react";
@@ -27,9 +28,10 @@ export default function useGraph(
 	containerId: string | undefined,
 	graphDefinition: Neo4JGraphDefinition | undefined,
 	filteredNodes: string[] | undefined,
-	displayedLevel = maxDisplayedLevel,
-	weightedNodes = true,
 ) {
+	const displayedLevel = useColombusStore((state) => state.displayedLevel);
+	const useWeightedNodes = useColombusStore((state) => state.useWeightedNodes);
+
 	const graph = useRef<Graph>(new Graph());
 	const renderer = useRef<Sigma | undefined>();
 
@@ -58,7 +60,7 @@ export default function useGraph(
 								continue;
 							}
 							let nodeSize = 5;
-							if (weightedNodes && i === 1) {
+							if (useWeightedNodes && i === 1) {
 								nodeSize +=
 									(v[1] as Neo4JNode).properties
 										.numberRelatedMetaInstructions ?? 0;
@@ -109,7 +111,7 @@ export default function useGraph(
 			}
 			return addedX;
 		},
-		[displayedLevel, weightedNodes],
+		[displayedLevel, useWeightedNodes],
 	);
 
 	useEffect(() => {
