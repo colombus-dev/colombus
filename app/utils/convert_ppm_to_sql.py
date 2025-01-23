@@ -57,18 +57,27 @@ def convert_steps_to_sql_query(pattern: list[str | dict[str, Any]]) -> str:
         if meta_instructions_prefix_query:
             all_meta_instructions_prefix_queries.append(meta_instructions_prefix_query)
 
-    query += "\nWHERE"
+    query += "\nWHERE "
     prev_pos = -1
-    pattern_without_stars = [e for e in pattern if e != "*"]
+    all_where_clauses = []
     for se_i, step_name in names_to_pos.items():
-        query += f' s{se_i}.name = "{step_name}"'
+        if se_i == 0:
+            # pattern strict starts with step_name
+            all_where_clauses.append(f"s{se_i}.position = 0")
+        if se_i == len(pattern) - 1:
+            # pattern strict ends with step_name
+            all_where_clauses.append(
+                f"s{se_i}.position = (SELECT max(position) FROM step WHERE profile_id = p.id)"
+            )
+        all_where_clauses.append(f's{se_i}.name = "{step_name}"')
         if prev_pos > -1:
             diff = se_i - prev_pos
-            query += f" AND s{se_i}.position - s{prev_pos}.position {'=' if diff == 1 else '>='} 1"
+            all_where_clauses.append(
+                f"s{se_i}.position - s{prev_pos}.position {'=' if diff == 1 else '>='} 1"
+            )
         prev_pos = se_i
-        print(names_to_pos, se_i, len(pattern) - 1)
-        if se_i < len(pattern_without_stars) - 1:
-            query += " AND"
+
+    query += " AND ".join(all_where_clauses)
 
     query += "".join(all_meta_instructions_where_queries)
 

@@ -16,9 +16,11 @@ def save_notebook_as_sql(
 ):
     with Session(engine) as session:
         all_steps = []
+        total_se_i = 0
         for sa_i, sa in enumerate(profile):
             sa["cross_db_uuid"] = str(uuid4())
             for se_i, se in enumerate(sa["tasks"]):
+                total_se_i += se_i + 1
                 se["cross_db_uuid"] = str(uuid4())
                 all_metainstructions = []
                 for mi_i, mi in enumerate(se["tasks"]):
@@ -43,7 +45,7 @@ def save_notebook_as_sql(
                 all_steps.append(
                     Step(
                         name=se["name"],
-                        position=se_i,
+                        position=total_se_i,
                         metaInstructions=all_metainstructions,
                         cross_db_uuid=se["cross_db_uuid"],
                     )
