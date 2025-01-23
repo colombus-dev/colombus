@@ -11,6 +11,7 @@ export const supportedSteps = [
 	"Others",
 ];
 export const specialSteps = ["*"];
+export const specialCharacterOR = "|";
 
 // graph styling configuration
 

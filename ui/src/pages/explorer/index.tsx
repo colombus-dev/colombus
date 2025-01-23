@@ -9,8 +9,8 @@ import {
 import ProfileExplorerGraphSettingsBar from "@/components/profile-explorer-graph-settings-bar";
 import ProfileExplorerPatternBar from "@/components/profile-explorer-pattern-bar";
 import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
-import ProfilePatternEditor from "@/components/profile-pattern-editor";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
+import ProfilePatternEditor from "@/components/profile-pattern-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

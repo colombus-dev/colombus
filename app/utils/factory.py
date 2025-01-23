@@ -1,7 +1,5 @@
+from typing import Any, Self
 from uuid import uuid4
-
-from sqlalchemy import Engine
-from sqlalchemy.orm import Session
 
 from app.models.sql_model import (
     Profile,
@@ -9,14 +7,37 @@ from app.models.sql_model import (
     MetaInstruction,
     Code,
 )
+from pydantic import BaseModel, Field, AliasChoices, AliasPath
 
 
-def save_notebook_as_sql(
-    notebook_name: str, profile: list[dict[str, dict]], engine: Engine
-):
-    with Session(engine) as session:
+class Code(BaseModel):
+    content: str = Field(validation_alias=AliasChoices("content", "name"))
+
+
+class MetaInstruction(BaseModel):
+    algoName: str
+    algoFamily: str
+    library: str
+    function: str
+    code: Code = Field(validation_alias=AliasPath("tasks", 0))
+
+
+class Step(BaseModel):
+    meta_instructions: list[MetaInstruction] = Field(
+        validation_alias=AliasChoices("meta_instructions", "tasks")
+    )
+
+
+class Profile(BaseModel):
+    name: str
+    steps: list[Step]
+
+
+class ProfileFactory:
+
+    @staticmethod
+    def from_dict_list(profile_name: str, profile: list[dict[str, dict]]) -> Profile:
         all_steps = []
-        total_se_i = 0
         for sa_i, sa in enumerate(profile):
             sa["cross_db_uuid"] = str(uuid4())
             for se_i, se in enumerate(sa["tasks"]):
@@ -44,16 +65,14 @@ def save_notebook_as_sql(
                 all_steps.append(
                     Step(
                         name=se["name"],
-                        position=total_se_i,
+                        position=se_i,
                         metaInstructions=all_metainstructions,
                         cross_db_uuid=se["cross_db_uuid"],
                     )
                 )
-                total_se_i += se_i + 1
         profile = Profile(
-            name=notebook_name,
+            name=profile_name,
             steps=all_steps,
             json_profile=profile,
         )
-        session.add(profile)
-        session.commit()
+        return profile

@@ -1,17 +1,21 @@
 import {
-	Select,
-	SelectContent,
-	SelectGroup,
-	SelectItem,
-	SelectLabel,
-	SelectSeparator,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import { specialSteps, supportedSteps } from "@/configuration";
+	DropdownMenu,
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+	specialCharacterOR,
+	specialSteps,
+	supportedSteps,
+} from "@/configuration";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
+import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import { XCircle } from "lucide-react";
+import { Button } from "./ui/button";
 
 const ProfilePatternEditor: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
@@ -34,54 +38,105 @@ const ProfilePatternEditor: React.FunctionComponent<
 			)}
 			{simplifiedPattern.map((p, i) => (
 				<div key={`${i}_${p}`} className="flex items-stretch">
-					<Select
-						value={`${i}_${p}`}
-						onValueChange={(v) => {
-							const newSteps = [...(currentPattern?.elements ?? [])];
-							const [strStepIndex, stepName] = v.split("_");
-							const stepIndex = Number.parseInt(strStepIndex);
-							if (stepName === "remove") {
-								newSteps.splice(stepIndex, 1);
-							} else {
-								newSteps[stepIndex] = specialSteps.includes(stepName)
-									? stepName
-									: { name: stepName, tasks: [] };
-							}
-							setCurrentPattern({ ...currentPattern, elements: newSteps });
-						}}
-					>
-						<SelectTrigger>
-							<SelectValue placeholder="Select step..." />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectGroup>
-								<SelectLabel className="ml-2 text-xs">Steps</SelectLabel>
-								{supportedSteps.map((s) => (
-									<SelectItem key={`${i}_${s}`} value={`${i}_${s}`}>
-										{s}
-									</SelectItem>
-								))}
-							</SelectGroup>
-							<SelectGroup>
-								<SelectLabel className="ml-2 text-xs">
-									Pattern elements
-								</SelectLabel>
-								{specialSteps.map((s) => (
-									<SelectItem
-										key={`${i}_${s}`}
-										value={`${i}_${s}`}
-										className="font-bold"
-									>
-										{s}
-									</SelectItem>
-								))}
-							</SelectGroup>
-							<SelectSeparator />
-							<SelectItem value={`${i}_remove`} className="text-center">
-								Remove <XCircle />
-							</SelectItem>
-						</SelectContent>
-					</Select>
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button variant="outline">
+								{p
+									? p.split(specialCharacterOR).join(" OR ")
+									: "Select step..."}
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent>
+							<DropdownMenuLabel>Steps</DropdownMenuLabel>
+							<DropdownMenuSeparator />
+							{supportedSteps.map((s) => (
+								<DropdownMenuCheckboxItem
+									key={s}
+									onCheckedChange={(isChecked) => {
+										const newSteps = [...(currentPattern?.elements ?? [])];
+										if (isChecked) {
+											newSteps[i] = {
+												name:
+													p && !specialSteps.includes(p)
+														? `${p}${specialCharacterOR}${s}`
+														: s,
+												tasks: [],
+											};
+										} else {
+											const stepsToKeep = (newSteps[i] as { name: string }).name
+												.split(specialCharacterOR)
+												.filter((spl) => spl !== s);
+											if (stepsToKeep.length === 0) {
+												newSteps.splice(i, 1);
+											} else {
+												newSteps[i] = {
+													name: stepsToKeep.join(specialCharacterOR),
+													tasks: [],
+												};
+											}
+										}
+										setCurrentPattern({
+											...currentPattern,
+											elements: newSteps,
+										});
+									}}
+									checked={
+										typeof currentPattern?.elements[i] === "object" &&
+										currentPattern.elements[i].name
+											.split(specialCharacterOR)
+											.includes(s)
+									}
+								>
+									{s}
+								</DropdownMenuCheckboxItem>
+							))}
+							<DropdownMenuLabel>Pattern elements</DropdownMenuLabel>
+							<DropdownMenuSeparator />
+							{specialSteps.map((s) => (
+								<DropdownMenuCheckboxItem
+									key={s}
+									onCheckedChange={(isChecked) => {
+										const newSteps = [...(currentPattern?.elements ?? [])];
+										if (isChecked) {
+											newSteps[i] = s;
+										} else {
+											newSteps.splice(i, 1);
+										}
+										setCurrentPattern({
+											...currentPattern,
+											elements: newSteps,
+										});
+									}}
+									checked={
+										typeof currentPattern?.elements[i] === "string" &&
+										currentPattern.elements[i] === s
+									}
+								>
+									{s}
+								</DropdownMenuCheckboxItem>
+							))}
+							<DropdownMenuLabel>Other actions</DropdownMenuLabel>
+							<DropdownMenuSeparator />
+							{p && (
+								<DropdownMenuItem
+									onClick={() => {
+										const newSteps = [...(currentPattern?.elements ?? [])];
+										newSteps.splice(i, 1);
+										setCurrentPattern({
+											...currentPattern,
+											elements: newSteps,
+										});
+									}}
+									disabled={p === undefined}
+									asChild
+								>
+									<Button variant="ghost" className="w-full">
+										<XCircle /> Remove
+									</Button>
+								</DropdownMenuItem>
+							)}
+						</DropdownMenuContent>
+					</DropdownMenu>
 					{i < selectableSteps.length - 1 && <p>&#8594;</p>}
 				</div>
 			))}

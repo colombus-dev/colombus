@@ -41,9 +41,7 @@ export default function EditorPage() {
 
 	return (
 		<section className="grid grid-row-8 space-x-4 h-full">
-			<ProfilePatternEditor
-				className="row-span-2"
-			/>
+			<ProfilePatternEditor className="row-span-2" />
 			<div className="space-x-2">
 				<a
 					href={`data:text/json;charset=utf-8,${encodeURIComponent(

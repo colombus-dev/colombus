@@ -69,17 +69,17 @@ const ProfilePatternActions: React.FunctionComponent<
 					/>
 					<DialogFooter>
 						<div className="space-x-2">
-						<a
-							href={`data:text/json;charset=utf-8,${encodeURIComponent(
-								JSON.stringify(currentPattern?.elements),
-							)}`}
-							download={`${savePatternName === '' ? 'pattern' : savePatternName}.json`}
-							className={cn(buttonVariants())}
-						>
-							Download Json
-							<Download />
-						</a>
-					</div>
+							<a
+								href={`data:text/json;charset=utf-8,${encodeURIComponent(
+									JSON.stringify(currentPattern?.elements),
+								)}`}
+								download={`${savePatternName === "" ? "pattern" : savePatternName}.json`}
+								className={cn(buttonVariants({ variant: "link" }))}
+							>
+								Download Json
+								<Download />
+							</a>
+						</div>
 						<DialogClose asChild>
 							<Button
 								type="submit"
