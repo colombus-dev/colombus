@@ -93,10 +93,16 @@ async def execute_ppm(name: str) -> list[tuple[str, ...]]:
 @app.post("/api/ppm/save/{name}")
 async def save_ppm(name: str, pattern: list[str | dict[str, Any]]) -> str:
     with Session(engine) as session:
-        pattern = Pattern(name=name, json_pattern=pattern)
-        session.add(pattern)
+        retrieved_session_pattern = session.execute(
+            select(Pattern).where(Pattern.name == name)
+        ).scalar_one_or_none()
+        session_pattern = retrieved_session_pattern or Pattern(
+            name=name, json_pattern=pattern
+        )
+        session_pattern.json_pattern = pattern
+        session.add(session_pattern)
         session.commit()
-        return pattern.name
+        return session_pattern.name
 
 
 @app.delete("/api/ppm/delete/{name}")

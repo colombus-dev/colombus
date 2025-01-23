@@ -42,7 +42,12 @@ const ProfileExplorerPatternBar: React.FunctionComponent<
 					<Button type="submit">Submit PPM filter</Button>
 				</div>
 			</form>
-			<Button className="col-span-2">Create new pattern</Button>
+			<Button
+				className="col-span-2"
+				onClick={() => setCurrentPattern({ elements: [] })}
+			>
+				Create new pattern
+			</Button>
 			<ScrollArea className="col-span-2 h-24">
 				<p className="font-bold">Saved patterns</p>
 				<ProfilePatternList />

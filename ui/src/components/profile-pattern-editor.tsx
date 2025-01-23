@@ -8,27 +8,23 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { specialStages, supportedStages } from "@/configuration";
+import { specialSteps, supportedSteps } from "@/configuration";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 import { XCircle } from "lucide-react";
 
-interface ProfilePatternProps {
-	editable?: boolean;
-}
-
-const ProfilePattern: React.FunctionComponent<
-	ProfilePatternProps & React.HTMLAttributes<HTMLDivElement>
-> = ({ editable = true, ...divProps }) => {
+const ProfilePatternEditor: React.FunctionComponent<
+	React.HTMLAttributes<HTMLDivElement>
+> = ({ ...divProps }) => {
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const setCurrentPattern = useColombusStore(
 		(state) => state.setCurrentPattern,
 	);
-	const selectableStages = editable
-		? [...(currentPattern?.elements ?? []), undefined]
-		: (currentPattern?.elements ?? []);
+	const selectableSteps = !currentPattern?.elements?.length
+		? [undefined]
+		: [...currentPattern.elements, undefined];
 	// TODO: currently only supporting first pattern layer
-	const simplifiedPattern = selectableStages.map((p) =>
+	const simplifiedPattern = selectableSteps.map((p) =>
 		typeof p === "string" ? p : p?.name,
 	);
 	return (
@@ -45,12 +41,10 @@ const ProfilePattern: React.FunctionComponent<
 							const [strStageIndex, stageName] = v.split("_");
 							const stageIndex = Number.parseInt(strStageIndex);
 							if (stageName === "remove") {
-								newStages.splice(stageIndex, 1);
+								// TODO
+								// newStages.splice(stageIndex, 1);
 							} else {
-								newStages[stageIndex] = specialStages.includes(stageName)
-									? stageName
-									: { name: stageName, tasks: [] };
-								// newStages[stageIndex] = typeof newStages[stageIndex] === "string" ? stageName;
+								newStages[stageIndex] = stageName;
 							}
 							setCurrentPattern({ ...currentPattern, elements: newStages });
 						}}
@@ -61,12 +55,8 @@ const ProfilePattern: React.FunctionComponent<
 						<SelectContent>
 							<SelectGroup>
 								<SelectLabel className="ml-2 text-xs">Stages</SelectLabel>
-								{supportedStages.map((s) => (
-									<SelectItem
-										key={`${i}_${s}`}
-										value={`${i}_${s}`}
-										disabled={!editable}
-									>
+								{supportedSteps.map((s) => (
+									<SelectItem key={`${i}_${s}`} value={`${i}_${s}`}>
 										{s}
 									</SelectItem>
 								))}
@@ -75,34 +65,27 @@ const ProfilePattern: React.FunctionComponent<
 								<SelectLabel className="ml-2 text-xs">
 									Pattern elements
 								</SelectLabel>
-								{specialStages.map((s) => (
+								{specialSteps.map((s) => (
 									<SelectItem
 										key={`${i}_${s}`}
 										value={`${i}_${s}`}
 										className="font-bold"
-										disabled={!editable}
 									>
 										{s}
 									</SelectItem>
 								))}
 							</SelectGroup>
 							<SelectSeparator />
-							{editable && (
-								<SelectItem
-									value={`${i}_remove`}
-									className="text-center"
-									disabled={!editable}
-								>
-									Remove <XCircle />
-								</SelectItem>
-							)}
+							<SelectItem value={`${i}_remove`} className="text-center">
+								Remove <XCircle />
+							</SelectItem>
 						</SelectContent>
 					</Select>
-					{i < selectableStages.length - 1 && <p>&#8594;</p>}
+					{i < selectableSteps.length - 1 && <p>&#8594;</p>}
 				</div>
 			))}
 		</div>
 	);
 };
 
-export default ProfilePattern;
+export default ProfilePatternEditor;

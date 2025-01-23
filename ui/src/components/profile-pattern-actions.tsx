@@ -1,7 +1,5 @@
-import { cn } from "@/lib/utils";
-import { CircleX, Save, Trash } from "lucide-react";
-import { Button } from "./ui/button";
 import { deletePpm, postSavePpm } from "@/api/client";
+import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogClose,
@@ -12,8 +10,10 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
+import { CircleX, Save, Trash } from "lucide-react";
+import { useState } from "react";
 
 const ProfilePatternActions: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
@@ -25,7 +25,9 @@ const ProfilePatternActions: React.FunctionComponent<
 	const resetCurrentPattern = useColombusStore(
 		(state) => state.resetCurrentPattern,
 	);
-	const [savePatternName, setSavePatternName] = useState<string>();
+	const [savePatternName, setSavePatternName] = useState<string>(
+		currentPattern?.name ?? "",
+	);
 
 	return (
 		<div {...divProps} className={cn("flex", divProps.className)}>
@@ -50,7 +52,7 @@ const ProfilePatternActions: React.FunctionComponent<
 			</Button>
 			<Dialog>
 				<DialogTrigger disabled={!currentPattern?.elements} asChild>
-					<Button variant="ghost" disabled={currentPattern?.name !== undefined}>
+					<Button variant="ghost">
 						<Save /> Save pattern
 					</Button>
 				</DialogTrigger>
@@ -60,6 +62,7 @@ const ProfilePatternActions: React.FunctionComponent<
 					</DialogHeader>
 					<Input
 						id="name"
+						value={savePatternName}
 						onChange={(e) => {
 							setSavePatternName(e.target.value);
 						}}
@@ -77,10 +80,10 @@ const ProfilePatternActions: React.FunctionComponent<
 													name,
 												}),
 										);
-										setSavePatternName(undefined);
+										setSavePatternName("");
 									}
 								}}
-								disabled={!savePatternName}
+								disabled={savePatternName === ""}
 							>
 								Save changes
 							</Button>

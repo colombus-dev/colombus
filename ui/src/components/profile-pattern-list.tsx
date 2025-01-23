@@ -1,9 +1,9 @@
 import { getAllPatterns } from "@/api/client";
-import { useEffect, useState } from "react";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
+import type { PatternElement } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
-import type { PatternElement } from "@/lib/types";
+import { useEffect, useState } from "react";
 
 const ProfilePatternList: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
