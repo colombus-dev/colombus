@@ -1,6 +1,6 @@
-import ProfilePattern from "@/components/profile-pattern";
+import ProfilePatternEditor from "@/components/profile-pattern-editor";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { specialStages } from "@/configuration";
+import { specialSteps } from "@/configuration";
 import { cn } from "@/lib/utils";
 import Graph from "graphology";
 import { Download } from "lucide-react";
@@ -10,7 +10,7 @@ import Sigma from "sigma";
 export default function EditorPage() {
 	const graph = useRef<Graph>(new Graph());
 	const renderer = useRef<Sigma | undefined>();
-	const [selectedStages, setSelectedStages] = useState<string[]>([]);
+	const [selectedStages] = useState<string[]>([]);
 
 	const [containerId, setContainerId] = useState<string | undefined>();
 
@@ -34,18 +34,15 @@ export default function EditorPage() {
 	const jsonPattern = useMemo(
 		() =>
 			selectedStages.map((s) =>
-				specialStages.includes(s) ? s : { name: s, tasks: ["*"] },
+				specialSteps.includes(s) ? s : { name: s, tasks: ["*"] },
 			),
 		[selectedStages],
 	);
 
 	return (
 		<section className="grid grid-row-8 space-x-4 h-full">
-			<ProfilePattern
+			<ProfilePatternEditor
 				className="row-span-2"
-				stages={selectedStages}
-				onPatternChanged={setSelectedStages}
-				editable
 			/>
 			<div className="space-x-2">
 				<a

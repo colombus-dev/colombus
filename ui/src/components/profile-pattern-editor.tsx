@@ -37,24 +37,25 @@ const ProfilePatternEditor: React.FunctionComponent<
 					<Select
 						value={`${i}_${p}`}
 						onValueChange={(v) => {
-							const newStages = [...(currentPattern?.elements ?? [])];
-							const [strStageIndex, stageName] = v.split("_");
-							const stageIndex = Number.parseInt(strStageIndex);
-							if (stageName === "remove") {
-								// TODO
-								// newStages.splice(stageIndex, 1);
+							const newSteps = [...(currentPattern?.elements ?? [])];
+							const [strStepIndex, stepName] = v.split("_");
+							const stepIndex = Number.parseInt(strStepIndex);
+							if (stepName === "remove") {
+								newSteps.splice(stepIndex, 1);
 							} else {
-								newStages[stageIndex] = stageName;
+								newSteps[stepIndex] = specialSteps.includes(stepName)
+									? stepName
+									: { name: stepName, tasks: [] };
 							}
-							setCurrentPattern({ ...currentPattern, elements: newStages });
+							setCurrentPattern({ ...currentPattern, elements: newSteps });
 						}}
 					>
 						<SelectTrigger>
-							<SelectValue placeholder="Select stage..." />
+							<SelectValue placeholder="Select step..." />
 						</SelectTrigger>
 						<SelectContent>
 							<SelectGroup>
-								<SelectLabel className="ml-2 text-xs">Stages</SelectLabel>
+								<SelectLabel className="ml-2 text-xs">Steps</SelectLabel>
 								{supportedSteps.map((s) => (
 									<SelectItem key={`${i}_${s}`} value={`${i}_${s}`}>
 										{s}

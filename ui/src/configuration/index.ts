@@ -2,7 +2,7 @@
 
 export type PpmNodesDisplayMode = "show-all" | "show-fixed" | "show-variable";
 
-export const supportedStages = [
+export const supportedSteps = [
 	"Library Loading",
 	"Visualization",
 	"Data Preparation",
@@ -10,7 +10,7 @@ export const supportedStages = [
 	"Model Building and Training",
 	"Others",
 ];
-export const specialStages = ["*"];
+export const specialSteps = ["*"];
 
 // graph styling configuration
 

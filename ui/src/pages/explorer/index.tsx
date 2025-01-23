@@ -9,7 +9,7 @@ import {
 import ProfileExplorerGraphSettingsBar from "@/components/profile-explorer-graph-settings-bar";
 import ProfileExplorerPatternBar from "@/components/profile-explorer-pattern-bar";
 import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
-import ProfilePattern from "@/components/profile-pattern";
+import ProfilePatternEditor from "@/components/profile-pattern-editor";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -133,7 +133,7 @@ export default function ExplorerPage() {
 				) : (
 					<ScrollArea className="row-span-1 h-full mr-8">
 						{currentPattern && <ProfilePatternActions />}
-						<ProfilePattern className="overflow-x-auto" />
+						<ProfilePatternEditor className="overflow-x-auto" />
 						<ScrollBar orientation="horizontal" />
 					</ScrollArea>
 				)}

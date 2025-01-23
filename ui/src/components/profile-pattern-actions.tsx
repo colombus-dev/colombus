@@ -1,5 +1,5 @@
 import { deletePpm, postSavePpm } from "@/api/client";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogClose,
@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
-import { CircleX, Save, Trash } from "lucide-react";
+import { CircleX, Download, Save, Trash } from "lucide-react";
 import { useState } from "react";
 
 const ProfilePatternActions: React.FunctionComponent<
@@ -68,6 +68,18 @@ const ProfilePatternActions: React.FunctionComponent<
 						}}
 					/>
 					<DialogFooter>
+						<div className="space-x-2">
+						<a
+							href={`data:text/json;charset=utf-8,${encodeURIComponent(
+								JSON.stringify(currentPattern?.elements),
+							)}`}
+							download={`${savePatternName === '' ? 'pattern' : savePatternName}.json`}
+							className={cn(buttonVariants())}
+						>
+							Download Json
+							<Download />
+						</a>
+					</div>
 						<DialogClose asChild>
 							<Button
 								type="submit"
