@@ -1,64 +1,50 @@
 import type { PatternElement } from "@/lib/types";
 import axios from "axios";
 
-const config = {
-	headers: { Authorization: `Basic ${btoa("neo4j:pinta_nina")}` },
+export type StepNode = {
+	id: string;
+	name: string;
+	position: number;
+	number_children: number;
+};
+export type MetaInstructionNode = {
+	id: string;
+	step_id: string;
+	algoFamily: string;
+	algoName: string;
+	library: string;
+	function: string;
+	position: number;
+	number_children: number;
+};
+export type CodeNode = {
+	id: string;
+	meta_instruction_id: string;
+	content: string;
+	position: number;
+};
+export type GraphDefinition = {
+	id: string;
+	name: string;
+	steps: StepNode[];
+	meta_instructions: MetaInstructionNode[];
+	codes: CodeNode[];
 };
 
-export type Neo4jNodeProperties = {
-	name?: string; // if step or workflow root
-	library?: string; // if metainstruction
-	function?: string; // if metainstruction
-	content?: string; // if code
-	cross_db_uuid?: string;
-	numberRelatedSteps?: number;
-	numberRelatedMetaInstructions?: number;
-	position?: number;
-};
-
-export type Neo4JNode = {
-	elementId: string;
-	labels: string[];
-	properties: Neo4jNodeProperties;
-};
-
-export type Neo4JEdge = {
-	elementId: string;
-	startNodeElementId: string;
-	endNodeElementId: string;
-	properties: unknown;
-	type: string;
-};
-
-export type Neo4JGraphDefinition = (Neo4JNode | Neo4JEdge)[][];
-
-export interface GetNodesFromNeo4JResponse {
-	bookmarks: string[];
-	data: {
-		fields: string[];
-		values: Neo4JGraphDefinition;
-	};
-}
-
-export async function getNodesFromNeo4J(profilesNames?: string[]) {
+export async function getGraphNodes(profilesNames?: string[]) {
 	if (profilesNames?.length === 0) {
-		return new Promise<Neo4JGraphDefinition>(() => [] as Neo4JGraphDefinition);
+		return new Promise<GraphDefinition[]>(() => [] as GraphDefinition[]);
 	}
 	return await axios
-		.post<GetNodesFromNeo4JResponse>(
-			"http://localhost:7474/db/neo4j/query/v2",
-			{
-				statement: `MATCH (p:Profile)-[pse]->(se:Step)-[sem]->(m:MetaInstruction)-[mc]->(c:Code) OPTIONAL MATCH (se)-[sesp:PRECEDES]->(:Step) OPTIONAL MATCH (m)-[mp:PRECEDES]->(:MetaInstruction) OPTIONAL MATCH (c)-[cp:PRECEDES]->(:Code) WHERE ANY (name in p.name WHERE name IN ${JSON.stringify(profilesNames)}) RETURN p, se, m, c, pse, sem, mc, sesp, mp, cp ORDER BY p DESC, se.position DESC, m.position DESC, c.position DESC`,
+		.get<GraphDefinition[]>("http://localhost:8080/api/profile/nodes", {
+			params: {
+				names: profilesNames,
 			},
-			config,
-		)
-		.then(
-			({
-				data: {
-					data: { values },
-				},
-			}) => values,
-		);
+			paramsSerializer: {
+				indexes: null,
+			},
+		})
+		.then(({ data }) => data);
 }
 
 export async function getAllProfiles() {
@@ -78,7 +64,6 @@ export async function postProfiles(files: FileList) {
 			formData,
 			{
 				headers: {
-					...config.headers,
 					accept: "application/json",
 					"Content-Type": "multipart/form-data",
 				},

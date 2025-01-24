@@ -3,15 +3,23 @@ import json
 from typing import Annotated, Any
 from pathlib import Path
 
-from fastapi import BackgroundTasks, FastAPI, UploadFile
+from fastapi import Depends, FastAPI, UploadFile, Query
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text, select, delete
-from sqlalchemy.orm import Session
+from pydantic import BaseModel
+from sqlmodel import text, select, delete, Session
 
-from app.models.sql_model import Base, Pattern, Profile, engine
+from app.models.api_model import ProfileNodes
+from app.models.sql_model import (
+    Pattern,
+    Profile,
+    Step,
+    MetaInstruction,
+    Code,
+    engine,
+    create_db_and_tables,
+)
 from app.utils.save_notebook_sql import save_notebook_as_sql
 from app.utils.convert_ppm_to_sql import convert_ppm_to_sql_query
-from app.utils.save_notebook_graph import save_notebook_as_graph
 
 app = FastAPI()
 
@@ -29,84 +37,102 @@ app.add_middleware(
 )
 
 
-@app.get("/api/profile/getAll")
-async def get_all_profile() -> list[str]:
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()
+
+
+def get_session():
     with Session(engine) as session:
-        return session.execute(select(Profile.name)).scalars().all()
+        yield session
+
+
+@app.get("/api/profile/getAll")
+async def get_all_profile(session: Session = Depends(get_session)) -> list[str]:
+    return session.exec(select(Profile.name)).all()
 
 
 @app.get("/api/profile/getJson")
-async def get_json_profile(profile_name: str):
-    with Session(engine) as session:
-        return (
-            session.execute(
-                select(Profile.json_profile).where(Profile.name == profile_name)
-            )
-            .scalars()
-            .all()
+async def get_json_profile(profile_name: str, session: Session = Depends(get_session)):
+    return session.exec(
+        select(Profile.json_profile).where(Profile.name == profile_name)
+    ).all()
+
+
+@app.get("/api/profile/nodes", response_model=list[ProfileNodes])
+async def get_all_nodes(
+    names: list[str] = Query(None), session: Session = Depends(get_session)
+) -> list[ProfileNodes]:
+    results = session.exec(select(Profile).where(Profile.name.in_(names))).all()
+    return [
+        ProfileNodes(
+            id=profile.id,
+            name=profile.name,
+            steps=profile.steps,
+            meta_instructions=profile.meta_instructions,
+            codes=profile.codes,
         )
+        for profile in results
+    ]
 
 
 @app.post("/api/profile/import/multiple")
-async def import_multiple_profile(
-    profile_files: list[UploadFile], background_tasks: BackgroundTasks
-):
+async def import_multiple_profile(profile_files: list[UploadFile]):
     all_imported_profiles = []
     for profile_file in profile_files:
         profile_path = Path(profile_file.filename)
         profile_content = await profile_file.read()
         profile = json.loads(profile_content)
         save_notebook_as_sql(profile_path.stem, profile, engine)
-        background_tasks.add_task(
-            save_notebook_as_graph,
-            notebook_name=profile_path.stem,
-            raw_profile=profile,
-        )
         all_imported_profiles.append(profile_path.stem)
     return all_imported_profiles
 
 
 @app.get("/api/ppm/getAll")
-async def get_all_ppm() -> list[tuple[str, list[str | dict[str, Any]]]]:
-    with Session(engine) as session:
-        return session.execute(select(Pattern.name, Pattern.json_pattern)).all()
+async def get_all_ppm(
+    session: Session = Depends(get_session),
+) -> list[tuple[str, list[str | dict[str, Any]]]]:
+    return session.execute(select(Pattern.name, Pattern.json_pattern)).all()
 
 
 @app.post("/api/ppm/execute")
-async def execute_ppm(pattern: list[str | dict[str, Any]]) -> list[tuple[str, ...]]:
+async def execute_ppm(
+    pattern: list[str | dict[str, Any]], session: Session = Depends(get_session)
+) -> list[tuple[str, ...]]:
     query = convert_ppm_to_sql_query(pattern)
-    with Session(engine) as session:
-        return session.execute(text(query)).all()
+    return session.execute(text(query)).all()
 
 
 @app.post("/api/ppm/execute/{name}")
-async def execute_ppm(name: str) -> list[tuple[str, ...]]:
-    with Session(engine) as session:
-        ppm = session.execute(
-            select(Pattern.json_pattern).where(Pattern.name == name)
-        ).scalar_one()
-        query = convert_ppm_to_sql_query(ppm)
-        with Session(engine) as session:
-            return session.execute(text(query)).all()
+async def execute_ppm(
+    name: str, session: Session = Depends(get_session)
+) -> list[tuple[str, ...]]:
+    ppm = session.execute(
+        select(Pattern.json_pattern).where(Pattern.name == name)
+    ).scalar_one()
+    query = convert_ppm_to_sql_query(ppm)
+    return session.execute(text(query)).all()
 
 
 @app.post("/api/ppm/save/{name}")
-async def save_ppm(name: str, pattern: list[str | dict[str, Any]]) -> str:
-    with Session(engine) as session:
-        retrieved_session_pattern = session.execute(
-            select(Pattern).where(Pattern.name == name)
-        ).scalar_one_or_none()
-        session_pattern = retrieved_session_pattern or Pattern(
-            name=name, json_pattern=pattern
-        )
-        session_pattern.json_pattern = pattern
-        session.add(session_pattern)
-        session.commit()
-        return session_pattern.name
+async def save_ppm(
+    name: str,
+    pattern: list[str | dict[str, Any]],
+    session: Session = Depends(get_session),
+) -> str:
+    retrieved_session_pattern = session.execute(
+        select(Pattern).where(Pattern.name == name)
+    ).scalar_one_or_none()
+    session_pattern = retrieved_session_pattern or Pattern(
+        name=name, json_pattern=pattern
+    )
+    session_pattern.json_pattern = pattern
+    session.add(session_pattern)
+    session.commit()
+    return session_pattern.name
 
 
 @app.delete("/api/ppm/delete/{name}")
-async def delete_ppm(name: str):
-    with Session(engine) as session:
-        session.execute(delete(Pattern).where(Pattern.name == name))
-        session.commit()
+async def delete_ppm(name: str, session: Session = Depends(get_session)):
+    session.execute(delete(Pattern).where(Pattern.name == name))
+    session.commit()

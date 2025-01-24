@@ -6,12 +6,10 @@ services:
     volumes:
       - ./app:/code/app:rw
     environment:
-      NEO4J_BOLT_FULL_URL: bolt://neo4j:pinta_nina@colombus_neo4j:7687
       MYSQL_FULL_URL: mysql+pymysql://christopher:pinta@colombus_mysql:3306/colombusdb
     depends_on:
       colombus_mysql:
         condition: service_healthy
-      # TODO: colombus_neo4j
   colombus_mysql:
     image: mysql:lts
     environment:
@@ -28,12 +26,3 @@ services:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       timeout: 10s
       retries: 10
-  colombus_neo4j:
-    image: neo4j:5.26.0-community-bullseye
-    ports:
-      - "7474:7474"
-      - "7687:7687"
-    volumes:
-      - "./graph_data:/data:rw"
-    environment:
-      NEO4J_AUTH: neo4j/pinta_nina

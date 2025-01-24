@@ -12,48 +12,52 @@ from app.models.sql_model import (
 
 
 def save_notebook_as_sql(
-    notebook_name: str, profile: list[dict[str, dict]], engine: Engine
+    profile_name: str, json_profile: list[dict[str, dict]], engine: Engine
 ):
     with Session(engine) as session:
         all_steps = []
+        all_profile_metainstructions = []
+        all_profile_codes = []
         total_se_i = 0
-        for sa_i, sa in enumerate(profile):
-            sa["cross_db_uuid"] = str(uuid4())
-            for se_i, se in enumerate(sa["tasks"]):
-                se["cross_db_uuid"] = str(uuid4())
+        total_mi_i = 0
+        total_c_i = 0
+        for sa in json_profile:
+            for se in sa["tasks"]:
                 all_metainstructions = []
-                for mi_i, mi in enumerate(se["tasks"]):
-                    mi["cross_db_uuid"] = str(uuid4())
-                    code = None
+                for mi in se["tasks"]:
+                    all_codes = []
                     for c in mi["tasks"]:
-                        c["cross_db_uuid"] = str(uuid4())
-                        # TODO: manage multiple codes for same meta_intruction if possible/makes sense
-                        code = Code(content=c["name"], cross_db_uuid=c["cross_db_uuid"])
-                    if code:
-                        session.add(code)
+                        all_codes.append(Code(content=c["name"], position=total_c_i))
+                        total_c_i += 1
                     all_metainstructions.append(
                         MetaInstruction(
                             algoFamily=mi["algoFamily"],
                             algoName=mi["algoName"],
                             library=mi["library"],
                             function=mi["function"],
-                            code=code,
-                            cross_db_uuid=mi["cross_db_uuid"],
+                            position=total_mi_i,
+                            codes=all_codes,
+                            number_children=len(mi["tasks"]),
                         )
                     )
+                    all_profile_codes.extend(all_codes)
+                    total_mi_i += 1
                 all_steps.append(
                     Step(
                         name=se["name"],
                         position=total_se_i,
-                        metaInstructions=all_metainstructions,
-                        cross_db_uuid=se["cross_db_uuid"],
+                        meta_instructions=all_metainstructions,
+                        number_children=len(se["tasks"]),
                     )
                 )
-                total_se_i += se_i + 1
+                all_profile_metainstructions.extend(all_metainstructions)
+                total_se_i += 1
         profile = Profile(
-            name=notebook_name,
+            name=profile_name,
             steps=all_steps,
-            json_profile=profile,
+            meta_instructions=all_profile_metainstructions,
+            codes=all_profile_codes,
+            json_profile=json_profile,
         )
         session.add(profile)
         session.commit()

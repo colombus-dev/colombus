@@ -1,11 +1,11 @@
 import {
-	type Neo4JGraphDefinition,
 	getAllProfiles,
-	getNodesFromNeo4J,
+	getGraphNodes,
 	postApplyPpmFilter,
 	postApplyPpmFilterByName,
 	postProfiles,
 } from "@/api/client";
+import type { GraphDefinition } from "@/api/client";
 import ProfileExplorerGraphSettingsBar from "@/components/profile-explorer-graph-settings-bar";
 import ProfileExplorerPatternBar from "@/components/profile-explorer-pattern-bar";
 import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
@@ -28,7 +28,7 @@ export default function ExplorerPage() {
 		string | undefined
 	>();
 	const [filteredWorkflowsNodes, setFilteredWorkflowsNodes] = useState<
-		Neo4JGraphDefinition | undefined
+		GraphDefinition[] | undefined
 	>();
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
 	const currentPattern = useColombusStore((state) => state.currentPattern);
@@ -59,11 +59,11 @@ export default function ExplorerPage() {
 			).union(new Set(workflowsNames.slice(0, 5)));
 			setFilteredProfilesNames([...reducedWorkflows]);
 			setAvailableProfilesWithPpmData(workflowsPpmData ?? []);
-			await getNodesFromNeo4J(workflowsNames).then((r) =>
+			await getGraphNodes(workflowsNames).then((r) =>
 				setFilteredWorkflowsNodes(r),
 			);
 		};
-		if (currentPattern?.elements) {
+		if (currentPattern?.elements.length) {
 			postApplyPpmFilter(currentPattern.elements).then((workflowsWithData) =>
 				updateAndMergeWithPosted(
 					[...new Set(workflowsWithData.map(([n]) => n))].sort(),

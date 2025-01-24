@@ -13,7 +13,7 @@ def convert_meta_instructions_to_sql_query(
             continue
         names_to_pos[mi_i] = mi
 
-        prefix_query += f", mi{step_pos}_{mi_i}.cross_db_uuid"
+        prefix_query += f", mi{step_pos}_{mi_i}.id"
         join_query += f"\nINNER JOIN meta_instruction AS mi{step_pos}_{mi_i} ON s{step_pos}.id = mi{step_pos}_{mi_i}.step_id"
 
     prev_pos = -1
@@ -43,7 +43,7 @@ def convert_steps_to_sql_query(pattern: list[str | dict[str, Any]]) -> str:
             continue
         names_to_pos[se_i] = step["name"]
 
-        prefix_query += f", s{se_i}.cross_db_uuid"
+        prefix_query += f", s{se_i}.id"
         query += f"\nINNER JOIN step AS s{se_i} ON p.id = s{se_i}.profile_id"
 
         (
