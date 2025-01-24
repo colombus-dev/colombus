@@ -18,7 +18,6 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { stepsColorsMapping } from "@/configuration";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
-import useGraphStyle from "@/hooks/useGraphStyle";
 import { useColombusStore } from "@/store";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -45,7 +44,6 @@ export default function ExplorerPage() {
 	const { renderer } = useGraph(graphContainerId, filteredWorkflowsNodes);
 
 	useGraphPpm(renderer.current);
-	useGraphStyle(renderer.current);
 
 	useEffect(() => {
 		const updateAndMergeWithPosted = async (

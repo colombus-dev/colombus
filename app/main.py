@@ -1,4 +1,5 @@
 import json
+import uuid
 
 from typing import Annotated, Any
 from pathlib import Path
@@ -106,7 +107,7 @@ async def execute_ppm(
 @app.post("/api/ppm/execute/{name}")
 async def execute_ppm(
     name: str, session: Session = Depends(get_session)
-) -> list[tuple[str, ...]]:
+) -> list[tuple[str, uuid.UUID]]:
     ppm = session.execute(
         select(Pattern.json_pattern).where(Pattern.name == name)
     ).scalar_one()

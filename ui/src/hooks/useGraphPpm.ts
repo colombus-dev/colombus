@@ -1,7 +1,7 @@
 import type { PpmNodesDisplayMode } from "@/configuration";
 import { useColombusStore } from "@/store";
 import groupBy from "lodash/groupBy";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type Sigma from "sigma";
 
 const shouldHideNodeForModeMapping = {
@@ -24,6 +24,7 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 	const availableProfilesWithPpmData = useColombusStore(
 		(state) => state.availableProfilesWithPpmData,
 	);
+	const [hoveredNode, setHoveredNode] = useState<string | undefined>();
 
 	const allUuidsToDisplay = useMemo(
 		() =>
@@ -34,19 +35,32 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 	);
 
 	useEffect(() => {
-		if (availableProfilesWithPpmData.length > 0) {
-			graphRenderer?.setSetting("nodeReducer", (_, data) => data);
+		if (availableProfilesWithPpmData.length === 0) {
+			graphRenderer?.setSetting("nodeReducer", (nodeId, data) => {
+				const res = { ...data };
+				if (res.forceLabel) {
+					res.label = res.fullLabel;
+				} else {
+					res.label = nodeId === hoveredNode ? res.fullLabel : ""; // res.shortLabel;
+				}
+				return res;
+			});
 		} else {
-			graphRenderer?.setSetting("nodeReducer", (_, data) => {
+			graphRenderer?.setSetting("nodeReducer", (nodeId, data) => {
 				const res = { ...data };
 				if (
 					shouldHideNodeForModeMapping[patternCapturedNodesDisplayMode](
 						allUuidsToDisplay,
-						res.crossDbUuid,
+						nodeId,
 					)
 				) {
 					res.color = "#f6f6f6";
 					res.forceLabel = false;
+				}
+				if (res.forceLabel) {
+					res.label = res.fullLabel;
+				} else {
+					res.label = nodeId === hoveredNode ? res.fullLabel : ""; // res.shortLabel;
 				}
 				return res;
 			});
@@ -60,5 +74,15 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 		patternCapturedNodesDisplayMode,
 		availableProfilesWithPpmData,
 		allUuidsToDisplay,
+		hoveredNode,
 	]);
+
+	useEffect(() => {
+		graphRenderer?.on("enterNode", ({ node }) => {
+			setHoveredNode(node);
+		});
+		graphRenderer?.on("leaveNode", () => {
+			setHoveredNode(undefined);
+		});
+	}, [graphRenderer]);
 }
