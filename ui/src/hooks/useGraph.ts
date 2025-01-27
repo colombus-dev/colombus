@@ -29,7 +29,9 @@ export default function useGraph(
 			renderer.current?.kill();
 			const graphContainer = document.getElementById("graph-container");
 			if (graphContainer) {
-				renderer.current = new Sigma(graph.current, graphContainer);
+				renderer.current = new Sigma(graph.current, graphContainer, {
+					autoRescale: false,
+				});
 			}
 		}
 	}, [containerId]);
@@ -91,7 +93,7 @@ export default function useGraph(
 						layerLevel,
 						c1Size,
 						addedX + Math.round(fullN1Size / 2),
-						y - layerLevel * 10,
+						y - layerLevel * 50,
 					);
 					addEdge(getParentId(n1), n1.id);
 				}
@@ -103,7 +105,7 @@ export default function useGraph(
 					layerLevel,
 					c2Size,
 					addedX + Math.round(fullN2Size / 2),
-					y - layerLevel * 10,
+					y - layerLevel * 50,
 				);
 				addEdge(n1.id, n2.id);
 				addEdge(getParentId(n2), n2.id);
@@ -181,7 +183,7 @@ export default function useGraph(
 			}
 			addNewProfile(profile, addedX, addedY);
 			// TODO? if (addedX >= maxRowLength) {
-			addedY -= 20 * displayedLevel;
+			addedY -= 50 * displayedLevel;
 			addedX = 1;
 		}
 	}, [graphDefinitions, filteredProfilesNames, displayedLevel, addNewProfile]);

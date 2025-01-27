@@ -57,9 +57,16 @@ export default function ExplorerPage() {
 			).union(new Set(workflowsNames.slice(0, 5)));
 			setFilteredProfilesNames([...reducedWorkflows]);
 			setAvailableProfilesWithPpmData(workflowsPpmData ?? []);
-			await getGraphNodes(workflowsNames).then((r) =>
-				setFilteredWorkflowsNodes(r),
-			);
+			// TODO: to improve
+			const graphNodesToKeep =
+				filteredWorkflowsNodes?.filter(({ name }) =>
+					workflowsNames.includes(name),
+				) ?? [];
+			await getGraphNodes(
+				workflowsNames.filter(
+					(n) => !filteredWorkflowsNodes?.find(({ name }) => name === n),
+				),
+			).then((r) => setFilteredWorkflowsNodes([...graphNodesToKeep, ...r]));
 		};
 		if (currentPattern?.elements.length) {
 			postApplyPpmFilter(currentPattern.elements).then((workflowsWithData) =>
