@@ -27,10 +27,7 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 	const [hoveredNode, setHoveredNode] = useState<string | undefined>();
 
 	const allUuidsToDisplay = useMemo(
-		() =>
-			Object.entries(
-				groupBy(availableProfilesWithPpmData, ([wfName]) => wfName),
-			).flatMap(([, v]) => v[0].slice(1)),
+		() => availableProfilesWithPpmData.flatMap((v) => v.slice(1)),
 		[availableProfilesWithPpmData],
 	);
 

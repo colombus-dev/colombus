@@ -9,6 +9,7 @@ import {
 import {
 	specialCharacterOR,
 	specialSteps,
+	stepsColorsMapping,
 	supportedSteps,
 } from "@/configuration";
 import { cn } from "@/lib/utils";
@@ -41,9 +42,22 @@ const ProfilePatternEditor: React.FunctionComponent<
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Button variant="outline">
-								{p
-									? p.split(specialCharacterOR).join(" OR ")
-									: "Select step..."}
+								<tr key={`legend_color_${p}`}>
+									<td
+										style={{
+											backgroundColor: Object.entries(stepsColorsMapping).find(
+												(o) => o[0] === p,
+											)?.[1],
+											width: "20px",
+											height: "20px",
+										}}
+									/>
+									<td>
+										{p
+											? p.split(specialCharacterOR).join(" OR ")
+											: "Select step..."}
+									</td>
+								</tr>
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent>

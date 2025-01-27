@@ -5,10 +5,21 @@ export type PpmNodesDisplayMode = "show-all" | "show-fixed" | "show-variable";
 export const supportedSteps = [
 	"Library Loading",
 	"Visualization",
-	"Data Preparation",
-	"Feature Engineering",
-	"Model Building and Training",
 	"Others",
+	"Data Preparation",
+	"Data Profiling and Exploratory Data Analysis",
+	"Data Preparation and Exploration",
+	"Data Cleaning Filtering",
+	"Data Sub-sampling and Train-test Splitting",
+	"Data Loading",
+	"Exploratory Data Analysis",
+	"Feature Engineering",
+	"Feature Transformation",
+	"Feature Selection",
+	"Model Building and Training",
+	"Model Training",
+	"Model Parameter Tuning",
+	"Model Validation and Assembling",
 ];
 export const specialSteps = ["*"];
 export const specialCharacterOR = "|";
