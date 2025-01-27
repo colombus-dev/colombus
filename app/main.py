@@ -101,18 +101,26 @@ async def execute_ppm(
     pattern: list[str | dict[str, Any]], session: Session = Depends(get_session)
 ) -> list[tuple[str, ...]]:
     query = convert_ppm_to_sql_query(pattern)
-    return session.execute(text(query)).all()
+    # TODO: improve this uuid conversion
+    return [
+        (r[0],) + tuple(str(uuid.UUID(e)) for e in r[1:])
+        for r in session.exec(text(query)).all()
+    ]
 
 
 @app.post("/api/ppm/execute/{name}")
 async def execute_ppm(
     name: str, session: Session = Depends(get_session)
-) -> list[tuple[str, uuid.UUID]]:
+) -> list[tuple[str, ...]]:
     ppm = session.execute(
         select(Pattern.json_pattern).where(Pattern.name == name)
     ).scalar_one()
     query = convert_ppm_to_sql_query(ppm)
-    return session.execute(text(query)).all()
+    # TODO: improve this uuid conversion
+    return [
+        (r[0],) + tuple(str(uuid.UUID(e)) for e in r[1:])
+        for r in session.exec(text(query)).all()
+    ]
 
 
 @app.post("/api/ppm/save/{name}")
