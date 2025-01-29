@@ -7,6 +7,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+	specialCharacterNOT,
 	specialCharacterOR,
 	specialSteps,
 	stepsColorsMapping,
@@ -16,7 +17,8 @@ import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import { XCircle } from "lucide-react";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const ProfilePatternEditor: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
@@ -54,7 +56,16 @@ const ProfilePatternEditor: React.FunctionComponent<
 									/>
 									<td>
 										{p
-											? p.split(specialCharacterOR).join(" OR ")
+											? (p.startsWith(specialCharacterNOT)
+													? "NOT ("
+													: ""
+												).concat(
+													p
+														.split(specialCharacterOR)
+														.join(" OR ")
+														.replace(specialCharacterNOT, ""),
+													p.startsWith(specialCharacterNOT) ? ")" : "",
+												)
 											: "Select step..."}
 									</td>
 								</tr>
@@ -63,47 +74,51 @@ const ProfilePatternEditor: React.FunctionComponent<
 						<DropdownMenuContent>
 							<DropdownMenuLabel>Steps</DropdownMenuLabel>
 							<DropdownMenuSeparator />
-							{supportedSteps.map((s) => (
-								<DropdownMenuCheckboxItem
-									key={s}
-									onCheckedChange={(isChecked) => {
-										const newSteps = [...(currentPattern?.elements ?? [])];
-										if (isChecked) {
-											newSteps[i] = {
-												name:
-													p && !specialSteps.includes(p)
-														? `${p}${specialCharacterOR}${s}`
-														: s,
-												tasks: [],
-											};
-										} else {
-											const stepsToKeep = (newSteps[i] as { name: string }).name
-												.split(specialCharacterOR)
-												.filter((spl) => spl !== s);
-											if (stepsToKeep.length === 0) {
-												newSteps.splice(i, 1);
-											} else {
+							<ScrollArea className="col-span-2 h-60">
+								{supportedSteps.map((s) => (
+									<DropdownMenuCheckboxItem
+										key={s}
+										onCheckedChange={(isChecked) => {
+											const newSteps = [...(currentPattern?.elements ?? [])];
+											if (isChecked) {
 												newSteps[i] = {
-													name: stepsToKeep.join(specialCharacterOR),
+													name:
+														p && !specialSteps.includes(p)
+															? `${p}${specialCharacterOR}${s}`
+															: s,
 													tasks: [],
 												};
+											} else {
+												const stepsToKeep = (
+													newSteps[i] as { name: string }
+												).name
+													.split(specialCharacterOR)
+													.filter((spl) => spl !== s);
+												if (stepsToKeep.length === 0) {
+													newSteps.splice(i, 1);
+												} else {
+													newSteps[i] = {
+														name: stepsToKeep.join(specialCharacterOR),
+														tasks: [],
+													};
+												}
 											}
+											setCurrentPattern({
+												...currentPattern,
+												elements: newSteps,
+											});
+										}}
+										checked={
+											typeof currentPattern?.elements[i] === "object" &&
+											currentPattern.elements[i].name
+												.split(specialCharacterOR)
+												.includes(s)
 										}
-										setCurrentPattern({
-											...currentPattern,
-											elements: newSteps,
-										});
-									}}
-									checked={
-										typeof currentPattern?.elements[i] === "object" &&
-										currentPattern.elements[i].name
-											.split(specialCharacterOR)
-											.includes(s)
-									}
-								>
-									{s}
-								</DropdownMenuCheckboxItem>
-							))}
+									>
+										{s}
+									</DropdownMenuCheckboxItem>
+								))}
+							</ScrollArea>
 							<DropdownMenuLabel>Pattern elements</DropdownMenuLabel>
 							<DropdownMenuSeparator />
 							{specialSteps.map((s) => (
@@ -129,6 +144,34 @@ const ProfilePatternEditor: React.FunctionComponent<
 									{s}
 								</DropdownMenuCheckboxItem>
 							))}
+							<DropdownMenuCheckboxItem
+								key="negate"
+								onCheckedChange={(isChecked) => {
+									if (!p) {
+										return;
+									}
+									const newSteps = [...(currentPattern?.elements ?? [])];
+									if (isChecked) {
+										newSteps[i] = {
+											name: `${specialCharacterNOT}${p}`,
+											tasks: [],
+										};
+									} else {
+										newSteps[i] = {
+											name: p.replace(specialCharacterNOT, ""),
+											tasks: [],
+										};
+									}
+									setCurrentPattern({
+										...currentPattern,
+										elements: newSteps,
+									});
+								}}
+								checked={p?.startsWith(specialCharacterNOT)}
+								disabled={!p || specialSteps.includes(p)}
+							>
+								Negate (<p className="font-bold">NOT</p>)
+							</DropdownMenuCheckboxItem>
 							<DropdownMenuLabel>Other actions</DropdownMenuLabel>
 							<DropdownMenuSeparator />
 							{p && (

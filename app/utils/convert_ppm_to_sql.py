@@ -70,12 +70,14 @@ def convert_steps_to_sql_query(pattern: list[str | dict[str, Any]]) -> str:
                 f"s{se_i}.position = (SELECT max(position) FROM step WHERE profile_id = p.id)"
             )
         all_where_clauses.append(
-            "("
+            ("NOT (" if step_name.startswith("!") else "(")
             + " OR ".join(
-                f's{se_i}.name = "{or_name}"' for or_name in step_name.split("|")
+                f's{se_i}.name = "{or_name}"'
+                for or_name in step_name.replace("!", "").split("|")
             )
             + ")"
         )
+
         if prev_pos > -1:
             diff = se_i - prev_pos
             all_where_clauses.append(
