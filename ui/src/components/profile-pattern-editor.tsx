@@ -19,6 +19,7 @@ import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import { XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import type { PatternElement } from "@/lib/types";
 
 const ProfilePatternEditor: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
@@ -27,19 +28,33 @@ const ProfilePatternEditor: React.FunctionComponent<
 	const setCurrentPattern = useColombusStore(
 		(state) => state.setCurrentPattern,
 	);
+	const availablePatterns = useColombusStore((state) => state.allSavedPatterns);
 	const selectableSteps = !currentPattern?.elements?.length
 		? [undefined]
 		: [...currentPattern.elements, undefined];
 	// TODO: currently only supporting first pattern layer
-	const simplifiedPattern = selectableSteps.map((p) =>
-		typeof p === "string" ? p : p?.name,
-	);
+
+	const formatPatternElement = (pe: PatternElement) => {
+		// TODO: to clean/improve
+		let preprocessedName = pe.name
+			.split(specialCharacterOR)
+			.join(" OR ")
+			.replace(specialCharacterNOT, "");
+		if (pe.type === "subpattern") {
+			preprocessedName = `Pattern[${preprocessedName}]`;
+		}
+		if (pe.name.startsWith(specialCharacterNOT)) {
+			preprocessedName = `NOT (${preprocessedName})`;
+		}
+		return preprocessedName;
+	};
+
 	return (
 		<div {...divProps} className={cn("flex", divProps.className)}>
 			{currentPattern?.name && (
 				<p className="pt-2 px-2 font-bold">{currentPattern.name}: </p>
 			)}
-			{simplifiedPattern.map((p, i) => (
+			{selectableSteps.map((p, i) => (
 				<div key={`${i}_${p}`} className="flex items-stretch">
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
@@ -48,26 +63,13 @@ const ProfilePatternEditor: React.FunctionComponent<
 									<td
 										style={{
 											backgroundColor: Object.entries(stepsColorsMapping).find(
-												(o) => o[0] === p,
+												(o) => o[0] === p?.name,
 											)?.[1],
 											width: "20px",
 											height: "20px",
 										}}
 									/>
-									<td>
-										{p
-											? (p.startsWith(specialCharacterNOT)
-													? "NOT ("
-													: ""
-												).concat(
-													p
-														.split(specialCharacterOR)
-														.join(" OR ")
-														.replace(specialCharacterNOT, ""),
-													p.startsWith(specialCharacterNOT) ? ")" : "",
-												)
-											: "Select step..."}
-									</td>
+									<td>{p ? formatPatternElement(p) : "Select step..."}</td>
 								</tr>
 							</Button>
 						</DropdownMenuTrigger>
@@ -83,10 +85,11 @@ const ProfilePatternEditor: React.FunctionComponent<
 											if (isChecked) {
 												newSteps[i] = {
 													name:
-														p && !specialSteps.includes(p)
-															? `${p}${specialCharacterOR}${s}`
+														p && supportedSteps.includes(p.name)
+															? `${p.name}${specialCharacterOR}${s}`
 															: s,
 													tasks: [],
+													type: "simple",
 												};
 											} else {
 												const stepsToKeep = (
@@ -100,6 +103,7 @@ const ProfilePatternEditor: React.FunctionComponent<
 													newSteps[i] = {
 														name: stepsToKeep.join(specialCharacterOR),
 														tasks: [],
+														type: "simple",
 													};
 												}
 											}
@@ -109,7 +113,8 @@ const ProfilePatternEditor: React.FunctionComponent<
 											});
 										}}
 										checked={
-											typeof currentPattern?.elements[i] === "object" &&
+											currentPattern &&
+											i < currentPattern.elements.length &&
 											currentPattern.elements[i].name
 												.split(specialCharacterOR)
 												.includes(s)
@@ -119,6 +124,40 @@ const ProfilePatternEditor: React.FunctionComponent<
 									</DropdownMenuCheckboxItem>
 								))}
 							</ScrollArea>
+							<DropdownMenuLabel>Saved Patterns</DropdownMenuLabel>
+							<DropdownMenuSeparator />
+							{availablePatterns.map(({ name, elements: tasks }) => (
+								<DropdownMenuCheckboxItem
+									key={name}
+									onCheckedChange={(isChecked) => {
+										if (!name) {
+											return;
+										}
+										const newSteps = [...(currentPattern?.elements ?? [])];
+										if (isChecked) {
+											newSteps[i] = { name, tasks, type: "subpattern" };
+										} else {
+											newSteps.splice(i, 1);
+										}
+										setCurrentPattern({
+											...currentPattern,
+											elements: newSteps,
+										});
+									}}
+									checked={
+										name !== undefined &&
+										currentPattern &&
+										i < currentPattern.elements.length &&
+										currentPattern?.elements[i].name
+											.split(specialCharacterOR)
+											.includes(name)
+									}
+									// disabling current pattern to avoid recursion in ppm
+									disabled={name === currentPattern?.name}
+								>
+									{name}
+								</DropdownMenuCheckboxItem>
+							))}
 							<DropdownMenuLabel>Pattern elements</DropdownMenuLabel>
 							<DropdownMenuSeparator />
 							{specialSteps.map((s) => (
@@ -127,7 +166,7 @@ const ProfilePatternEditor: React.FunctionComponent<
 									onCheckedChange={(isChecked) => {
 										const newSteps = [...(currentPattern?.elements ?? [])];
 										if (isChecked) {
-											newSteps[i] = s;
+											newSteps[i] = { name: s, tasks: [], type: "special" };
 										} else {
 											newSteps.splice(i, 1);
 										}
@@ -153,13 +192,13 @@ const ProfilePatternEditor: React.FunctionComponent<
 									const newSteps = [...(currentPattern?.elements ?? [])];
 									if (isChecked) {
 										newSteps[i] = {
-											name: `${specialCharacterNOT}${p}`,
-											tasks: [],
+											...p,
+											name: `${specialCharacterNOT}${p.name}`,
 										};
 									} else {
 										newSteps[i] = {
-											name: p.replace(specialCharacterNOT, ""),
-											tasks: [],
+											...p,
+											name: p.name.replace(specialCharacterNOT, ""),
 										};
 									}
 									setCurrentPattern({
@@ -167,8 +206,8 @@ const ProfilePatternEditor: React.FunctionComponent<
 										elements: newSteps,
 									});
 								}}
-								checked={p?.startsWith(specialCharacterNOT)}
-								disabled={!p || specialSteps.includes(p)}
+								checked={p?.name.startsWith(specialCharacterNOT)}
+								disabled={!p || specialSteps.includes(p.name)}
 							>
 								Negate (<p className="font-bold">NOT</p>)
 							</DropdownMenuCheckboxItem>

@@ -92,13 +92,13 @@ async def import_multiple_profile(profile_files: list[UploadFile]):
 @app.get("/api/ppm/getAll")
 async def get_all_ppm(
     session: Session = Depends(get_session),
-) -> list[tuple[str, list[str | dict[str, Any]]]]:
+) -> list[tuple[str, list[dict[str, Any]]]]:
     return session.execute(select(Pattern.name, Pattern.json_pattern)).all()
 
 
 @app.post("/api/ppm/execute")
 async def execute_ppm(
-    pattern: list[str | dict[str, Any]], session: Session = Depends(get_session)
+    pattern: list[dict[str, Any]], session: Session = Depends(get_session)
 ) -> list[tuple[str, ...]]:
     query = convert_ppm_to_sql_query(pattern)
     # TODO: improve this uuid conversion
@@ -126,7 +126,7 @@ async def execute_ppm(
 @app.post("/api/ppm/save/{name}")
 async def save_ppm(
     name: str,
-    pattern: list[str | dict[str, Any]],
+    pattern: list[dict[str, Any]],
     session: Session = Depends(get_session),
 ) -> str:
     retrieved_session_pattern = session.execute(

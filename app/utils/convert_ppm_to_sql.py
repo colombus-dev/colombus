@@ -31,15 +31,27 @@ def convert_meta_instructions_to_sql_query(
     return prefix_query, join_query, where_query
 
 
-def convert_steps_to_sql_query(pattern: list[str | dict[str, Any]]) -> str:
+def flatten_pattern(pattern: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    flattened_pattern = []
+    for se in pattern:
+        if se["type"] == "subpattern":
+            flattened_pattern.extend(flatten_pattern(se["tasks"]))
+        else:
+            flattened_pattern.append(se)
+    return flattened_pattern
+
+
+def convert_steps_to_sql_query(pattern: list[dict[str, Any]]) -> str:
     names_to_pos = {}
     prefix_query = "SELECT DISTINCT p.name"
     query = " from profile AS p"
     all_meta_instructions_where_queries = []
     meta_instructions_prefix_query = []
 
-    for se_i, step in enumerate(pattern):
-        if step == "*":
+    flat_pattern = flatten_pattern(pattern)
+
+    for se_i, step in enumerate(flat_pattern):
+        if step["name"] == "*":
             continue
         names_to_pos[se_i] = step["name"]
 
@@ -64,7 +76,7 @@ def convert_steps_to_sql_query(pattern: list[str | dict[str, Any]]) -> str:
         if se_i == 0:
             # pattern strict starts with step_name
             all_where_clauses.append(f"s{se_i}.position = 0")
-        if se_i == len(pattern) - 1:
+        if se_i == len(flat_pattern) - 1:
             # pattern strict ends with step_name
             all_where_clauses.append(
                 f"s{se_i}.position = (SELECT max(position) FROM step WHERE profile_id = p.id)"
@@ -92,6 +104,6 @@ def convert_steps_to_sql_query(pattern: list[str | dict[str, Any]]) -> str:
     return prefix_query + "".join(meta_instructions_prefix_query) + query + ";"
 
 
-def convert_ppm_to_sql_query(pattern: list[str | dict[str, Any]]):
+def convert_ppm_to_sql_query(pattern: list[dict[str, Any]]):
     print(convert_steps_to_sql_query(pattern))
     return convert_steps_to_sql_query(pattern)

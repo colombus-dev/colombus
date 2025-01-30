@@ -4,7 +4,7 @@ import { create } from "zustand";
 import type { StateCreator } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
-type Pattern = {
+export type Pattern = {
 	name?: string;
 	elements: PatternElement[];
 };
@@ -13,6 +13,8 @@ interface PatternSlice {
 	currentPattern?: Pattern;
 	setCurrentPattern: (p: Pattern) => void;
 	resetCurrentPattern: () => void;
+	allSavedPatterns: Pattern[];
+	setAllSavedPatterns: (p: Pattern[]) => void;
 }
 
 interface GraphCustomizationSlice {
@@ -45,6 +47,9 @@ const createPatternSlice: StateCreator<ColombusStore, [], [], PatternSlice> = (
 	setCurrentPattern: (p) => set((state) => ({ ...state, currentPattern: p })),
 	resetCurrentPattern: () =>
 		set((state) => ({ ...state, currentPattern: undefined })),
+	allSavedPatterns: [],
+	setAllSavedPatterns: (p) =>
+		set((state) => ({ ...state, allSavedPatterns: p })),
 });
 
 const createGraphCustomizationSlice: StateCreator<

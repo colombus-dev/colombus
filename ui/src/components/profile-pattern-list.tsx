@@ -1,9 +1,8 @@
 import { getAllPatterns } from "@/api/client";
 import { Button } from "@/components/ui/button";
-import type { PatternElement } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 const ProfilePatternList: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
@@ -11,24 +10,25 @@ const ProfilePatternList: React.FunctionComponent<
 	const setCurrentPattern = useColombusStore(
 		(state) => state.setCurrentPattern,
 	);
-	const [availablePatternsNames, setAvailablePatternsNames] = useState<
-		{ name: string; elements: PatternElement[] }[]
-	>([]);
+	const availablePatterns = useColombusStore((state) => state.allSavedPatterns);
+	const setAvailablePatterns = useColombusStore(
+		(state) => state.setAllSavedPatterns,
+	);
 
 	useEffect(() => {
 		getAllPatterns().then((res) => {
-			setAvailablePatternsNames(
+			setAvailablePatterns(
 				res.map(([name, elements]) => ({
 					name,
 					elements,
 				})),
 			);
 		});
-	}, []);
+	}, [setAvailablePatterns]);
 
 	return (
 		<div {...divProps} className={cn("space-x-1", divProps.className)}>
-			{availablePatternsNames.map(({ name, elements }) => (
+			{availablePatterns.map(({ name, elements }) => (
 				<Button
 					key={name}
 					onClick={() => {
@@ -41,7 +41,7 @@ const ProfilePatternList: React.FunctionComponent<
 					{name}
 				</Button>
 			))}
-			{availablePatternsNames.length === 0 && (
+			{availablePatterns.length === 0 && (
 				<p>Saved patterns will be listed here...</p>
 			)}
 		</div>
