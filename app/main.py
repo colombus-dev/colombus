@@ -103,7 +103,12 @@ async def execute_ppm(
     query = convert_ppm_to_sql_query(pattern)
     # TODO: improve this uuid conversion
     return [
-        (r[0],) + tuple(str(uuid.UUID(e)) for e in r[1:])
+        (r[0],)
+        + tuple(
+            str(uuid.UUID(e))
+            for f in r[1:]
+            for e in f.replace("[", "").replace("]", "").replace('"', "").split(", ")
+        )
         for r in session.exec(text(query)).all()
     ]
 
@@ -118,7 +123,12 @@ async def execute_ppm(
     query = convert_ppm_to_sql_query(ppm)
     # TODO: improve this uuid conversion
     return [
-        (r[0],) + tuple(str(uuid.UUID(e)) for e in r[1:])
+        (r[0],)
+        + tuple(
+            str(uuid.UUID(e))
+            for f in r[1:]
+            for e in f.replace("[", "").replace("]", "").replace('"', "").split(", ")
+        )
         for r in session.exec(text(query)).all()
     ]
 

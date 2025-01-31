@@ -41,6 +41,17 @@ def flatten_pattern(pattern: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return flattened_pattern
 
 
+def convert_or_not_stmt(sql_step_name: str, step_name: str):
+    return (
+        ("NOT (" if step_name.startswith("!") else "(")
+        + " OR ".join(
+            f'{sql_step_name}.name = "{or_name}"'
+            for or_name in step_name.replace("!", "").split("|")
+        )
+        + ")"
+    )
+
+
 def convert_steps_to_sql_query(pattern: list[dict[str, Any]]) -> str:
     names_to_pos = {}
     prefix_query = "SELECT DISTINCT p.name"
@@ -55,8 +66,27 @@ def convert_steps_to_sql_query(pattern: list[dict[str, Any]]) -> str:
             continue
         names_to_pos[se_i] = step["name"]
 
-        prefix_query += f", s{se_i}.id"
-        query += f"\nINNER JOIN step AS s{se_i} ON p.id = s{se_i}.profile_id"
+        if "+" in step["name"]:
+            prefix_query += f", s{se_i}.grp_concat"
+            grp_condition = convert_or_not_stmt("s", step["name"].replace("+", ""))
+            # using JSON_ARRAYAGG over GROUP_CONCAT as it allows retuning bigger strings
+            # TODO: anyway, we should optimize the query to avoid returning too long string which can lead to
+            # performance/memory issues ?
+            query += f"""
+            INNER JOIN (
+                SELECT subabc.profile_id, subabc.name, subabc.grp, MIN(subabc.position) AS min_pos, MAX(subabc.position) AS max_pos, JSON_ARRAYAGG(subabc.id) AS grp_concat
+                FROM (
+                    SELECT subsubabc.profile_id, subsubabc.name, subsubabc.id, subsubabc.position, subsubabc.position - CAST(DENSE_RANK() OVER(partition by name ORDER BY position) AS SIGNED) AS grp
+                    FROM (
+                        SELECT DISTINCT p.id AS profile_id, p.name, s.id, s.position from profile AS p INNER JOIN step AS s ON p.id = s.profile_id WHERE {grp_condition} GROUP BY p.name, s.id ORDER BY p.name, s.position
+                    ) AS subsubabc
+                ) as subabc
+                GROUP BY subabc.profile_id, subabc.name, subabc.grp
+            ) AS s{se_i} ON p.id = s{se_i}.profile_id
+            """
+        else:
+            prefix_query += f", s{se_i}.id"
+            query += f"\nINNER JOIN step AS s{se_i} ON p.id = s{se_i}.profile_id"
 
         (
             meta_instructions_prefix_query,
@@ -69,36 +99,38 @@ def convert_steps_to_sql_query(pattern: list[dict[str, Any]]) -> str:
         if meta_instructions_prefix_query:
             all_meta_instructions_prefix_queries.append(meta_instructions_prefix_query)
 
-    query += "\nWHERE "
     prev_pos = -1
+    prev_sql_position = -1
     all_where_clauses = []
     for se_i, step_name in names_to_pos.items():
+        sql_min_position = (
+            f"s{se_i}.min_pos" if step_name.endswith("+") else f"s{se_i}.position"
+        )
+        sql_max_position = (
+            f"s{se_i}.max_pos" if step_name.endswith("+") else f"s{se_i}.position"
+        )
         if se_i == 0:
             # pattern strict starts with step_name
-            all_where_clauses.append(f"s{se_i}.position = 0")
+            all_where_clauses.append(f"{sql_min_position} = 0")
         if se_i == len(flat_pattern) - 1:
             # pattern strict ends with step_name
             all_where_clauses.append(
-                f"s{se_i}.position = (SELECT max(position) FROM step WHERE profile_id = p.id)"
+                f"{sql_max_position} = (SELECT max(position) FROM step WHERE profile_id = p.id)"
             )
-        all_where_clauses.append(
-            ("NOT (" if step_name.startswith("!") else "(")
-            + " OR ".join(
-                f's{se_i}.name = "{or_name}"'
-                for or_name in step_name.replace("!", "").split("|")
-            )
-            + ")"
-        )
+        if not step_name.endswith("+"):
+            all_where_clauses.append(convert_or_not_stmt(f"s{se_i}", step_name))
 
         if prev_pos > -1:
             diff = se_i - prev_pos
             all_where_clauses.append(
-                f"s{se_i}.position - s{prev_pos}.position {'=' if diff == 1 else '>='} 1"
+                f"{sql_max_position} - {prev_sql_position} {'=' if diff == 1 else '>='} 1"
             )
         prev_pos = se_i
+        prev_sql_position = sql_max_position
 
+    if all_where_clauses:
+        query += "\nWHERE "
     query += " AND ".join(all_where_clauses)
-
     query += "".join(all_meta_instructions_where_queries)
 
     return prefix_query + "".join(meta_instructions_prefix_query) + query + ";"

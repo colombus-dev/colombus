@@ -9,6 +9,7 @@ import {
 import {
 	specialCharacterNOT,
 	specialCharacterOR,
+	specialCharacterPLUS,
 	specialSteps,
 	stepsColorsMapping,
 	supportedSteps,
@@ -38,13 +39,18 @@ const ProfilePatternEditor: React.FunctionComponent<
 		// TODO: to clean/improve
 		let preprocessedName = pe.name
 			.split(specialCharacterOR)
+			.map((s) => (specialSteps.includes(s) ? s : `"${s}"`))
 			.join(" OR ")
-			.replace(specialCharacterNOT, "");
+			.replace(specialCharacterNOT, "")
+			.replace(specialCharacterPLUS, "");
 		if (pe.type === "subpattern") {
 			preprocessedName = `Pattern[${preprocessedName}]`;
 		}
 		if (pe.name.startsWith(specialCharacterNOT)) {
 			preprocessedName = `NOT (${preprocessedName})`;
+		}
+		if (pe.name.endsWith(specialCharacterPLUS)) {
+			preprocessedName = `AT LEAST ONE (${preprocessedName})`;
 		}
 		return preprocessedName;
 	};
@@ -84,17 +90,16 @@ const ProfilePatternEditor: React.FunctionComponent<
 											const newSteps = [...(currentPattern?.elements ?? [])];
 											if (isChecked) {
 												newSteps[i] = {
-													name:
-														p && supportedSteps.includes(p.name)
-															? `${p.name}${specialCharacterOR}${s}`
-															: s,
+													name: p?.name
+														.split(specialCharacterOR)
+														.filter((n) => supportedSteps.includes(n)).length
+														? `${p.name}${specialCharacterOR}${s}`
+														: s,
 													tasks: [],
 													type: "simple",
 												};
 											} else {
-												const stepsToKeep = (
-													newSteps[i] as { name: string }
-												).name
+												const stepsToKeep = newSteps[i].name
 													.split(specialCharacterOR)
 													.filter((spl) => spl !== s);
 												if (stepsToKeep.length === 0) {
@@ -210,6 +215,34 @@ const ProfilePatternEditor: React.FunctionComponent<
 								disabled={!p || specialSteps.includes(p.name)}
 							>
 								Negate (<p className="font-bold">NOT</p>)
+							</DropdownMenuCheckboxItem>
+							<DropdownMenuCheckboxItem
+								key="plus"
+								onCheckedChange={(isChecked) => {
+									if (!p) {
+										return;
+									}
+									const newSteps = [...(currentPattern?.elements ?? [])];
+									if (isChecked) {
+										newSteps[i] = {
+											...p,
+											name: `${p.name}${specialCharacterPLUS}`,
+										};
+									} else {
+										newSteps[i] = {
+											...p,
+											name: p.name.replace(specialCharacterPLUS, ""),
+										};
+									}
+									setCurrentPattern({
+										...currentPattern,
+										elements: newSteps,
+									});
+								}}
+								checked={p?.name.endsWith(specialCharacterPLUS)}
+								disabled={!p || specialSteps.includes(p.name)}
+							>
+								One or more (<p className="font-bold">+</p>)
 							</DropdownMenuCheckboxItem>
 							<DropdownMenuLabel>Other actions</DropdownMenuLabel>
 							<DropdownMenuSeparator />

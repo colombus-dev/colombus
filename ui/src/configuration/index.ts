@@ -24,6 +24,7 @@ export const supportedSteps = [
 export const specialSteps = ["*"];
 export const specialCharacterOR = "|";
 export const specialCharacterNOT = "!";
+export const specialCharacterPLUS = "+";
 
 // graph styling configuration
 
