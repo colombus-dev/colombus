@@ -19,10 +19,19 @@ type PatternGroupNode = {
 	number_sub_children: number;
 	childrenIds: string[];
 };
-const expandPpm = (elements: PatternElement[]): PatternElement[] => {
+const expandPpm = (
+	elements: PatternElement[],
+	parentPatternName?: string,
+): PatternElement[] => {
 	return elements
 		.filter(({ type }) => type !== "special")
-		.flatMap((e) => (e.type === "simple" ? e : expandPpm(e.tasks)));
+		.flatMap((e) =>
+			e.type === "simple" ? e : expandPpm(e.tasks, parentPatternName ?? e.name),
+		)
+		.map(
+			// replacing subpatterns names with the top pattern one
+			(e) => ({ ...e, name: parentPatternName ?? e.name }) as PatternElement,
+		);
 };
 
 const getGroupsIds = (
