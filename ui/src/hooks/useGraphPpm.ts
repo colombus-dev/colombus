@@ -1,18 +1,15 @@
 import type { PpmNodesDisplayMode } from "@/configuration";
 import { useColombusStore } from "@/store";
-import groupBy from "lodash/groupBy";
 import { useEffect, useMemo, useState } from "react";
 import type Sigma from "sigma";
 
 const shouldHideNodeForModeMapping = {
 	"show-all": () => false,
-	"show-fixed": (allUuids, nodeUuid) =>
-		nodeUuid && !allUuids.includes(nodeUuid),
-	"show-variable": (allUuids, nodeUuid) =>
-		nodeUuid && allUuids.includes(nodeUuid),
+	"show-fixed": (allUuids, nodeUuid) => nodeUuid && !allUuids.has(nodeUuid),
+	"show-variable": (allUuids, nodeUuid) => nodeUuid && allUuids.has(nodeUuid),
 } as {
 	[mode in PpmNodesDisplayMode]: (
-		allUuids: string[],
+		allUuids: Set<string>,
 		nodeUuid: string | undefined,
 	) => boolean;
 };
@@ -27,7 +24,10 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 	const [hoveredNode, setHoveredNode] = useState<string | undefined>();
 
 	const allUuidsToDisplay = useMemo(
-		() => availableProfilesWithPpmData.flatMap((v) => v.slice(1)),
+		() =>
+			new Set([
+				...availableProfilesWithPpmData.flatMap((v) => v.results.flat()),
+			]),
 		[availableProfilesWithPpmData],
 	);
 
@@ -46,6 +46,7 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 			graphRenderer?.setSetting("nodeReducer", (nodeId, data) => {
 				const res = { ...data };
 				if (
+					res.layerLevel !== 1 && // always showing matched groups
 					shouldHideNodeForModeMapping[patternCapturedNodesDisplayMode](
 						allUuidsToDisplay,
 						nodeId,

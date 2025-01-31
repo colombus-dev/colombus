@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlmodel import text, select, delete, Session
 
-from app.models.api_model import ProfileNodes
+from app.models.api_model import ProfileNodes, PpmResult
 from app.models.sql_model import (
     Pattern,
     Profile,
@@ -99,15 +99,22 @@ async def get_all_ppm(
 @app.post("/api/ppm/execute")
 async def execute_ppm(
     pattern: list[dict[str, Any]], session: Session = Depends(get_session)
-) -> list[tuple[str, ...]]:
+) -> list[PpmResult]:
     query = convert_ppm_to_sql_query(pattern)
     # TODO: improve this uuid conversion
     return [
-        (r[0],)
-        + tuple(
-            str(uuid.UUID(e))
-            for f in r[1:]
-            for e in f.replace("[", "").replace("]", "").replace('"', "").split(", ")
+        PpmResult(
+            profile_name=r[0],
+            results=[
+                [
+                    uuid.UUID(e)
+                    for e in f.replace("[", "")
+                    .replace("]", "")
+                    .replace('"', "")
+                    .split(", ")
+                ]
+                for f in r[1:]
+            ],
         )
         for r in session.exec(text(query)).all()
     ]
@@ -116,18 +123,25 @@ async def execute_ppm(
 @app.post("/api/ppm/execute/{name}")
 async def execute_ppm(
     name: str, session: Session = Depends(get_session)
-) -> list[tuple[str, ...]]:
+) -> list[PpmResult]:
     ppm = session.execute(
         select(Pattern.json_pattern).where(Pattern.name == name)
     ).scalar_one()
     query = convert_ppm_to_sql_query(ppm)
     # TODO: improve this uuid conversion
     return [
-        (r[0],)
-        + tuple(
-            str(uuid.UUID(e))
-            for f in r[1:]
-            for e in f.replace("[", "").replace("]", "").replace('"', "").split(", ")
+        PpmResult(
+            profile_name=r[0],
+            results=[
+                [
+                    uuid.UUID(e)
+                    for e in f.replace("[", "")
+                    .replace("]", "")
+                    .replace('"', "")
+                    .split(", ")
+                ]
+                for f in r[1:]
+            ],
         )
         for r in session.exec(text(query)).all()
     ]

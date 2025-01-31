@@ -1,3 +1,4 @@
+import type { PpmResult } from "@/api/client";
 import type { PpmNodesDisplayMode } from "@/configuration";
 import type { PatternElement } from "@/lib/types";
 import { create } from "zustand";
@@ -29,8 +30,8 @@ interface GraphCustomizationSlice {
 interface ProfilesSlice {
 	availableProfilesNames: string[];
 	setAvailableProfilesNames: (profiles: string[]) => void;
-	availableProfilesWithPpmData: string[][];
-	setAvailableProfilesWithPpmData: (data: string[][]) => void;
+	availableProfilesWithPpmData: PpmResult[];
+	setAvailableProfilesWithPpmData: (data: PpmResult[]) => void;
 	filteredProfilesNames: string[];
 	setFilteredProfilesNames: (profiles: string[]) => void;
 }

@@ -5,7 +5,7 @@ import {
 	postApplyPpmFilterByName,
 	postProfiles,
 } from "@/api/client";
-import type { GraphDefinition } from "@/api/client";
+import type { GraphDefinition, PpmResult } from "@/api/client";
 import ProfileExplorerGraphSettingsBar from "@/components/profile-explorer-graph-settings-bar";
 import ProfileExplorerPatternBar from "@/components/profile-explorer-pattern-bar";
 import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
@@ -48,7 +48,7 @@ export default function ExplorerPage() {
 	useEffect(() => {
 		const updateAndMergeWithPosted = async (
 			workflowsNames: string[],
-			workflowsPpmData: string[][] | undefined,
+			workflowsPpmData?: PpmResult[],
 		) => {
 			setAvailableProfilesNames(workflowsNames);
 			// we prioritize newly posted profiles
@@ -71,14 +71,22 @@ export default function ExplorerPage() {
 		if (currentPattern?.elements.length) {
 			postApplyPpmFilter(currentPattern.elements).then((workflowsWithData) =>
 				updateAndMergeWithPosted(
-					[...new Set(workflowsWithData.map(([n]) => n))].sort(),
+					[
+						...new Set(
+							workflowsWithData.map(({ profile_name }) => profile_name),
+						),
+					],
 					workflowsWithData,
 				),
 			);
 		} else if (currentPattern?.name) {
 			postApplyPpmFilterByName(currentPattern.name).then((workflowsWithData) =>
 				updateAndMergeWithPosted(
-					[...new Set(workflowsWithData.map(([n]) => n))].sort(),
+					[
+						...new Set(
+							workflowsWithData.map(({ profile_name }) => profile_name),
+						),
+					],
 					workflowsWithData,
 				),
 			);

@@ -28,7 +28,7 @@ export const specialCharacterPLUS = "+";
 
 // graph styling configuration
 
-export const colors = ["#F79767", "#57C7E3", "#F16667", "#D9C8AE"];
+export const colors = ["#F79767", "#ffd700", "#57C7E3", "#F16667", "#D9C8AE"];
 
 export const stepsColorsMapping: { [stepName: string]: string } = {
 	"Library Loading": "#ff0029",

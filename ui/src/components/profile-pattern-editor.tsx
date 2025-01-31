@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuCheckboxItem,
@@ -6,6 +7,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
 	specialCharacterNOT,
 	specialCharacterOR,
@@ -14,13 +16,11 @@ import {
 	stepsColorsMapping,
 	supportedSteps,
 } from "@/configuration";
+import type { PatternElement } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import { XCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import type { PatternElement } from "@/lib/types";
 
 const ProfilePatternEditor: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>

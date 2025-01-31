@@ -1,5 +1,6 @@
 import uuid
 
+from pydantic import BaseModel
 from sqlmodel import SQLModel
 
 from app.models.sql_model import ProfileBase, StepBase, MetaInstructionBase, CodeBase
@@ -25,3 +26,8 @@ class ProfileNodes(ProfileBase):
     steps: list[StepNode]
     meta_instructions: list[MetaInstructionNode]
     codes: list[CodeNode]
+
+
+class PpmResult(BaseModel):
+    profile_name: str
+    results: list[list[uuid.UUID]]

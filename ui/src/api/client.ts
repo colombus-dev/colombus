@@ -30,6 +30,10 @@ export type GraphDefinition = {
 	meta_instructions: MetaInstructionNode[];
 	codes: CodeNode[];
 };
+export type PpmResult = {
+	profile_name: string;
+	results: string[][];
+};
 
 export async function getGraphNodes(profilesNames?: string[]) {
 	if (profilesNames?.length === 0) {
@@ -80,13 +84,13 @@ export async function getAllPatterns() {
 
 export async function postApplyPpmFilter(pattern: PatternElement[]) {
 	return await axios
-		.post<string[][]>("http://localhost:8080/api/ppm/execute", pattern)
+		.post<PpmResult[]>("http://localhost:8080/api/ppm/execute", pattern)
 		.then(({ data }) => data);
 }
 
 export async function postApplyPpmFilterByName(name: string) {
 	return await axios
-		.post<string[][]>(`http://localhost:8080/api/ppm/execute/${name}`)
+		.post<PpmResult[]>(`http://localhost:8080/api/ppm/execute/${name}`)
 		.then(({ data }) => data);
 }
 
