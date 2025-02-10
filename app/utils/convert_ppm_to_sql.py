@@ -54,86 +54,166 @@ def convert_or_not_stmt(sql_step_name: str, step_name: str):
 
 def convert_steps_to_sql_query(pattern: list[dict[str, Any]]) -> str:
     names_to_pos = {}
-    prefix_query = "SELECT DISTINCT p.name"
-    query = " from profile AS p"
-    all_meta_instructions_where_queries = []
-    meta_instructions_prefix_query = []
+    all_cte_clauses = []
+    all_select_clauses = ["p.name"]
+    all_groups_select_clauses = ["sub_p.id"]
+    all_join_clauses = []
+    all_groups_join_clauses = []
+    all_where_clauses = []
+    all_groups_where_clauses = []
+    all_groupby_clauses = ["p.id"]
+    # all_meta_instructions_where_queries = []
+    # meta_instructions_prefix_query = []
 
     flat_pattern = flatten_pattern(pattern)
 
+    prev_se_i_group = None
     for se_i, step in enumerate(flat_pattern):
         if step["name"] == "*":
             continue
         names_to_pos[se_i] = step["name"]
 
-        if "+" in step["name"]:
-            prefix_query += f", s{se_i}.grp_concat"
-            grp_condition = convert_or_not_stmt("s", step["name"].replace("+", ""))
+        if "+" in step["name"] or "*" in step["name"]:
+            grp_condition = convert_or_not_stmt(
+                "s", step["name"].replace("+", "").replace("*", "")
+            )
+            all_cte_clauses.append(
+                f"""
+                res{se_i}_groups AS (
+                    SELECT subabc.profile_id, subabc.id, subabc.grp, subabc.position
+                    FROM (
+                        SELECT subsubabc.profile_id, subsubabc.id, subsubabc.position, subsubabc.position - CAST(DENSE_RANK() OVER(partition by profile_id ORDER BY position) AS SIGNED) AS grp
+                        FROM (
+                            SELECT DISTINCT p.id AS profile_id, s.id, s.position
+                            FROM profile AS p
+                            INNER JOIN step AS s ON p.id = s.profile_id
+                            WHERE {grp_condition}
+                            GROUP BY s.id
+                            ORDER BY s.position
+                        ) AS subsubabc
+                    ) as subabc
+                )
+                """
+            )
+            all_cte_clauses.append(
+                f"""
+                grp_min_max_{se_i} AS (
+                    SELECT profile_id, grp, MIN(position) AS min_pos, MAX(position) AS max_pos
+                    FROM res{se_i}_groups
+                    GROUP BY profile_id, grp
+                )
+                """
+            )
+            all_select_clauses.append(
+                f"GROUP_CONCAT(DISTINCT sub_select.s{se_i}_id) AS grp_concat_s{se_i}"
+            )
+            all_groups_select_clauses.append(f"sub_s{se_i}.id AS s{se_i}_id")
+            all_groups_select_clauses.append(
+                f"sub_s{se_i}.position AS s{se_i}_position"
+            )
+            all_groups_select_clauses.append(f"sub_s{se_i}.grp AS s{se_i}_grp")
+            all_groups_select_clauses.append(f"sub_s{se_i}.min_pos AS s{se_i}_min_pos")
+            all_groups_select_clauses.append(f"sub_s{se_i}.max_pos AS s{se_i}_max_pos")
             # using JSON_ARRAYAGG over GROUP_CONCAT as it allows retuning bigger strings
             # TODO: anyway, we should optimize the query to avoid returning too long string which can lead to
             # performance/memory issues ?
-            query += f"""
-            INNER JOIN (
-                SELECT subabc.profile_id, subabc.name, subabc.grp, MIN(subabc.position) AS min_pos, MAX(subabc.position) AS max_pos, JSON_ARRAYAGG(subabc.id) AS grp_concat
-                FROM (
-                    SELECT subsubabc.profile_id, subsubabc.name, subsubabc.id, subsubabc.position, subsubabc.position - CAST(DENSE_RANK() OVER(partition by name ORDER BY position) AS SIGNED) AS grp
-                    FROM (
-                        SELECT DISTINCT p.id AS profile_id, p.name, s.id, s.position from profile AS p INNER JOIN step AS s ON p.id = s.profile_id WHERE {grp_condition} GROUP BY p.name, s.id ORDER BY p.name, s.position
-                    ) AS subsubabc
-                ) as subabc
-                GROUP BY subabc.profile_id, subabc.name, subabc.grp
-            ) AS s{se_i} ON p.id = s{se_i}.profile_id
+            join_type = "INNER" if "+" in step["name"] else "LEFT OUTER"
+            join_condition = [f"sub_p.id = sub_s{se_i}.profile_id"]
+            if prev_se_i_group is not None:
+                join_condition.append(
+                    f"sub_s{se_i}.position > sub_s{prev_se_i_group}.max_pos"
+                )
+                join_condition.append(
+                    f"sub_s{se_i}.min_pos <= sub_s{prev_se_i_group}.max_pos"
+                )
+            all_groups_join_clauses.append(
+                f"""
+                {join_type} JOIN (
+                    SELECT res{se_i}_groups.*, grp_min_max_{se_i}.min_pos, grp_min_max_{se_i}.max_pos
+                    FROM res{se_i}_groups
+                    INNER JOIN grp_min_max_{se_i} ON res{se_i}_groups.grp = grp_min_max_{se_i}.grp AND res{se_i}_groups.profile_id = grp_min_max_{se_i}.profile_id
+                ) AS sub_s{se_i} ON {' AND '.join(join_condition)}
             """
+            )
+            all_groupby_clauses.append(f"sub_select.s{se_i}_grp")
+            prev_se_i_group = se_i
         else:
-            prefix_query += f", s{se_i}.id"
-            query += f"\nINNER JOIN step AS s{se_i} ON p.id = s{se_i}.profile_id"
+            all_select_clauses.append(f"s{se_i}.id")
+            all_join_clauses.append(
+                f"\nINNER JOIN step AS s{se_i} ON p.id = s{se_i}.profile_id"
+            )
+            all_groupby_clauses.append(f"s{se_i}.id")
 
-        (
-            meta_instructions_prefix_query,
-            meta_instructions_join_query,
-            meta_instructions_where_query,
-        ) = convert_meta_instructions_to_sql_query(step["tasks"], se_i)
-        query += meta_instructions_join_query
-        if meta_instructions_where_query:
-            all_meta_instructions_where_queries.append(meta_instructions_where_query)
-        if meta_instructions_prefix_query:
-            all_meta_instructions_prefix_queries.append(meta_instructions_prefix_query)
+        # TODO
+        # (
+        #     meta_instructions_prefix_query,
+        #     meta_instructions_join_query,
+        #     meta_instructions_where_query,
+        # ) = convert_meta_instructions_to_sql_query(step["tasks"], se_i)
+        # query += meta_instructions_join_query
+        # if meta_instructions_where_query:
+        #     all_meta_instructions_where_queries.append(meta_instructions_where_query)
+        # if meta_instructions_prefix_query:
+        #     all_meta_instructions_prefix_queries.append(meta_instructions_prefix_query)
 
     prev_pos = -1
     prev_sql_position = -1
-    all_where_clauses = []
     for se_i, step_name in names_to_pos.items():
+        step_ends_with_special = step_name.endswith(("+", "*"))
         sql_min_position = (
-            f"s{se_i}.min_pos" if step_name.endswith("+") else f"s{se_i}.position"
+            f"sub_select.s{se_i}_min_pos"
+            if step_ends_with_special
+            else f"s{se_i}.position"
         )
         sql_max_position = (
-            f"s{se_i}.max_pos" if step_name.endswith("+") else f"s{se_i}.position"
+            f"sub_select.s{se_i}_max_pos"
+            if step_ends_with_special
+            else f"s{se_i}.position"
         )
-        if se_i == 0:
+        if se_i == 0 and not step_name.endswith("*"):
             # pattern strict starts with step_name
             all_where_clauses.append(f"{sql_min_position} = 0")
-        if se_i == len(flat_pattern) - 1:
+        if se_i == len(flat_pattern) - 1 and not step_name.endswith("*"):
             # pattern strict ends with step_name
             all_where_clauses.append(
                 f"{sql_max_position} = (SELECT max(position) FROM step WHERE profile_id = p.id)"
             )
-        if not step_name.endswith("+"):
+        if not step_ends_with_special:
             all_where_clauses.append(convert_or_not_stmt(f"s{se_i}", step_name))
-
-        if prev_pos > -1:
-            diff = se_i - prev_pos
-            all_where_clauses.append(
-                f"{sql_max_position} - {prev_sql_position} {'=' if diff == 1 else '>='} 1"
-            )
+            if prev_pos > -1:
+                diff = se_i - prev_pos
+                all_where_clauses.append(
+                    f"{sql_max_position} - {prev_sql_position} {'=' if diff == 1 else '>='} 1"
+                )
         prev_pos = se_i
         prev_sql_position = sql_max_position
 
+    query = ""
+    if all_cte_clauses:
+        query += "WITH "
+        query += ", ".join(all_cte_clauses)
+    query += "\nSELECT DISTINCT "  # TODO: check DISTINCT
+    query += ", ".join(all_select_clauses)
+    query += "\nFROM profile AS p"
+    query += "\n".join(all_join_clauses)
+    if all_groups_join_clauses:
+        query += "\nINNER JOIN (\nSELECT "
+        query += ", ".join(all_groups_select_clauses)
+        query += "\nFROM profile as sub_p"
+        query += "\n".join(all_groups_join_clauses)
+        if all_groups_where_clauses:
+            query += "\nWHERE "
+            query += " AND ".join(all_groups_where_clauses)
+        query += "\n) AS sub_select ON p.id = sub_select.id"
     if all_where_clauses:
         query += "\nWHERE "
-    query += " AND ".join(all_where_clauses)
-    query += "".join(all_meta_instructions_where_queries)
+        query += " AND ".join(all_where_clauses)
+    query += "\nGROUP BY "
+    query += ", ".join(all_groupby_clauses)
+    # query += "".join(all_meta_instructions_where_queries)
 
-    return prefix_query + "".join(meta_instructions_prefix_query) + query + ";"
+    # return prefix_query + "".join(meta_instructions_prefix_query) + query + ";"
+    return query + ";"
 
 
 def convert_ppm_to_sql_query(pattern: list[dict[str, Any]]):

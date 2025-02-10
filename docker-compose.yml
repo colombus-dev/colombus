@@ -12,6 +12,7 @@ services:
         condition: service_healthy
   colombus_mysql:
     image: mysql:lts
+    command: --group_concat_max_len=8192
     environment:
       MYSQL_ROOT_PASSWORD: nina
       MYSQL_DATABASE: colombusdb

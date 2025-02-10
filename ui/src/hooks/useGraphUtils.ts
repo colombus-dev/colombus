@@ -199,40 +199,45 @@ export default function useGraphUtils(graph: Graph) {
 			if (displayedLevel >= 1) {
 				addNode(id, name, 0, 5, addedX + Math.round((5 * codes.length) / 2), y);
 			}
-			const hasPpmGroups = ppmResults && currentPattern;
-			const groupsNodes = hasPpmGroups
-				? getGroupsIds(ppmResults, currentPattern, steps)
-				: [];
-			if (hasPpmGroups) {
-				const stepsPositions = getNodesPositionsSimulation(steps, addedX);
-				// displaying matched ppm groups
-				for (const grpNodes of groupsNodes) {
-					let grpX = x;
-					for (const node of grpNodes) {
-						const startStepX = steps.findIndex(
-							(s) => s.id === node.childrenIds[0],
-						);
-						const endStepX = steps.findIndex(
-							(s) => s.id === node.childrenIds[node.childrenIds.length - 1],
-						);
-						grpX += Math.round(
-							(stepsPositions.nodesPositions[endStepX] +
-								stepsPositions.nodesPositions[startStepX]) /
-								2,
-						);
-						addNode(
-							node.id,
-							node.name,
-							1,
-							useWeightedNodes ? 5 + (node.number_children ?? 0) : 5,
-							grpX,
-							y - 50,
-						);
-						addEdge(id, node.id);
+			if (displayedLevel >= 2) {
+				const hasPpmGroups = ppmResults && currentPattern;
+				const groupsNodes = hasPpmGroups
+					? getGroupsIds(ppmResults, currentPattern, steps)
+					: [];
+				if (hasPpmGroups) {
+					const stepsPositions = getNodesPositionsSimulation(steps, addedX);
+					// displaying matched ppm groups
+					for (const grpNodes of groupsNodes) {
+						let grpX = x;
+						for (const node of grpNodes) {
+							const startStepX = steps.findIndex(
+								(s) => s.id === node.childrenIds[0],
+							);
+							const endStepX = steps.findIndex(
+								(s) => s.id === node.childrenIds[node.childrenIds.length - 1],
+							);
+							grpX += Math.round(
+								(stepsPositions.nodesPositions[endStepX] +
+									stepsPositions.nodesPositions[startStepX]) /
+									2,
+							);
+							addNode(
+								node.id,
+								node.name,
+								1,
+								useWeightedNodes ? 5 + (node.number_children ?? 0) : 5,
+								x +
+									Math.round(
+										(stepsPositions.nodesPositions[endStepX] +
+											stepsPositions.nodesPositions[startStepX]) /
+											2,
+									),
+								y - 50,
+							);
+							addEdge(id, node.id);
+						}
 					}
 				}
-			}
-			if (displayedLevel >= 2) {
 				const flatGroupsNodes = groupsNodes.flat();
 				addedX = Math.max(
 					addedX,

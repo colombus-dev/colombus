@@ -12,6 +12,7 @@ import {
 	specialCharacterNOT,
 	specialCharacterOR,
 	specialCharacterPLUS,
+	specialCharacterSTAR,
 	specialSteps,
 	stepsColorsMapping,
 	supportedSteps,
@@ -39,15 +40,23 @@ const ProfilePatternEditor: React.FunctionComponent<
 		// TODO: to clean/improve
 		let preprocessedName = pe.name
 			.split(specialCharacterOR)
-			.map((s) => (specialSteps.includes(s) ? s : `"${s}"`))
-			.join(" OR ")
-			.replace(specialCharacterNOT, "")
-			.replace(specialCharacterPLUS, "");
+			.map((s) =>
+				specialSteps.includes(s)
+					? s
+					: `"${s
+							.replace(specialCharacterNOT, "")
+							.replace(specialCharacterSTAR, "")
+							.replace(specialCharacterPLUS, "")}"`,
+			)
+			.join(" OR ");
 		if (pe.type === "subpattern") {
 			preprocessedName = `Pattern[${preprocessedName}]`;
 		}
 		if (pe.name.startsWith(specialCharacterNOT)) {
 			preprocessedName = `NOT (${preprocessedName})`;
+		}
+		if (pe.name.endsWith(specialCharacterSTAR)) {
+			preprocessedName = `ZERO OR MORE (${preprocessedName})`;
 		}
 		if (pe.name.endsWith(specialCharacterPLUS)) {
 			preprocessedName = `AT LEAST ONE (${preprocessedName})`;
@@ -82,7 +91,7 @@ const ProfilePatternEditor: React.FunctionComponent<
 						<DropdownMenuContent>
 							<DropdownMenuLabel>Steps</DropdownMenuLabel>
 							<DropdownMenuSeparator />
-							<ScrollArea className="col-span-2 h-60">
+							<ScrollArea className="col-span-2 h-48">
 								{supportedSteps.map((s) => (
 									<DropdownMenuCheckboxItem
 										key={s}
@@ -215,6 +224,34 @@ const ProfilePatternEditor: React.FunctionComponent<
 								disabled={!p || specialSteps.includes(p.name)}
 							>
 								Negate (<p className="font-bold">NOT</p>)
+							</DropdownMenuCheckboxItem>
+							<DropdownMenuCheckboxItem
+								key="star"
+								onCheckedChange={(isChecked) => {
+									if (!p) {
+										return;
+									}
+									const newSteps = [...(currentPattern?.elements ?? [])];
+									if (isChecked) {
+										newSteps[i] = {
+											...p,
+											name: `${p.name}${specialCharacterSTAR}`,
+										};
+									} else {
+										newSteps[i] = {
+											...p,
+											name: p.name.replace(specialCharacterSTAR, ""),
+										};
+									}
+									setCurrentPattern({
+										...currentPattern,
+										elements: newSteps,
+									});
+								}}
+								checked={p?.name.endsWith(specialCharacterSTAR)}
+								disabled={!p || specialSteps.includes(p.name)}
+							>
+								Zero or more (<p className="font-bold">*</p>)
 							</DropdownMenuCheckboxItem>
 							<DropdownMenuCheckboxItem
 								key="plus"
