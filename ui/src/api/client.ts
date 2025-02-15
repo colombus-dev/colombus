@@ -37,7 +37,7 @@ export type PpmResult = {
 
 export async function getGraphNodes(profilesNames?: string[]) {
 	if (profilesNames?.length === 0) {
-		return new Promise<GraphDefinition[]>(() => [] as GraphDefinition[]);
+		return Promise.resolve<GraphDefinition[]>([]);
 	}
 	return await axios
 		.get<GraphDefinition[]>("http://localhost:8080/api/profile/nodes", {

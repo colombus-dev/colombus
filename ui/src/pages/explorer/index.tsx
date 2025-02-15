@@ -30,6 +30,7 @@ export default function ExplorerPage() {
 		GraphDefinition[] | undefined
 	>();
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
+	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const setAvailableProfilesWithPpmData = useColombusStore(
 		(state) => state.setAvailableProfilesWithPpmData,
@@ -66,8 +67,12 @@ export default function ExplorerPage() {
 				workflowsNames.filter(
 					(n) => !filteredWorkflowsNodes?.find(({ name }) => name === n),
 				),
-			).then((r) => setFilteredWorkflowsNodes([...graphNodesToKeep, ...r]));
+			).then((r) => {
+				setFilteredWorkflowsNodes([...graphNodesToKeep, ...r]);
+				setIsLoading(false);
+			});
 		};
+		setIsLoading(true);
 		if (currentPattern?.elements.length) {
 			postApplyPpmFilter(currentPattern.elements).then((workflowsWithData) =>
 				updateAndMergeWithPosted(
@@ -140,7 +145,7 @@ export default function ExplorerPage() {
 				<ProfileExplorerGraphSettingsBar />
 				<ProfileExplorerPpmResultsBar />
 			</div>
-			<div className="col-span-5 grid grid-rows-6 items-center">
+			<div className="col-span-4 grid grid-rows-6 items-center">
 				{!currentPattern ? (
 					<ProfileExplorerPatternBar className="row-span-1s" />
 				) : (
@@ -150,12 +155,15 @@ export default function ExplorerPage() {
 						<ScrollBar orientation="horizontal" />
 					</ScrollArea>
 				)}
+				{isLoading && <p>Loading...</p>}
 				<div
 					className="row-span-7 border-gray-500 border"
 					id="graph-container"
 					style={{ height: "99%", width: "98%" }}
 				/>
-				<table className="relative text-sm">
+			</div>
+			<div className="col-span-1">
+				<table className="text-sm">
 					<thead className="font-bold">
 						<tr>
 							<td colSpan={2}>Legend</td>
@@ -163,7 +171,7 @@ export default function ExplorerPage() {
 					</thead>
 					<tbody>
 						{Object.entries(stepsColorsMapping).map(([n, c]) => (
-							<tr key={`legend_color_${c}`}>
+							<tr key={`legend_color_${c}`} className="space-y-1">
 								<td
 									style={{ backgroundColor: c, width: "20px", height: "20px" }}
 								/>
