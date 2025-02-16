@@ -28,22 +28,27 @@ const ProfilePatternList: React.FunctionComponent<
 
 	return (
 		<div {...divProps} className={cn("space-x-1", divProps.className)}>
-			{availablePatterns.map(({ name, elements }) => (
-				<Button
-					key={name}
-					onClick={() => {
-						setCurrentPattern({
-							name,
-							elements,
-						});
-					}}
-				>
-					{name}
-				</Button>
-			))}
-			{availablePatterns.length === 0 && (
-				<p>Saved patterns will be listed here...</p>
-			)}
+			<ul className="list-none space-y-1">
+				{availablePatterns.map(({ name, elements }) => (
+					<li key={name}>
+						<Button
+							className="w-full"
+							key={name}
+							onClick={() => {
+								setCurrentPattern({
+									name,
+									elements,
+								});
+							}}
+						>
+							{name}
+						</Button>
+					</li>
+				))}
+				{availablePatterns.length === 0 && (
+					<p>Saved patterns will be listed here...</p>
+				)}
+			</ul>
 		</div>
 	);
 };

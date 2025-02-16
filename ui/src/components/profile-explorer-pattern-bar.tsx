@@ -1,8 +1,6 @@
-import ProfilePatternList from "@/components/profile-pattern-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type { PatternElement } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
@@ -34,7 +32,7 @@ const ProfileExplorerPatternBar: React.FunctionComponent<
 		);
 
 	return (
-		<div className={cn("grid grid-cols-8 space-x-2", divProps.className)}>
+		<div className={cn("grid grid-cols-4 space-x-2", divProps.className)}>
 			<form onSubmit={handlePpmFormSubmit} className="col-span-2">
 				<div className="grid w-full max-w-sm items-center gap-1.5">
 					<Label htmlFor="ppm-form">Select a pattern to apply (JSON)</Label>
@@ -42,16 +40,14 @@ const ProfileExplorerPatternBar: React.FunctionComponent<
 					<Button type="submit">Submit PPM filter</Button>
 				</div>
 			</form>
-			<Button
-				className="col-span-2"
-				onClick={() => setCurrentPattern({ elements: [] })}
-			>
-				Create new pattern
-			</Button>
-			<ScrollArea className="col-span-2 h-24">
-				<p className="font-bold">Saved patterns</p>
-				<ProfilePatternList />
-			</ScrollArea>
+			<div className="col-span-2">
+				<Button
+					className="w-full"
+					onClick={() => setCurrentPattern({ elements: [] })}
+				>
+					Create new pattern
+				</Button>
+			</div>
 		</div>
 	);
 };

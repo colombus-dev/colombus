@@ -11,14 +11,17 @@ import ProfileExplorerPatternBar from "@/components/profile-explorer-pattern-bar
 import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
 import ProfilePatternEditor from "@/components/profile-pattern-editor";
+import ProfilePatternList from "@/components/profile-pattern-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { stepsColorsMapping } from "@/configuration";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import { useColombusStore } from "@/store";
+import { CirclePlus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -40,6 +43,10 @@ export default function ExplorerPage() {
 	);
 	const setFilteredProfilesNames = useColombusStore(
 		(state) => state.setFilteredProfilesNames,
+	);
+
+	const setCurrentPattern = useColombusStore(
+		(state) => state.setCurrentPattern,
 	);
 
 	const { renderer } = useGraph(graphContainerId, filteredWorkflowsNodes);
@@ -125,7 +132,7 @@ export default function ExplorerPage() {
 	}, []);
 
 	return (
-		<section className="grid grid-cols-6 space-x-4 h-full">
+		<section className="grid grid-cols-7 space-x-4 h-full">
 			<div className="col-span-1 space-y-2 p-2">
 				<div className="row-span-1">
 					<form onSubmit={handleProfileFormSubmit}>
@@ -162,24 +169,40 @@ export default function ExplorerPage() {
 					style={{ height: "99%", width: "98%" }}
 				/>
 			</div>
-			<div className="col-span-1">
-				<table className="text-sm">
-					<thead className="font-bold">
-						<tr>
-							<td colSpan={2}>Legend</td>
-						</tr>
-					</thead>
-					<tbody>
-						{Object.entries(stepsColorsMapping).map(([n, c]) => (
-							<tr key={`legend_color_${c}`} className="space-y-1">
-								<td
-									style={{ backgroundColor: c, width: "20px", height: "20px" }}
-								/>
-								<td>{n}</td>
-							</tr>
-						))}
-					</tbody>
-				</table>
+			<div className="col-span-1 space-y-4">
+				<p className="font-bold">Saved patterns</p>
+				<div className="col-span-2">
+					<Button
+						className="w-full"
+						onClick={() => setCurrentPattern({ elements: [] })}
+					>
+						<CirclePlus />
+						Create new pattern
+					</Button>
+				</div>
+				<Separator />
+				<ProfilePatternList />
+			</div>
+			<div className="col-span-1 space-y-4">
+				<p className="font-bold">Legend</p>
+				<ul className="list-none space-y-1 text-sm">
+					{Object.entries(stepsColorsMapping).map(([n, c]) => (
+						<li
+							key={`legend_color_${c}`}
+							className="flex flex-row space-y-1 space-x-1"
+						>
+							<div
+								className="w-2"
+								style={{
+									backgroundColor: c,
+									width: "20px",
+									height: "20px",
+								}}
+							/>
+							<div>{n}</div>
+						</li>
+					))}
+				</ul>
 			</div>
 		</section>
 	);
