@@ -29,6 +29,12 @@ def save_notebook_as_sql(
                     for c in mi["tasks"]:
                         all_codes.append(Code(content=c["name"], position=total_c_i))
                         total_c_i += 1
+                    if isinstance(mi["algoFamily"], list):
+                        mi["algoFamily"] = ", ".join(mi["algoFamily"])
+                    if isinstance(mi["library"], list):
+                        mi["library"] = ", ".join(mi["library"])
+                    if isinstance(mi["function"], list):
+                        mi["function"] = ", ".join(mi["function"])
                     all_metainstructions.append(
                         MetaInstruction(
                             algoFamily=mi["algoFamily"],

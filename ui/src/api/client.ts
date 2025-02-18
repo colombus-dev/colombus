@@ -35,12 +35,15 @@ export type PpmResult = {
 	results: string[][];
 };
 
+const apiPath = import.meta.env.VITE_API_HOST ?? "http://localhost";
+const apiPort = import.meta.env.VITE_API_PORT ?? 8080;
+
 export async function getGraphNodes(profilesNames?: string[]) {
 	if (profilesNames?.length === 0) {
 		return Promise.resolve<GraphDefinition[]>([]);
 	}
 	return await axios
-		.get<GraphDefinition[]>("http://localhost:8080/api/profile/nodes", {
+		.get<GraphDefinition[]>(`${apiPath}:${apiPort}/api/profile/nodes`, {
 			params: {
 				names: profilesNames,
 			},
@@ -53,7 +56,7 @@ export async function getGraphNodes(profilesNames?: string[]) {
 
 export async function getAllProfiles() {
 	return await axios
-		.get<string[]>("http://localhost:8080/api/profile/getAll")
+		.get<string[]>(`${apiPath}:${apiPort}/api/profile/getAll`)
 		.then(({ data }) => data);
 }
 
@@ -64,7 +67,7 @@ export async function postProfiles(files: FileList) {
 	}
 	return await axios
 		.post<string[]>(
-			"http://localhost:8080/api/profile/import/multiple",
+			`${apiPath}:${apiPort}/api/profile/import/multiple`,
 			formData,
 			{
 				headers: {
@@ -78,28 +81,28 @@ export async function postProfiles(files: FileList) {
 
 export async function getAllPatterns() {
 	return await axios
-		.get<[string, PatternElement[]][]>("http://localhost:8080/api/ppm/getAll")
+		.get<[string, PatternElement[]][]>(`${apiPath}:${apiPort}/api/ppm/getAll`)
 		.then(({ data }) => data);
 }
 
 export async function postApplyPpmFilter(pattern: PatternElement[]) {
 	return await axios
-		.post<PpmResult[]>("http://localhost:8080/api/ppm/execute", pattern)
+		.post<PpmResult[]>(`${apiPath}:${apiPort}/api/ppm/execute`, pattern)
 		.then(({ data }) => data);
 }
 
 export async function postApplyPpmFilterByName(name: string) {
 	return await axios
-		.post<PpmResult[]>(`http://localhost:8080/api/ppm/execute/${name}`)
+		.post<PpmResult[]>(`${apiPath}:${apiPort}/api/ppm/execute/${name}`)
 		.then(({ data }) => data);
 }
 
 export async function postSavePpm(name: string, pattern: PatternElement[]) {
 	return await axios
-		.post<string>(`http://localhost:8080/api/ppm/save/${name}`, pattern)
+		.post<string>(`${apiPath}:${apiPort}/api/ppm/save/${name}`, pattern)
 		.then(({ data }) => data);
 }
 
 export async function deletePpm(name: string) {
-	return await axios.delete(`http://localhost:8080/api/ppm/delete/${name}`);
+	return await axios.delete(`${apiPath}:${apiPort}/api/ppm/delete/${name}`);
 }

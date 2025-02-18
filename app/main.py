@@ -27,6 +27,7 @@ app = FastAPI()
 origins = [
     "http://localhost",
     "http://localhost:5173",
+    "http://erebe-vm9.i3s.unice.fr",
 ]
 
 app.add_middleware(
