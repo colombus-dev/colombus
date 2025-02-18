@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import uuid4, UUID
 
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session
@@ -12,7 +12,10 @@ from app.models.sql_model import (
 
 
 def save_notebook_as_sql(
-    profile_name: str, json_profile: list[dict[str, dict]], engine: Engine
+    project_id: UUID,
+    profile_name: str,
+    json_profile: list[dict[str, dict]],
+    engine: Engine,
 ):
     with Session(engine) as session:
         all_steps = []
@@ -31,6 +34,8 @@ def save_notebook_as_sql(
                         total_c_i += 1
                     if isinstance(mi["algoFamily"], list):
                         mi["algoFamily"] = ", ".join(mi["algoFamily"])
+                    if isinstance(mi["algoName"], list):
+                        mi["algoName"] = ", ".join(mi["algoName"])
                     if isinstance(mi["library"], list):
                         mi["library"] = ", ".join(mi["library"])
                     if isinstance(mi["function"], list):
@@ -59,6 +64,7 @@ def save_notebook_as_sql(
                 all_profile_metainstructions.extend(all_metainstructions)
                 total_se_i += 1
         profile = Profile(
+            project_id=project_id,
             name=profile_name,
             steps=all_steps,
             meta_instructions=all_profile_metainstructions,

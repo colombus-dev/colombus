@@ -1,3 +1,5 @@
+import uuid
+
 from typing import Any
 
 
@@ -52,9 +54,13 @@ def convert_or_not_stmt(sql_step_name: str, step_name: str):
     )
 
 
-def convert_steps_to_sql_query(pattern: list[dict[str, Any]]) -> str:
+def convert_steps_to_sql_query(
+    project_id: uuid.UUID, pattern: list[dict[str, Any]]
+) -> str:
     names_to_pos = {}
-    all_cte_clauses = ["FROM profile AS p"]
+    all_cte_clauses = [
+        f'FROM (SELECT * FROM profile WHERE project_id LIKE "{project_id.hex}") AS p'
+    ]
     all_select_clauses = ["name"]
     all_groups_select_clauses = ["p.id as profile_id", "p.name"]
     all_where_clauses = []
@@ -160,6 +166,6 @@ def convert_steps_to_sql_query(pattern: list[dict[str, Any]]) -> str:
     return query + ";"
 
 
-def convert_ppm_to_sql_query(pattern: list[dict[str, Any]]):
-    print(convert_steps_to_sql_query(pattern))
-    return convert_steps_to_sql_query(pattern)
+def convert_ppm_to_sql_query(project_id: uuid.UUID, pattern: list[dict[str, Any]]):
+    print(convert_steps_to_sql_query(project_id, pattern))
+    return convert_steps_to_sql_query(project_id, pattern)

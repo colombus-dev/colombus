@@ -35,6 +35,7 @@ export default function ExplorerPage() {
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const currentPattern = useColombusStore((state) => state.currentPattern);
+	const currentProject = useColombusStore((state) => state.currentProject);
 	const setAvailableProfilesWithPpmData = useColombusStore(
 		(state) => state.setAvailableProfilesWithPpmData,
 	);
@@ -54,6 +55,9 @@ export default function ExplorerPage() {
 	useGraphPpm(renderer.current);
 
 	useEffect(() => {
+		if (!currentProject) {
+			return;
+		}
 		const updateAndMergeWithPosted = async (
 			workflowsNames: string[],
 			workflowsPpmData?: PpmResult[],
@@ -71,6 +75,7 @@ export default function ExplorerPage() {
 					workflowsNames.includes(name),
 				) ?? [];
 			await getGraphNodes(
+				currentProject.id,
 				workflowsNames.filter(
 					(n) => !filteredWorkflowsNodes?.find(({ name }) => name === n),
 				),
@@ -81,31 +86,36 @@ export default function ExplorerPage() {
 		};
 		setIsLoading(true);
 		if (currentPattern?.elements.length) {
-			postApplyPpmFilter(currentPattern.elements).then((workflowsWithData) =>
-				updateAndMergeWithPosted(
-					[
-						...new Set(
-							workflowsWithData.map(({ profile_name }) => profile_name),
-						),
-					],
-					workflowsWithData,
-				),
+			postApplyPpmFilter(currentProject.id, currentPattern.elements).then(
+				(workflowsWithData) =>
+					updateAndMergeWithPosted(
+						[
+							...new Set(
+								workflowsWithData.map(({ profile_name }) => profile_name),
+							),
+						],
+						workflowsWithData,
+					),
 			);
 		} else if (currentPattern?.name) {
-			postApplyPpmFilterByName(currentPattern.name).then((workflowsWithData) =>
-				updateAndMergeWithPosted(
-					[
-						...new Set(
-							workflowsWithData.map(({ profile_name }) => profile_name),
-						),
-					],
-					workflowsWithData,
-				),
+			postApplyPpmFilterByName(currentProject.id, currentPattern.name).then(
+				(workflowsWithData) =>
+					updateAndMergeWithPosted(
+						[
+							...new Set(
+								workflowsWithData.map(({ profile_name }) => profile_name),
+							),
+						],
+						workflowsWithData,
+					),
 			);
 		} else {
-			getAllProfiles().then((wfs) => updateAndMergeWithPosted(wfs, undefined));
+			getAllProfiles(currentProject.id).then((wfs) =>
+				updateAndMergeWithPosted(wfs, undefined),
+			);
 		}
 	}, [
+		currentProject,
 		currentPattern,
 		postedProfiles,
 		setFilteredProfilesNames,
@@ -114,18 +124,21 @@ export default function ExplorerPage() {
 	]);
 
 	const handleProfileFormSubmit: React.FormEventHandler<HTMLFormElement> =
-		useCallback(async (e) => {
-			e.preventDefault();
-			const files = ((e.target as HTMLFormElement)[0] as HTMLInputElement)
-				.files;
-			if (!files) {
-				return;
-			}
-			await postProfiles(files).then((r) => {
-				toast("Profile(s) successfuly imported.");
-				setPostedProfiles(r);
-			});
-		}, []);
+		useCallback(
+			async (e) => {
+				e.preventDefault();
+				const files = ((e.target as HTMLFormElement)[0] as HTMLInputElement)
+					.files;
+				if (!files || !currentProject) {
+					return;
+				}
+				await postProfiles(currentProject.id, files).then((r) => {
+					toast.success("Profile(s) successfuly imported.");
+					setPostedProfiles(r);
+				});
+			},
+			[currentProject],
+		);
 
 	useEffect(() => {
 		setGraphContainerId("graph-container");

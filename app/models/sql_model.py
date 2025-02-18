@@ -8,8 +8,30 @@ from sqlalchemy.dialects import mysql
 from sqlalchemy.orm import relationship
 
 
+ProjectIdFk = Field(default=None, foreign_key="project.id", ondelete="CASCADE")
 ProfileIdFk = Field(default=None, foreign_key="profile.id", ondelete="CASCADE")
 LongString = String().with_variant(mysql.LONGTEXT(), "mysql", "mariadb")
+
+
+# "app management"-related tables
+
+
+class Project(SQLModel, table=True):
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str
+
+    profiles: list["Profile"] = Relationship(
+        back_populates="project",
+        sa_relationship=relationship(order_by="asc(Profile.name)"),
+    )
+    patterns: list["Pattern"] = Relationship(
+        back_populates="project",
+        sa_relationship=relationship(order_by="asc(Pattern.name)"),
+    )
+
+
+# Profile-related tables
 
 
 class ProfileBase(SQLModel):
@@ -18,6 +40,7 @@ class ProfileBase(SQLModel):
 
 class Profile(ProfileBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    project_id: uuid.UUID = ProjectIdFk
     json_profile: dict[str, Any] = Field(sa_type=JSON)
 
     steps: list["Step"] = Relationship(
@@ -32,6 +55,7 @@ class Profile(ProfileBase, table=True):
         back_populates="profile",
         sa_relationship=relationship(order_by="asc(Code.position)"),
     )
+    project: Project = Relationship(back_populates="profiles")
 
 
 class StepBase(SQLModel):
@@ -91,12 +115,17 @@ class Code(CodeBase, table=True):
     meta_instruction: MetaInstruction = Relationship(back_populates="codes")
 
 
+# PPM-related tables
+
+
 class Pattern(SQLModel, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    project_id: uuid.UUID = ProjectIdFk
     name: str
     json_pattern: dict[str, Any] = Field(sa_type=JSON)
 
+    project: Project = Relationship(back_populates="patterns")
     elements: list["PatternElement"] = Relationship(back_populates="pattern")
 
 

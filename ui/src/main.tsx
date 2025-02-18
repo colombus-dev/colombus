@@ -7,6 +7,7 @@ import EditorPage from "@/pages/editor";
 import ExplorerPage from "@/pages/explorer";
 import RootLayout from "@/root-layout";
 import { BrowserRouter, Route, Routes } from "react-router";
+import RequireProject from "./RequireProject";
 
 // biome-ignore lint/style/noNonNullAssertion: TODO
 createRoot(document.getElementById("root")!).render(
@@ -15,8 +16,22 @@ createRoot(document.getElementById("root")!).render(
 			<Routes>
 				<Route element={<RootLayout />}>
 					<Route index element={<App />} />
-					<Route path="/explorer" element={<ExplorerPage />} />
-					<Route path="/editor" element={<EditorPage />} />
+					<Route
+						path="/explorer"
+						element={
+							<RequireProject>
+								<ExplorerPage />
+							</RequireProject>
+						}
+					/>
+					<Route
+						path="/editor"
+						element={
+							<RequireProject>
+								<EditorPage />
+							</RequireProject>
+						}
+					/>
 				</Route>
 			</Routes>
 		</BrowserRouter>

@@ -9,6 +9,17 @@ export type Pattern = {
 	name?: string;
 	elements: PatternElement[];
 };
+export type Project = {
+	id: string;
+	name: string;
+};
+
+interface ProjectSlice {
+	apiKey?: string;
+	setApiKey: (key: string) => void;
+	currentProject?: Project;
+	setCurrentProject: (p: Project) => void;
+}
 
 interface PatternSlice {
 	currentPattern?: Pattern;
@@ -37,7 +48,8 @@ interface ProfilesSlice {
 }
 
 interface ColombusStore
-	extends PatternSlice,
+	extends ProjectSlice,
+		PatternSlice,
 		GraphCustomizationSlice,
 		ProfilesSlice {}
 
@@ -51,6 +63,15 @@ const createPatternSlice: StateCreator<ColombusStore, [], [], PatternSlice> = (
 	allSavedPatterns: [],
 	setAllSavedPatterns: (p) =>
 		set((state) => ({ ...state, allSavedPatterns: p })),
+});
+
+const createProjectSlice: StateCreator<ColombusStore, [], [], ProjectSlice> = (
+	set,
+) => ({
+	currentProject: undefined,
+	setCurrentProject: (p) => set((state) => ({ ...state, currentProject: p })),
+	apiKey: undefined,
+	setApiKey: (k) => set((state) => ({ ...state, apiKey: k })),
 });
 
 const createGraphCustomizationSlice: StateCreator<
@@ -91,6 +112,7 @@ export const useColombusStore = create<ColombusStore>()(
 	devtools(
 		persist(
 			(...a) => ({
+				...createProjectSlice(...a),
 				...createPatternSlice(...a),
 				...createGraphCustomizationSlice(...a),
 				...createProfilesSlice(...a),

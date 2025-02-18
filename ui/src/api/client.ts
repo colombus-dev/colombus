@@ -1,5 +1,6 @@
 import type { PatternElement } from "@/lib/types";
 import axios from "axios";
+import { data } from "react-router";
 
 export type StepNode = {
 	id: string;
@@ -38,36 +39,72 @@ export type PpmResult = {
 const apiPath = import.meta.env.VITE_API_HOST ?? "http://localhost";
 const apiPort = import.meta.env.VITE_API_PORT ?? 8080;
 
-export async function getGraphNodes(profilesNames?: string[]) {
-	if (profilesNames?.length === 0) {
-		return Promise.resolve<GraphDefinition[]>([]);
-	}
+export async function checkApiKey(apiKey: string) {
 	return await axios
-		.get<GraphDefinition[]>(`${apiPath}:${apiPort}/api/profile/nodes`, {
-			params: {
-				names: profilesNames,
-			},
-			paramsSerializer: {
-				indexes: null,
-			},
+		.post<string>(`${apiPath}:${apiPort}/api/key`, {
+			api_key: apiKey,
 		})
 		.then(({ data }) => data);
 }
 
-export async function getAllProfiles() {
+export async function createNewProject(name: string, apiKey: string) {
 	return await axios
-		.get<string[]>(`${apiPath}:${apiPort}/api/profile/getAll`)
+		.post<string>(`${apiPath}:${apiPort}/api/project`, {
+			name,
+			api_key: apiKey,
+		})
 		.then(({ data }) => data);
 }
 
-export async function postProfiles(files: FileList) {
+export async function postRetrieveProjectName(
+	projectId: string,
+	apiKey: string,
+) {
+	return await axios
+		.post<string>(`${apiPath}:${apiPort}/api/project/${projectId}/details`, {
+			api_key: apiKey,
+		})
+		.then(({ data }) => data);
+}
+
+export async function getGraphNodes(
+	projectId: string,
+	profilesNames?: string[],
+) {
+	if (profilesNames?.length === 0) {
+		return Promise.resolve<GraphDefinition[]>([]);
+	}
+	return await axios
+		.get<GraphDefinition[]>(
+			`${apiPath}:${apiPort}/api/project/${projectId}/profile/nodes`,
+			{
+				params: {
+					names: profilesNames,
+				},
+				paramsSerializer: {
+					indexes: null,
+				},
+			},
+		)
+		.then(({ data }) => data);
+}
+
+export async function getAllProfiles(projectId: string) {
+	return await axios
+		.get<string[]>(
+			`${apiPath}:${apiPort}/api/project/${projectId}/profile/getAll`,
+		)
+		.then(({ data }) => data);
+}
+
+export async function postProfiles(projectId: string, files: FileList) {
 	const formData = new FormData();
 	for (const file of files) {
 		formData.append("profile_files", file);
 	}
 	return await axios
 		.post<string[]>(
-			`${apiPath}:${apiPort}/api/profile/import/multiple`,
+			`${apiPath}:${apiPort}/api/project/${projectId}/profile/import/multiple`,
 			formData,
 			{
 				headers: {
@@ -79,30 +116,52 @@ export async function postProfiles(files: FileList) {
 		.then(({ data }) => data);
 }
 
-export async function getAllPatterns() {
+export async function getAllPatterns(projectId: string) {
 	return await axios
-		.get<[string, PatternElement[]][]>(`${apiPath}:${apiPort}/api/ppm/getAll`)
+		.get<[string, PatternElement[]][]>(
+			`${apiPath}:${apiPort}/api/project/${projectId}/ppm/getAll`,
+		)
 		.then(({ data }) => data);
 }
 
-export async function postApplyPpmFilter(pattern: PatternElement[]) {
+export async function postApplyPpmFilter(
+	projectId: string,
+	pattern: PatternElement[],
+) {
 	return await axios
-		.post<PpmResult[]>(`${apiPath}:${apiPort}/api/ppm/execute`, pattern)
+		.post<PpmResult[]>(
+			`${apiPath}:${apiPort}/api/project/${projectId}/ppm/execute`,
+			pattern,
+		)
 		.then(({ data }) => data);
 }
 
-export async function postApplyPpmFilterByName(name: string) {
+export async function postApplyPpmFilterByName(
+	projectId: string,
+	name: string,
+) {
 	return await axios
-		.post<PpmResult[]>(`${apiPath}:${apiPort}/api/ppm/execute/${name}`)
+		.post<PpmResult[]>(
+			`${apiPath}:${apiPort}/api/project/${projectId}/ppm/execute/${name}`,
+		)
 		.then(({ data }) => data);
 }
 
-export async function postSavePpm(name: string, pattern: PatternElement[]) {
+export async function postSavePpm(
+	projectId: string,
+	name: string,
+	pattern: PatternElement[],
+) {
 	return await axios
-		.post<string>(`${apiPath}:${apiPort}/api/ppm/save/${name}`, pattern)
+		.post<string>(
+			`${apiPath}:${apiPort}/api/project/${projectId}/ppm/save/${name}`,
+			pattern,
+		)
 		.then(({ data }) => data);
 }
 
-export async function deletePpm(name: string) {
-	return await axios.delete(`${apiPath}:${apiPort}/api/ppm/delete/${name}`);
+export async function deletePpm(projectId: string, name: string) {
+	return await axios.delete(
+		`${apiPath}:${apiPort}/api/project/${projectId}/ppm/delete/${name}`,
+	);
 }

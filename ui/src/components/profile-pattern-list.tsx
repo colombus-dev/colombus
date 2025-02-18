@@ -14,9 +14,13 @@ const ProfilePatternList: React.FunctionComponent<
 	const setAvailablePatterns = useColombusStore(
 		(state) => state.setAllSavedPatterns,
 	);
+	const currentProject = useColombusStore((state) => state.currentProject);
 
 	useEffect(() => {
-		getAllPatterns().then((res) => {
+		if (!currentProject) {
+			return;
+		}
+		getAllPatterns(currentProject.id).then((res) => {
 			setAvailablePatterns(
 				res.map(([name, elements]) => ({
 					name,
@@ -24,7 +28,7 @@ const ProfilePatternList: React.FunctionComponent<
 				})),
 			);
 		});
-	}, [setAvailablePatterns]);
+	}, [setAvailablePatterns, currentProject]);
 
 	return (
 		<div {...divProps} className={cn("space-x-1", divProps.className)}>

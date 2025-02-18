@@ -25,6 +25,7 @@ const ProfilePatternActions: React.FunctionComponent<
 	const resetCurrentPattern = useColombusStore(
 		(state) => state.resetCurrentPattern,
 	);
+	const currentProject = useColombusStore((state) => state.currentProject);
 	const [savePatternName, setSavePatternName] = useState<string>(
 		currentPattern?.name ?? "",
 	);
@@ -42,8 +43,10 @@ const ProfilePatternActions: React.FunctionComponent<
 			<Button
 				variant="ghost"
 				onClick={() => {
-					if (currentPattern?.name) {
-						deletePpm(currentPattern.name).then(resetCurrentPattern);
+					if (currentPattern?.name && currentProject) {
+						deletePpm(currentProject.id, currentPattern.name).then(
+							resetCurrentPattern,
+						);
 					}
 				}}
 				disabled={currentPattern?.name === undefined}
@@ -84,13 +87,20 @@ const ProfilePatternActions: React.FunctionComponent<
 							<Button
 								type="submit"
 								onClick={() => {
-									if (savePatternName && currentPattern?.elements) {
-										postSavePpm(savePatternName, currentPattern.elements).then(
-											(name) =>
-												setCurrentPattern({
-													...currentPattern,
-													name,
-												}),
+									if (
+										savePatternName &&
+										currentPattern?.elements &&
+										currentProject
+									) {
+										postSavePpm(
+											currentProject.id,
+											savePatternName,
+											currentPattern.elements,
+										).then((name) =>
+											setCurrentPattern({
+												...currentPattern,
+												name,
+											}),
 										);
 										setSavePatternName("");
 									}
