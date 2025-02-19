@@ -153,10 +153,12 @@ export default function ExplorerProjectIdPage() {
 		);
 
 	useEffect(() => {
-		setGraphContainerId("graph-container");
-	}, []);
+		if (projectValidity === "valid") {
+			setGraphContainerId("graph-container");
+		}
+	}, [projectValidity]);
 
-	return (
+	return projectValidity === "valid" ? (
 		<section className="grid grid-cols-7 space-x-4 h-full">
 			<div className="col-span-1 space-y-2 p-2">
 				<div className="row-span-1">
@@ -230,5 +232,7 @@ export default function ExplorerProjectIdPage() {
 				</ul>
 			</div>
 		</section>
+	) : (
+		<section>404</section>
 	);
 }

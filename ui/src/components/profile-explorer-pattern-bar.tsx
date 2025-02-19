@@ -40,14 +40,6 @@ const ProfileExplorerPatternBar: React.FunctionComponent<
 					<Button type="submit">Submit PPM filter</Button>
 				</div>
 			</form>
-			<div className="col-span-2">
-				<Button
-					className="w-full"
-					onClick={() => setCurrentPattern({ elements: [] })}
-				>
-					Create new pattern
-				</Button>
-			</div>
 		</div>
 	);
 };
