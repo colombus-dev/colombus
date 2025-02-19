@@ -27,7 +27,7 @@ const ProjectCreateForm: React.FunctionComponent<
 				)
 					.then((projectId) => {
 						toast.success("Project successfuly created.");
-						navigate(`/explorer?project=${projectId}`);
+						navigate(`/explorer/${projectId}`);
 					})
 					.catch((r) => {
 						toast.error(r.response.data.detail);

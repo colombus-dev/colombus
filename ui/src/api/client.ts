@@ -1,6 +1,5 @@
 import type { PatternElement } from "@/lib/types";
 import axios from "axios";
-import { data } from "react-router";
 
 export type StepNode = {
 	id: string;

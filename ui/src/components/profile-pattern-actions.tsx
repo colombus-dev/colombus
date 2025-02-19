@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 import { CircleX, Download, Save, Trash } from "lucide-react";
 import { useState } from "react";
+import { useParams } from "react-router";
 
 const ProfilePatternActions: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
@@ -25,10 +26,11 @@ const ProfilePatternActions: React.FunctionComponent<
 	const resetCurrentPattern = useColombusStore(
 		(state) => state.resetCurrentPattern,
 	);
-	const currentProject = useColombusStore((state) => state.currentProject);
 	const [savePatternName, setSavePatternName] = useState<string>(
 		currentPattern?.name ?? "",
 	);
+
+	const { projectId } = useParams<{ projectId: string }>();
 
 	return (
 		<div {...divProps} className={cn("flex", divProps.className)}>
@@ -43,10 +45,8 @@ const ProfilePatternActions: React.FunctionComponent<
 			<Button
 				variant="ghost"
 				onClick={() => {
-					if (currentPattern?.name && currentProject) {
-						deletePpm(currentProject.id, currentPattern.name).then(
-							resetCurrentPattern,
-						);
+					if (currentPattern?.name && projectId) {
+						deletePpm(projectId, currentPattern.name).then(resetCurrentPattern);
 					}
 				}}
 				disabled={currentPattern?.name === undefined}
@@ -90,10 +90,10 @@ const ProfilePatternActions: React.FunctionComponent<
 									if (
 										savePatternName &&
 										currentPattern?.elements &&
-										currentProject
+										projectId
 									) {
 										postSavePpm(
-											currentProject.id,
+											projectId,
 											savePatternName,
 											currentPattern.elements,
 										).then((name) =>

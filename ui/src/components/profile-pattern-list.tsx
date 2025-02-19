@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 import { useEffect } from "react";
+import { useParams } from "react-router";
 
 const ProfilePatternList: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
@@ -14,13 +15,13 @@ const ProfilePatternList: React.FunctionComponent<
 	const setAvailablePatterns = useColombusStore(
 		(state) => state.setAllSavedPatterns,
 	);
-	const currentProject = useColombusStore((state) => state.currentProject);
+	const { projectId } = useParams<{ projectId: string }>();
 
 	useEffect(() => {
-		if (!currentProject) {
+		if (!projectId) {
 			return;
 		}
-		getAllPatterns(currentProject.id).then((res) => {
+		getAllPatterns(projectId).then((res) => {
 			setAvailablePatterns(
 				res.map(([name, elements]) => ({
 					name,
@@ -28,7 +29,7 @@ const ProfilePatternList: React.FunctionComponent<
 				})),
 			);
 		});
-	}, [setAvailablePatterns, currentProject]);
+	}, [setAvailablePatterns, projectId]);
 
 	return (
 		<div {...divProps} className={cn("space-x-1", divProps.className)}>

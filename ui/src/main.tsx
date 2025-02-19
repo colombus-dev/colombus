@@ -3,11 +3,10 @@ import { createRoot } from "react-dom/client";
 import "@/index.css";
 import App from "@/App.tsx";
 import { Toaster } from "@/components/ui/sonner";
-import EditorPage from "@/pages/editor";
+import ExplorerProjectIdPage from "@/pages/explorer/:projectId";
 import ExplorerPage from "@/pages/explorer";
 import RootLayout from "@/root-layout";
 import { BrowserRouter, Route, Routes } from "react-router";
-import RequireProject from "./RequireProject";
 
 // biome-ignore lint/style/noNonNullAssertion: TODO
 createRoot(document.getElementById("root")!).render(
@@ -16,22 +15,10 @@ createRoot(document.getElementById("root")!).render(
 			<Routes>
 				<Route element={<RootLayout />}>
 					<Route index element={<App />} />
-					<Route
-						path="/explorer"
-						element={
-							<RequireProject>
-								<ExplorerPage />
-							</RequireProject>
-						}
-					/>
-					<Route
-						path="/editor"
-						element={
-							<RequireProject>
-								<EditorPage />
-							</RequireProject>
-						}
-					/>
+					<Route path="explorer">
+						<Route index element={<ExplorerPage />} />
+						<Route path=":projectId" element={<ExplorerProjectIdPage />} />
+					</Route>
 				</Route>
 			</Routes>
 		</BrowserRouter>
