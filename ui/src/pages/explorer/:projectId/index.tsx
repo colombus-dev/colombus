@@ -180,9 +180,16 @@ export default function ExplorerProjectIdPage() {
 				<ProfileExplorerPpmResultsBar />
 			</div>
 			<div className="col-span-4 grid grid-rows-6 items-center">
-				{!currentPattern ? (
+				{/* {!currentPattern ? (
 					<ProfileExplorerPatternBar className="row-span-1s" />
 				) : (
+					<ScrollArea className="row-span-1 h-full mr-8">
+						{currentPattern && <ProfilePatternActions />}
+						<ProfilePatternEditor className="overflow-x-auto" />
+						<ScrollBar orientation="horizontal" />
+					</ScrollArea>
+				)} */}
+				{currentPattern && (
 					<ScrollArea className="row-span-1 h-full mr-8">
 						{currentPattern && <ProfilePatternActions />}
 						<ProfilePatternEditor className="overflow-x-auto" />
