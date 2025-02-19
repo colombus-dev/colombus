@@ -230,7 +230,7 @@ async def save_ppm(
         )
     ).scalar_one_or_none()
     session_pattern = retrieved_session_pattern or Pattern(
-        name=name, json_pattern=pattern
+        project_id=project_id, name=name, json_pattern=pattern
     )
     session_pattern.json_pattern = pattern
     session.add(session_pattern)

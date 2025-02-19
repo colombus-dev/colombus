@@ -52,7 +52,9 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 					</label>
 				</div>
 			</div>
-			<ScrollArea className="h-[45vh]">
+			<ScrollArea
+				className={`h-[${import.meta.env.VITE_INTERFACE_MODE === "full" ? 45 : 55}vh]`}
+			>
 				<div className="space-y-1">
 					{availableProfilesNames
 						.filter((w) => w.toLowerCase().includes(resultSearchFilter))

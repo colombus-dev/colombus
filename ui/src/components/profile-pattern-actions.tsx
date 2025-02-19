@@ -1,4 +1,4 @@
-import { deletePpm, postSavePpm } from "@/api/client";
+import { deletePpm, getAllPatterns, postSavePpm } from "@/api/client";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
 	Dialog,
@@ -25,6 +25,9 @@ const ProfilePatternActions: React.FunctionComponent<
 	);
 	const resetCurrentPattern = useColombusStore(
 		(state) => state.resetCurrentPattern,
+	);
+	const setAvailablePatterns = useColombusStore(
+		(state) => state.setAllSavedPatterns,
 	);
 	const [savePatternName, setSavePatternName] = useState<string>(
 		currentPattern?.name ?? "",
@@ -96,12 +99,20 @@ const ProfilePatternActions: React.FunctionComponent<
 											projectId,
 											savePatternName,
 											currentPattern.elements,
-										).then((name) =>
+										).then((name) => {
 											setCurrentPattern({
 												...currentPattern,
 												name,
-											}),
-										);
+											});
+											getAllPatterns(projectId).then((res) => {
+												setAvailablePatterns(
+													res.map(([name, elements]) => ({
+														name,
+														elements,
+													})),
+												);
+											});
+										});
 										setSavePatternName("");
 									}
 								}}

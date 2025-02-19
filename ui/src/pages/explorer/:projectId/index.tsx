@@ -161,34 +161,33 @@ export default function ExplorerProjectIdPage() {
 	return projectValidity === "valid" ? (
 		<section className="grid grid-cols-7 space-x-4 h-full">
 			<div className="col-span-1 space-y-2 p-2">
-				<div className="row-span-1">
-					<form onSubmit={handleProfileFormSubmit}>
-						<div className="grid w-full max-w-sm items-center gap-1.5">
-							<Label htmlFor="profile-form">Import a new profile (JSON)</Label>
-							<Input
-								id="profile-form"
-								type="file"
-								accept=".json"
-								multiple
-								name="profile-form"
-							/>
-							<Button type="submit">Submit Profile</Button>
-						</div>
-					</form>
-				</div>
+				{import.meta.env.VITE_INTERFACE_MODE === "full" && (
+					<div className="row-span-1">
+						<form onSubmit={handleProfileFormSubmit}>
+							<div className="grid w-full max-w-sm items-center gap-1.5">
+								<Label htmlFor="profile-form">
+									Import a new profile (JSON)
+								</Label>
+								<Input
+									id="profile-form"
+									type="file"
+									accept=".json"
+									multiple
+									name="profile-form"
+								/>
+								<Button type="submit">Submit Profile</Button>
+							</div>
+						</form>
+					</div>
+				)}
 				<ProfileExplorerGraphSettingsBar />
 				<ProfileExplorerPpmResultsBar />
 			</div>
 			<div className="col-span-4 grid grid-rows-6 items-center">
-				{/* {!currentPattern ? (
-					<ProfileExplorerPatternBar className="row-span-1s" />
-				) : (
-					<ScrollArea className="row-span-1 h-full mr-8">
-						{currentPattern && <ProfilePatternActions />}
-						<ProfilePatternEditor className="overflow-x-auto" />
-						<ScrollBar orientation="horizontal" />
-					</ScrollArea>
-				)} */}
+				{import.meta.env.VITE_SHOW_FULL_INTERFACE === "full" &&
+					!currentPattern && (
+						<ProfileExplorerPatternBar className="row-span-1s" />
+					)}
 				{currentPattern && (
 					<ScrollArea className="row-span-1 h-full mr-8">
 						{currentPattern && <ProfilePatternActions />}
