@@ -160,9 +160,13 @@ export default function ExplorerProjectIdPage() {
 		}
 	}, [projectValidity]);
 
+	if (projectValidity === "pending") {
+		return <section className="grid grid-cols-7 space-x-2 h-full" />;
+	}
+
 	return projectValidity === "valid" ? (
 		<section className="grid grid-cols-7 space-x-2 h-full">
-			{/* <div className="col-span-1 space-y-2 p-2">
+			<div className="col-span-1 space-y-4 p-2">
 				{import.meta.env.VITE_INTERFACE_MODE === "full" && (
 					<div className="row-span-1">
 						<form onSubmit={handleProfileFormSubmit}>
@@ -182,10 +186,6 @@ export default function ExplorerProjectIdPage() {
 						</form>
 					</div>
 				)}
-				<ProfileExplorerGraphSettingsBar />
-				<ProfileExplorerPpmResultsBar />
-			</div> */}
-			<div className="col-span-1 space-y-4 p-2">
 				<p className="font-bold">Saved patterns</p>
 				<div className="col-span-2">
 					<Button
@@ -227,6 +227,9 @@ export default function ExplorerProjectIdPage() {
 					/>
 					{!isLoading && (
 						<ProfileExplorerPpmResultsBar className="absolute top-0 m-3" />
+					)}
+					{!isLoading && (
+						<ProfileExplorerGraphSettingsBar className="absolute top-0 right-6 m-3" />
 					)}
 					{!isLoading && (
 						<GraphControls
