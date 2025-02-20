@@ -6,6 +6,7 @@ import {
 	postProfiles,
 } from "@/api/client";
 import type { GraphDefinition, PpmResult } from "@/api/client";
+import GraphControls from "@/components/graph-controls";
 import ProfileExplorerGraphSettingsBar from "@/components/profile-explorer-graph-settings-bar";
 import ProfileExplorerPatternBar from "@/components/profile-explorer-pattern-bar";
 import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
@@ -26,6 +27,7 @@ import { CirclePlus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { BounceLoader } from "react-spinners";
 
 export default function ExplorerProjectIdPage() {
 	const [graphContainerId, setGraphContainerId] = useState<
@@ -159,8 +161,8 @@ export default function ExplorerProjectIdPage() {
 	}, [projectValidity]);
 
 	return projectValidity === "valid" ? (
-		<section className="grid grid-cols-7 space-x-4 h-full">
-			<div className="col-span-1 space-y-2 p-2">
+		<section className="grid grid-cols-7 space-x-2 h-full">
+			{/* <div className="col-span-1 space-y-2 p-2">
 				{import.meta.env.VITE_INTERFACE_MODE === "full" && (
 					<div className="row-span-1">
 						<form onSubmit={handleProfileFormSubmit}>
@@ -182,27 +184,8 @@ export default function ExplorerProjectIdPage() {
 				)}
 				<ProfileExplorerGraphSettingsBar />
 				<ProfileExplorerPpmResultsBar />
-			</div>
-			<div className="col-span-4 grid grid-rows-6 items-center">
-				{import.meta.env.VITE_SHOW_FULL_INTERFACE === "full" &&
-					!currentPattern && (
-						<ProfileExplorerPatternBar className="row-span-1s" />
-					)}
-				{currentPattern && (
-					<ScrollArea className="row-span-1 h-full mr-8">
-						{currentPattern && <ProfilePatternActions />}
-						<ProfilePatternEditor className="overflow-x-auto" />
-						<ScrollBar orientation="horizontal" />
-					</ScrollArea>
-				)}
-				{isLoading && <p>Loading...</p>}
-				<div
-					className="row-span-7 border-gray-500 border"
-					id="graph-container"
-					style={{ height: "99%", width: "98%" }}
-				/>
-			</div>
-			<div className="col-span-1 space-y-4">
+			</div> */}
+			<div className="col-span-1 space-y-4 p-2">
 				<p className="font-bold">Saved patterns</p>
 				<div className="col-span-2">
 					<Button
@@ -215,6 +198,43 @@ export default function ExplorerProjectIdPage() {
 				</div>
 				<Separator />
 				<ProfilePatternList />
+			</div>
+			<div className="col-span-5 grid grid-rows-7 items-center">
+				{import.meta.env.VITE_SHOW_FULL_INTERFACE === "full" &&
+					!currentPattern && (
+						<ProfileExplorerPatternBar className="row-span-1" />
+					)}
+				{currentPattern && (
+					<ScrollArea className="row-span-1 h-full mr-8">
+						{currentPattern && <ProfilePatternActions />}
+						<ProfilePatternEditor className="overflow-x-auto" />
+						<ScrollBar orientation="horizontal" />
+					</ScrollArea>
+				)}
+				<div
+					className={`group relative row-span-${currentPattern ? 6 : 7} h-full`}
+				>
+					<div
+						className="h-full border-gray-500 border"
+						id="graph-container"
+						style={{ height: "99%", width: "98%" }}
+					/>
+					<BounceLoader
+						className="absolute top-1/2 right-1/2"
+						color="green"
+						cssOverride={{ position: "absolute" }}
+						loading={isLoading}
+					/>
+					{!isLoading && (
+						<ProfileExplorerPpmResultsBar className="absolute top-0 m-3" />
+					)}
+					{!isLoading && (
+						<GraphControls
+							graphRenderer={renderer.current}
+							className="absolute bottom-2 right-6"
+						/>
+					)}
+				</div>
 			</div>
 			<div className="col-span-1 space-y-4">
 				<p className="font-bold">Legend</p>

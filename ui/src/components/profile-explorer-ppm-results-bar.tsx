@@ -28,7 +28,7 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 			<Input
 				id="filter-results"
 				type="text"
-				placeholder="Filter results"
+				placeholder="Search profiles"
 				onChange={(e) => setResultSearchFilter(e.target.value.toLowerCase())}
 			/>
 			<div className="flex space-x-2" key="check-all-div">
