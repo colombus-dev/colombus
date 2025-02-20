@@ -59,7 +59,7 @@ def convert_steps_to_sql_query(
 ) -> str:
     names_to_pos = {}
     all_cte_clauses = [
-        f'FROM (SELECT * FROM profile WHERE project_id LIKE "{project_id.hex}") AS p'
+        f'FROM (SELECT * FROM profile WHERE project_id = "{project_id.hex}") AS p'
     ]
     all_select_clauses = ["name"]
     all_groups_select_clauses = ["p.id as profile_id", "p.name"]
@@ -144,7 +144,7 @@ def convert_steps_to_sql_query(
         prev_sql_position = sql_max_position
 
     query = "WITH filtered_rows AS ("
-    query += "\nSELECT DISTINCT "
+    query += "\nSELECT "
     query += ", ".join(all_groups_select_clauses)
     query += "\n"
     query += "\n".join(all_cte_clauses)
