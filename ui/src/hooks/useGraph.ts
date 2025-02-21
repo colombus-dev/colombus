@@ -50,7 +50,6 @@ export default function useGraph(
 				(pr) => pr.profile_name === profile.name,
 			);
 			addNewProfile(profile, ppmResData, currentPattern, addedX, addedY);
-			// TODO? if (addedX >= maxRowLength) {
 			addedY -= 50 * (displayedLevel + 1);
 			addedX = 1;
 		}

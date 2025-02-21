@@ -44,7 +44,10 @@ const getGroupsIds = (
 	for (const [ri, result] of ppmResults.entries()) {
 		ppmNodes[ri] = result.results.map((r, i) => ({
 			id: Math.random().toString(36),
-			name: ppmCandiddates[i].name,
+			// TODO: sometimes ppmCandiddates can be undefined as the currentPattern
+			// has changed but the ppm results corresponds to the previous pattern
+			// until the API returns new ppm results
+			name: ppmCandiddates[i]?.name ?? "",
 			position: i,
 			number_children: r.length,
 			number_sub_children: steps

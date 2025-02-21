@@ -79,7 +79,7 @@ export default function ExplorerProjectIdPage() {
 			// we prioritize newly posted profiles
 			const reducedWorkflows = new Set(
 				workflowsNames.filter(([w]) => postedProfiles?.includes(w)),
-			).union(new Set(workflowsNames.slice(0, 5)));
+			).union(new Set(workflowsNames.slice(0, 20)));
 			setFilteredProfilesNames([...reducedWorkflows]);
 			setAvailableProfilesWithPpmData(workflowsPpmData ?? []);
 			// TODO: to improve
@@ -136,6 +136,12 @@ export default function ExplorerProjectIdPage() {
 		setAvailableProfilesNames,
 		setAvailableProfilesWithPpmData,
 	]);
+
+	useEffect(() => {
+		if (isLoading) {
+			setFilteredWorkflowsNodes([]);
+		}
+	}, [isLoading]);
 
 	const handleProfileFormSubmit: React.FormEventHandler<HTMLFormElement> =
 		useCallback(

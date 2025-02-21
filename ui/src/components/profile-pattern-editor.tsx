@@ -17,8 +17,7 @@ import {
 	stepsColorsMapping,
 	supportedSteps,
 } from "@/configuration";
-import type { PatternElement } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, formatPatternElement } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import { XCircle } from "lucide-react";
@@ -35,34 +34,6 @@ const ProfilePatternEditor: React.FunctionComponent<
 		? [undefined]
 		: [...currentPattern.elements, undefined];
 	// TODO: currently only supporting first pattern layer
-
-	const formatPatternElement = (pe: PatternElement) => {
-		// TODO: to clean/improve
-		let preprocessedName = pe.name
-			.split(specialCharacterOR)
-			.map((s) =>
-				specialSteps.includes(s)
-					? s
-					: `"${s
-							.replace(specialCharacterNOT, "")
-							.replace(specialCharacterSTAR, "")
-							.replace(specialCharacterPLUS, "")}"`,
-			)
-			.join(" OR ");
-		if (pe.type === "subpattern") {
-			preprocessedName = `Pattern[${preprocessedName}]`;
-		}
-		if (pe.name.startsWith(specialCharacterNOT)) {
-			preprocessedName = `NOT (${preprocessedName})`;
-		}
-		if (pe.name.endsWith(specialCharacterSTAR)) {
-			preprocessedName = `ZERO OR MORE (${preprocessedName})`;
-		}
-		if (pe.name.endsWith(specialCharacterPLUS)) {
-			preprocessedName = `AT LEAST ONE (${preprocessedName})`;
-		}
-		return preprocessedName;
-	};
 
 	return (
 		<div {...divProps} className={cn("flex", divProps.className)}>

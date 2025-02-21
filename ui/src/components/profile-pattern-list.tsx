@@ -2,8 +2,10 @@ import { getAllPatterns } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
+import { Trash } from "lucide-react";
 import { useEffect } from "react";
 import { useParams } from "react-router";
+import DeletePatternDialog from "./delete-pattern-dialog";
 
 const ProfilePatternList: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
@@ -35,9 +37,9 @@ const ProfilePatternList: React.FunctionComponent<
 		<div {...divProps} className={cn("space-x-1", divProps.className)}>
 			<ul className="list-none space-y-1">
 				{availablePatterns.map(({ name, elements }) => (
-					<li key={name}>
+					<li key={name} className="grid grid-cols-6 space-x-1">
 						<Button
-							className="w-full"
+							className="col-span-5"
 							key={name}
 							onClick={() => {
 								setCurrentPattern({
@@ -48,6 +50,11 @@ const ProfilePatternList: React.FunctionComponent<
 						>
 							{name}
 						</Button>
+						<DeletePatternDialog patternName={name}>
+							<Button key={`delete-${name}`} className="col-span-1">
+								<Trash />
+							</Button>
+						</DeletePatternDialog>
 					</li>
 				))}
 				{availablePatterns.length === 0 && (

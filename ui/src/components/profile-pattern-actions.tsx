@@ -1,4 +1,4 @@
-import { deletePpm, getAllPatterns, postSavePpm } from "@/api/client";
+import { getAllPatterns, postSavePpm } from "@/api/client";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
 	Dialog,
@@ -15,6 +15,7 @@ import { useColombusStore } from "@/store";
 import { CircleX, Download, Save, Trash } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router";
+import DeletePatternDialog from "./delete-pattern-dialog";
 
 const ProfilePatternActions: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
@@ -45,17 +46,12 @@ const ProfilePatternActions: React.FunctionComponent<
 			>
 				<CircleX /> Reset pattern
 			</Button>
-			<Button
-				variant="ghost"
-				onClick={() => {
-					if (currentPattern?.name && projectId) {
-						deletePpm(projectId, currentPattern.name).then(resetCurrentPattern);
-					}
-				}}
-				disabled={currentPattern?.name === undefined}
-			>
-				<Trash /> Delete pattern
-			</Button>
+			<DeletePatternDialog patternName={currentPattern?.name}>
+				<Button variant="ghost" disabled={currentPattern?.name === undefined}>
+					<Trash /> Delete pattern
+				</Button>
+			</DeletePatternDialog>
+
 			<Dialog>
 				<DialogTrigger disabled={!currentPattern?.elements} asChild>
 					<Button variant="ghost">
