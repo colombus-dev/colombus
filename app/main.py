@@ -169,6 +169,20 @@ async def import_multiple_profile(
     return all_imported_profiles
 
 
+@app.delete("/api/project/{project_id}/profile/delete/{profile_id}")
+async def delete_profile(
+    project_id: uuid.UUID,
+    profile_id: uuid.UUID,
+    session: Session = Depends(get_session),
+):
+    session.execute(
+        delete(Profile).where(
+            (Profile.project_id == project_id) & (Profile.id == profile_id)
+        )
+    )
+    session.commit()
+
+
 @app.get("/api/project/{project_id}/ppm/getAll")
 async def get_all_ppm(
     session: Session = Depends(get_session),
@@ -238,6 +252,7 @@ async def save_ppm(
     return session_pattern.name
 
 
+# TODO: change name to pattern_id in delete operation
 @app.delete("/api/project/{project_id}/ppm/delete/{name}")
 async def delete_ppm(
     project_id: uuid.UUID, name: str, session: Session = Depends(get_session)
