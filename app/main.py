@@ -39,9 +39,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+notebooks_storage_path = Path("./data/notebooks")
+
 
 @app.on_event("startup")
 def on_startup():
+    notebooks_storage_path.mkdir(parents=True, exist_ok=True)
     create_db_and_tables()
 
 
@@ -109,6 +112,34 @@ async def post_retrieve_project_details(
     if not res:
         raise HTTPException(status_code=404, detail="Project not found.")
     return res
+
+
+class PostNotebooksPayload(BaseModel):
+    api_key: str
+    notebook_files: list[UploadFile]
+
+
+@app.post("/api/project/{project_id}/notebook/upload/multiple")
+async def post_notebooks(
+    project_id: uuid.UUID,
+    payload: PostNotebooksPayload,
+    session: Session = Depends(get_session),
+) -> str:
+    if payload.api_key != API_KEY:
+        raise HTTPException(
+            status_code=403, detail="Invalid API KEY. Please contact project members."
+        )
+
+    if not all(Path(p).suffix == ".ipynb" for p in payload.notebook_files):
+        raise HTTPException(status_code=404, detail="Unsupported files.")
+
+    for file in payload.notebook_files:
+        path_file = Path(file)
+        with open(notebooks_storage_path / path_file.name, "w") as f:
+            file_content = await file.read()
+            f.write(file_content)
+
+    return "ok"
 
 
 @app.get("/api/project/{project_id}/profile/getAll")
