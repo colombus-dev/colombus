@@ -96,7 +96,7 @@ export async function getAllProfiles(projectId: string) {
 		.then(({ data }) => data);
 }
 
-export async function postProfiles(projectId: string, files: FileList) {
+export async function postProfiles(projectId: string, files: File[]) {
 	const formData = new FormData();
 	for (const file of files) {
 		formData.append("profile_files", file);

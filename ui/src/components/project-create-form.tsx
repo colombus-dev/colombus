@@ -14,31 +14,27 @@ const ProjectCreateForm: React.FunctionComponent<
 	const apiKey = useColombusStore((state) => state.apiKey);
 	const navigate = useNavigate();
 
-	const handleProfileFormSubmit: React.FormEventHandler<HTMLFormElement> =
-		useCallback(
-			async (e) => {
-				e.preventDefault();
-				if (!apiKey) {
-					return;
-				}
-				await createNewProject(
-					((e.target as HTMLFormElement)[0] as HTMLInputElement).value,
-					apiKey,
-				)
-					.then((projectId) => {
-						toast.success("Project successfuly created.");
-						navigate(`/explorer/${projectId}`);
-					})
-					.catch((r) => {
-						toast.error(r.response.data.detail);
-					});
-			},
-			[apiKey, navigate],
-		);
+	const handleProfileFormSubmit = useCallback(
+		async (formData: FormData) => {
+			const newProjectName = formData.get("project-name-form")?.toString();
+			if (!apiKey || !newProjectName) {
+				return;
+			}
+			await createNewProject(newProjectName, apiKey)
+				.then((projectId) => {
+					toast.success("Project successfuly created.");
+					navigate(`/explorer/${projectId}`);
+				})
+				.catch((r) => {
+					toast.error(r.response.data.detail);
+				});
+		},
+		[apiKey, navigate],
+	);
 
 	return (
 		<div {...divProps} className={cn("space-x-1", divProps.className)}>
-			<form onSubmit={handleProfileFormSubmit}>
+			<form action={handleProfileFormSubmit}>
 				<div className="grid w-full max-w-sm items-center gap-1.5">
 					<Label htmlFor="project-form">Create a new project</Label>
 					<Input

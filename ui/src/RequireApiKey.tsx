@@ -6,36 +6,34 @@ import { Label } from "./components/ui/label";
 import { Input } from "./components/ui/input";
 import { Button } from "./components/ui/button";
 
-export default function RequireApiKey({
-	children,
-}: React.PropsWithChildren): JSX.Element {
+export default function RequireApiKey({ children }: React.PropsWithChildren) {
 	const apiKey = useColombusStore((state) => state.apiKey);
 	const setApiKey = useColombusStore((state) => state.setApiKey);
 
-	const handleApiKeyFormSubmit: React.FormEventHandler<HTMLFormElement> =
-		useCallback(
-			async (e) => {
-				e.preventDefault();
-				const userKey = ((e.target as HTMLFormElement)[0] as HTMLInputElement)
-					.value;
-				await checkApiKey(userKey)
-					.then(() => {
-						toast.success("API Key is valid.");
-						setApiKey(userKey);
-					})
-					.catch((r) => {
-						toast.error(r.response.data.detail);
-					});
-			},
-			[setApiKey],
-		);
+	const handleApiKeyFormSubmit = useCallback(
+		async (formData: FormData) => {
+			const userKey = formData.get("api-key-form")?.toString();
+			if (!userKey) {
+				return;
+			}
+			await checkApiKey(userKey)
+				.then(() => {
+					toast.success("API Key is valid.");
+					setApiKey(userKey);
+				})
+				.catch((r) => {
+					toast.error(r.response.data.detail);
+				});
+		},
+		[setApiKey],
+	);
 
 	return apiKey ? (
 		<>{children}</>
 	) : (
 		<section className="grid grid-cols-3 grid-rows-5 space-x-4 h-full">
 			<div className="col-start-2 col-span-1 row-start-2 row-span-1">
-				<form onSubmit={handleApiKeyFormSubmit}>
+				<form action={handleApiKeyFormSubmit}>
 					<div className="grid w-full max-w-sm items-center gap-1.5">
 						<Label htmlFor="api-key-form">Enter the API Key</Label>
 						<Input

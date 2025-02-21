@@ -12,30 +12,27 @@ const ProjectSearchForm: React.FunctionComponent<
 	const apiKey = useColombusStore((state) => state.apiKey);
 	const navigate = useNavigate();
 
-	const handleProfileFormSubmit: React.FormEventHandler<HTMLFormElement> =
-		useCallback(
-			async (e) => {
-				e.preventDefault();
-				if (!apiKey) {
-					return;
-				}
-				navigate(
-					`/explorer/${((e.target as HTMLFormElement)[0] as HTMLInputElement).value}`,
-				);
-			},
-			[apiKey, navigate],
-		);
+	const handleProfileFormSubmit = useCallback(
+		async (formData: FormData) => {
+			const projectId = formData.get("project-name-form");
+			if (!apiKey || !projectId) {
+				return;
+			}
+			navigate(`/explorer/${projectId}`);
+		},
+		[apiKey, navigate],
+	);
 
 	return (
 		<div {...divProps} className={cn("space-x-1", divProps.className)}>
-			<form onSubmit={handleProfileFormSubmit}>
+			<form action={handleProfileFormSubmit}>
 				<div className="grid w-full max-w-sm items-center gap-1.5">
 					<Label htmlFor="project-form">Load an existing project</Label>
 					<Input
 						id="project-form"
 						name="project-name-form"
-						required
 						placeholder="Enter project id"
+						required
 					/>
 					<Button type="submit">Load project</Button>
 				</div>

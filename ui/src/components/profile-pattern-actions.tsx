@@ -44,7 +44,7 @@ const ProfilePatternActions: React.FunctionComponent<
 					resetCurrentPattern();
 				}}
 			>
-				<CircleX /> Reset pattern
+				<CircleX /> Close pattern
 			</Button>
 			<DeletePatternDialog patternName={currentPattern?.name}>
 				<Button variant="ghost" disabled={currentPattern?.name === undefined}>

@@ -29,6 +29,8 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { BounceLoader } from "react-spinners";
 
+const GRAPH_CONTAINER_ID = "graph-container";
+
 export default function ExplorerProjectIdPage() {
 	const [graphContainerId, setGraphContainerId] = useState<
 		string | undefined
@@ -63,6 +65,7 @@ export default function ExplorerProjectIdPage() {
 
 	useEffect(() => {
 		if (projectValidity === "invalid") {
+			toast.error("Project not found.");
 			navigate("/explorer");
 		}
 	}, [projectValidity, navigate]);
@@ -143,26 +146,23 @@ export default function ExplorerProjectIdPage() {
 		}
 	}, [isLoading]);
 
-	const handleProfileFormSubmit: React.FormEventHandler<HTMLFormElement> =
-		useCallback(
-			async (e) => {
-				e.preventDefault();
-				const files = ((e.target as HTMLFormElement)[0] as HTMLInputElement)
-					.files;
-				if (!files || !projectId) {
-					return;
-				}
-				await postProfiles(projectId, files).then((r) => {
-					toast.success("Profile(s) successfuly imported.");
-					setPostedProfiles(r);
-				});
-			},
-			[projectId],
-		);
+	const handleProfileFormSubmit = useCallback(
+		async (formData: FormData) => {
+			const files = (formData.getAll("profile-form") as File[]) || null;
+			if (!files || !projectId) {
+				return;
+			}
+			await postProfiles(projectId, files).then((r) => {
+				toast.success("Profile(s) successfuly imported.");
+				setPostedProfiles(r);
+			});
+		},
+		[projectId],
+	);
 
 	useEffect(() => {
 		if (projectValidity === "valid") {
-			setGraphContainerId("graph-container");
+			setGraphContainerId(GRAPH_CONTAINER_ID);
 		}
 	}, [projectValidity]);
 
@@ -175,17 +175,18 @@ export default function ExplorerProjectIdPage() {
 			<div className="col-span-1 space-y-4 p-2">
 				{import.meta.env.VITE_INTERFACE_MODE === "full" && (
 					<div className="row-span-1">
-						<form onSubmit={handleProfileFormSubmit}>
+						<form action={handleProfileFormSubmit}>
 							<div className="grid w-full max-w-sm items-center gap-1.5">
 								<Label htmlFor="profile-form">
 									Import a new profile (JSON)
 								</Label>
 								<Input
 									id="profile-form"
+									name="profile-form"
 									type="file"
 									accept=".json"
 									multiple
-									name="profile-form"
+									required
 								/>
 								<Button type="submit">Submit Profile</Button>
 							</div>
@@ -222,7 +223,7 @@ export default function ExplorerProjectIdPage() {
 				>
 					<div
 						className="h-full border-gray-500 border"
-						id="graph-container"
+						id={GRAPH_CONTAINER_ID}
 						style={{ height: "99%", width: "98%" }}
 					/>
 					<BounceLoader
