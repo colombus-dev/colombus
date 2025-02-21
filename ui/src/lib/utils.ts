@@ -6,7 +6,6 @@ import {
 	specialCharacterOR,
 	specialCharacterPLUS,
 	specialCharacterSTAR,
-	specialSteps,
 } from "@/configuration";
 
 /**
@@ -26,6 +25,7 @@ export function cn(...inputs: ClassValue[]) {
  * - a OR b for OR groups
  * - NOT (...) for negation groups
  * - ZERO OR MORE (...) for * groups
+ * - ZERO OR MORE (Any step) for empty * groups
  * - AT LEAST ONE (...) for + groups
  *
  * @param pe the pattern element to format to string
@@ -35,8 +35,8 @@ export function formatPatternElement(pe: PatternElement) {
 	let preprocessedName = pe.name
 		.split(specialCharacterOR)
 		.map((s) =>
-			specialSteps.includes(s)
-				? s
+			s === specialCharacterSTAR
+				? "Any step"
 				: `"${s
 						.replace(specialCharacterNOT, "")
 						.replace(specialCharacterSTAR, "")

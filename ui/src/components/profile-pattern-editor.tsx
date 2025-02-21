@@ -13,7 +13,6 @@ import {
 	specialCharacterOR,
 	specialCharacterPLUS,
 	specialCharacterSTAR,
-	specialSteps,
 	stepsColorsMapping,
 	supportedSteps,
 } from "@/configuration";
@@ -68,12 +67,21 @@ const ProfilePatternEditor: React.FunctionComponent<
 										key={s}
 										onCheckedChange={(isChecked) => {
 											const newSteps = [...(currentPattern?.elements ?? [])];
+											const nameWithoutGroupSymbols = p?.name
+												.replace(specialCharacterSTAR, "")
+												.replace(specialCharacterPLUS, "");
+											const group =
+												p?.name.endsWith(specialCharacterSTAR) ||
+												p?.name.endsWith(specialCharacterPLUS)
+													? p.name.at(-1)
+													: "";
 											if (isChecked) {
 												newSteps[i] = {
-													name: p?.name
+													name: nameWithoutGroupSymbols
+														?.replace(specialCharacterNOT, "")
 														.split(specialCharacterOR)
 														.filter((n) => supportedSteps.includes(n)).length
-														? `${p.name}${specialCharacterOR}${s}`
+														? `${nameWithoutGroupSymbols}${specialCharacterOR}${s}${group}`
 														: s,
 													tasks: [],
 													type: "simple",
@@ -101,6 +109,9 @@ const ProfilePatternEditor: React.FunctionComponent<
 											currentPattern &&
 											i < currentPattern.elements.length &&
 											currentPattern.elements[i].name
+												.replace(specialCharacterNOT, "")
+												.replace(specialCharacterSTAR, "")
+												.replace(specialCharacterPLUS, "")
 												.split(specialCharacterOR)
 												.includes(s)
 										}
@@ -145,29 +156,6 @@ const ProfilePatternEditor: React.FunctionComponent<
 							))}
 							<DropdownMenuLabel>Pattern elements</DropdownMenuLabel>
 							<DropdownMenuSeparator />
-							{specialSteps.map((s) => (
-								<DropdownMenuCheckboxItem
-									key={s}
-									onCheckedChange={(isChecked) => {
-										const newSteps = [...(currentPattern?.elements ?? [])];
-										if (isChecked) {
-											newSteps[i] = { name: s, tasks: [], type: "special" };
-										} else {
-											newSteps.splice(i, 1);
-										}
-										setCurrentPattern({
-											...currentPattern,
-											elements: newSteps,
-										});
-									}}
-									checked={
-										typeof currentPattern?.elements[i] === "string" &&
-										currentPattern.elements[i] === s
-									}
-								>
-									{s}
-								</DropdownMenuCheckboxItem>
-							))}
 							<DropdownMenuCheckboxItem
 								key="negate"
 								onCheckedChange={(isChecked) => {
@@ -192,27 +180,41 @@ const ProfilePatternEditor: React.FunctionComponent<
 									});
 								}}
 								checked={p?.name.startsWith(specialCharacterNOT)}
-								disabled={!p || specialSteps.includes(p.name)}
+								disabled={!p || p.name === specialCharacterSTAR}
 							>
 								Negate (<p className="font-bold">NOT</p>)
 							</DropdownMenuCheckboxItem>
 							<DropdownMenuCheckboxItem
 								key="star"
 								onCheckedChange={(isChecked) => {
-									if (!p) {
-										return;
-									}
+									const currentPatternElement = p ?? {
+										name: "",
+										tasks: [],
+										type: "simple",
+									};
 									const newSteps = [...(currentPattern?.elements ?? [])];
 									if (isChecked) {
 										newSteps[i] = {
-											...p,
-											name: `${p.name}${specialCharacterSTAR}`,
+											...currentPatternElement,
+											name: `${currentPatternElement.name.replace(specialCharacterPLUS, "")}${specialCharacterSTAR}`,
 										};
 									} else {
-										newSteps[i] = {
-											...p,
-											name: p.name.replace(specialCharacterSTAR, ""),
-										};
+										const newPatternElementName =
+											currentPatternElement.name.replace(
+												specialCharacterSTAR,
+												"",
+											);
+										if (newPatternElementName !== "") {
+											newSteps[i] = {
+												...currentPatternElement,
+												name: currentPatternElement.name.replace(
+													specialCharacterSTAR,
+													"",
+												),
+											};
+										} else {
+											newSteps.splice(i, 1);
+										}
 									}
 									setCurrentPattern({
 										...currentPattern,
@@ -220,7 +222,6 @@ const ProfilePatternEditor: React.FunctionComponent<
 									});
 								}}
 								checked={p?.name.endsWith(specialCharacterSTAR)}
-								disabled={!p || specialSteps.includes(p.name)}
 							>
 								Zero or more (<p className="font-bold">*</p>)
 							</DropdownMenuCheckboxItem>
@@ -234,7 +235,7 @@ const ProfilePatternEditor: React.FunctionComponent<
 									if (isChecked) {
 										newSteps[i] = {
 											...p,
-											name: `${p.name}${specialCharacterPLUS}`,
+											name: `${p.name.replace(specialCharacterSTAR, "")}${specialCharacterPLUS}`,
 										};
 									} else {
 										newSteps[i] = {
@@ -248,7 +249,7 @@ const ProfilePatternEditor: React.FunctionComponent<
 									});
 								}}
 								checked={p?.name.endsWith(specialCharacterPLUS)}
-								disabled={!p || specialSteps.includes(p.name)}
+								disabled={!p || p.name === specialCharacterSTAR}
 							>
 								One or more (<p className="font-bold">+</p>)
 							</DropdownMenuCheckboxItem>

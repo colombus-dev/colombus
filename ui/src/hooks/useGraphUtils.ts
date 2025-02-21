@@ -24,7 +24,6 @@ const expandPpm = (
 	parentPatternName?: string,
 ): PatternElement[] => {
 	return elements
-		.filter(({ type }) => type !== "special")
 		.flatMap((e) =>
 			e.type === "simple" ? e : expandPpm(e.tasks, parentPatternName ?? e.name),
 		)

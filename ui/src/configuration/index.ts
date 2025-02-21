@@ -21,7 +21,6 @@ export const supportedSteps = [
 	"Model Parameter Tuning",
 	"Model Validation and Assembling",
 ];
-export const specialSteps = ["*"];
 export const specialCharacterOR = "|";
 export const specialCharacterNOT = "!";
 export const specialCharacterSTAR = "*";

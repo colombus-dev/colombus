@@ -1,4 +1,4 @@
-export type PatternElementType = "simple" | "special" | "subpattern";
+export type PatternElementType = "simple" | "subpattern";
 export type PatternElement = {
 	name: string;
 	tasks: PatternElement[];

@@ -233,15 +233,15 @@ export default function ExplorerProjectIdPage() {
 						loading={isLoading}
 					/>
 					{!isLoading && (
-						<ProfileExplorerPpmResultsBar className="absolute top-0 m-3" />
+						<ProfileExplorerPpmResultsBar className="absolute top-0 m-3 bg-white bg-opacity-80 p-2" />
 					)}
 					{!isLoading && (
-						<ProfileExplorerGraphSettingsBar className="absolute top-0 right-6 m-3" />
+						<ProfileExplorerGraphSettingsBar className="absolute top-0 right-6 m-3 bg-white bg-opacity-80 p-2" />
 					)}
 					{!isLoading && (
 						<GraphControls
 							graphRenderer={renderer.current}
-							className="absolute bottom-2 right-6"
+							className="absolute bottom-3 right-6 bg-white bg-opacity-80"
 						/>
 					)}
 				</div>
