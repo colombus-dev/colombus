@@ -6,10 +6,7 @@ import {
 	postProfiles,
 } from "@/api/client";
 import type { GraphDefinition, PpmResult } from "@/api/client";
-import GraphControls from "@/components/graph-controls";
-import ProfileExplorerGraphSettingsBar from "@/components/profile-explorer-graph-settings-bar";
 import ProfileExplorerPatternBar from "@/components/profile-explorer-pattern-bar";
-import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
 import ProfilePatternEditor from "@/components/profile-pattern-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
@@ -27,7 +24,7 @@ import { CirclePlus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { BounceLoader } from "react-spinners";
+import GraphContainer from "@/components/graph-container";
 
 const GRAPH_CONTAINER_ID = "graph-container";
 
@@ -218,33 +215,12 @@ export default function ExplorerProjectIdPage() {
 						<ScrollBar orientation="horizontal" />
 					</ScrollArea>
 				)}
-				<div
-					className={`group relative row-span-${currentPattern ? 6 : 7} h-full`}
-				>
-					<div
-						className="h-full border-gray-500 border"
-						id={GRAPH_CONTAINER_ID}
-						style={{ height: "99%", width: "98%" }}
-					/>
-					<BounceLoader
-						className="absolute top-1/2 right-1/2"
-						color="green"
-						cssOverride={{ position: "absolute" }}
-						loading={isLoading}
-					/>
-					{!isLoading && (
-						<ProfileExplorerPpmResultsBar className="absolute top-0 m-3 bg-white bg-opacity-80 p-2" />
-					)}
-					{!isLoading && (
-						<ProfileExplorerGraphSettingsBar className="absolute top-0 right-6 m-3 bg-white bg-opacity-80 p-2" />
-					)}
-					{!isLoading && (
-						<GraphControls
-							graphRenderer={renderer.current}
-							className="absolute bottom-3 right-6 bg-white bg-opacity-80"
-						/>
-					)}
-				</div>
+				<GraphContainer
+					className="group relative row-span-7 h-full"
+					containerId={GRAPH_CONTAINER_ID}
+					isLoading={isLoading}
+					graphRenderer={renderer.current}
+				/>
 			</div>
 			<div className="col-span-1 space-y-4">
 				<p className="font-bold">Legend</p>
