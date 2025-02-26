@@ -9,10 +9,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
+	specialCharacterENDS,
 	specialCharacterNOT,
 	specialCharacterOR,
 	specialCharacterPLUS,
 	specialCharacterSTAR,
+	specialCharacterSTARTS,
 	stepsColorsMapping,
 	supportedSteps,
 } from "@/configuration";
@@ -154,10 +156,10 @@ const ProfilePatternEditor: React.FunctionComponent<
 									{name}
 								</DropdownMenuCheckboxItem>
 							))}
-							<DropdownMenuLabel>Pattern elements</DropdownMenuLabel>
+							<DropdownMenuLabel>Pattern Matching elements</DropdownMenuLabel>
 							<DropdownMenuSeparator />
 							<DropdownMenuCheckboxItem
-								key="negate"
+								key="starts-with"
 								onCheckedChange={(isChecked) => {
 									if (!p) {
 										return;
@@ -166,7 +168,66 @@ const ProfilePatternEditor: React.FunctionComponent<
 									if (isChecked) {
 										newSteps[i] = {
 											...p,
-											name: `${specialCharacterNOT}${p.name}`,
+											name: `${specialCharacterSTARTS}${p.name}`,
+										};
+									} else {
+										newSteps[i] = {
+											...p,
+											name: p.name.replace(specialCharacterSTARTS, ""),
+										};
+									}
+									setCurrentPattern({
+										...currentPattern,
+										elements: newSteps,
+									});
+								}}
+								checked={p?.name.startsWith(specialCharacterSTARTS)}
+								disabled={!p}
+							>
+								Starts with (<p className="font-bold">^</p>)
+							</DropdownMenuCheckboxItem>
+							<DropdownMenuCheckboxItem
+								key="ends-with"
+								onCheckedChange={(isChecked) => {
+									if (!p) {
+										return;
+									}
+									const newSteps = [...(currentPattern?.elements ?? [])];
+									if (isChecked) {
+										newSteps[i] = {
+											...p,
+											name: `${p.name}${specialCharacterENDS}`,
+										};
+									} else {
+										newSteps[i] = {
+											...p,
+											name: p.name.replace(specialCharacterENDS, ""),
+										};
+									}
+									setCurrentPattern({
+										...currentPattern,
+										elements: newSteps,
+									});
+								}}
+								checked={p?.name.endsWith(specialCharacterENDS)}
+								disabled={!p}
+							>
+								Ends with (<p className="font-bold">$</p>)
+							</DropdownMenuCheckboxItem>
+							<DropdownMenuCheckboxItem
+								key="negate"
+								onCheckedChange={(isChecked) => {
+									if (!p) {
+										return;
+									}
+									const newSteps = [...(currentPattern?.elements ?? [])];
+									if (isChecked) {
+										const prefix = p.name.startsWith(specialCharacterSTARTS)
+											? specialCharacterSTARTS
+											: "";
+										newSteps[i] = {
+											...p,
+											name: `${prefix}${specialCharacterNOT}${p.name.replace(specialCharacterSTARTS, "")}`,
 										};
 									} else {
 										newSteps[i] = {
@@ -179,10 +240,10 @@ const ProfilePatternEditor: React.FunctionComponent<
 										elements: newSteps,
 									});
 								}}
-								checked={p?.name.startsWith(specialCharacterNOT)}
-								disabled={!p || p.name === specialCharacterSTAR}
+								checked={p?.name.replace(specialCharacterSTAR, "").startsWith(specialCharacterNOT)}
+								disabled={!p}
 							>
-								Negate (<p className="font-bold">NOT</p>)
+								Not (<p className="font-bold">!</p>)
 							</DropdownMenuCheckboxItem>
 							<DropdownMenuCheckboxItem
 								key="star"
@@ -194,23 +255,22 @@ const ProfilePatternEditor: React.FunctionComponent<
 									};
 									const newSteps = [...(currentPattern?.elements ?? [])];
 									if (isChecked) {
+										const suffix = currentPatternElement.name.startsWith(specialCharacterENDS)
+											? specialCharacterENDS
+											: "";
 										newSteps[i] = {
 											...currentPatternElement,
-											name: `${currentPatternElement.name.replace(specialCharacterPLUS, "")}${specialCharacterSTAR}`,
+											name: `${currentPatternElement.name.replace(specialCharacterPLUS, "").replace(specialCharacterENDS, "")}${specialCharacterSTAR}${suffix}`,
 										};
 									} else {
-										const newPatternElementName =
-											currentPatternElement.name.replace(
-												specialCharacterSTAR,
-												"",
-											);
+										const newPatternElementName = currentPatternElement.name.replace(
+											specialCharacterSTAR,
+											"",
+										);
 										if (newPatternElementName !== "") {
 											newSteps[i] = {
 												...currentPatternElement,
-												name: currentPatternElement.name.replace(
-													specialCharacterSTAR,
-													"",
-												),
+												name: currentPatternElement.name.replace(specialCharacterSTAR, ""),
 											};
 										} else {
 											newSteps.splice(i, 1);
@@ -221,7 +281,7 @@ const ProfilePatternEditor: React.FunctionComponent<
 										elements: newSteps,
 									});
 								}}
-								checked={p?.name.endsWith(specialCharacterSTAR)}
+								checked={p?.name.replace(specialCharacterENDS, "").endsWith(specialCharacterSTAR)}
 							>
 								Zero or more (<p className="font-bold">*</p>)
 							</DropdownMenuCheckboxItem>
@@ -233,9 +293,12 @@ const ProfilePatternEditor: React.FunctionComponent<
 									}
 									const newSteps = [...(currentPattern?.elements ?? [])];
 									if (isChecked) {
+										const suffix = p.name.startsWith(specialCharacterENDS)
+											? specialCharacterENDS
+											: "";
 										newSteps[i] = {
 											...p,
-											name: `${p.name.replace(specialCharacterSTAR, "")}${specialCharacterPLUS}`,
+											name: `${p.name.replace(specialCharacterSTAR, "").replace(specialCharacterENDS, "")}${specialCharacterPLUS}${suffix}`,
 										};
 									} else {
 										newSteps[i] = {
@@ -248,8 +311,8 @@ const ProfilePatternEditor: React.FunctionComponent<
 										elements: newSteps,
 									});
 								}}
-								checked={p?.name.endsWith(specialCharacterPLUS)}
-								disabled={!p || p.name === specialCharacterSTAR}
+								checked={p?.name.replace(specialCharacterENDS, "").endsWith(specialCharacterPLUS)}
+								disabled={!p}
 							>
 								One or more (<p className="font-bold">+</p>)
 							</DropdownMenuCheckboxItem>

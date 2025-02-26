@@ -2,10 +2,12 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import type { PatternElement } from "@/lib/types";
 import {
+	specialCharacterENDS,
 	specialCharacterNOT,
 	specialCharacterOR,
 	specialCharacterPLUS,
 	specialCharacterSTAR,
+	specialCharacterSTARTS,
 } from "@/configuration";
 
 /**
@@ -38,6 +40,8 @@ export function formatPatternElement(pe: PatternElement) {
 			s === specialCharacterSTAR
 				? "Any step not in next group"
 				: `"${s
+						.replace(specialCharacterSTARTS, "")
+						.replace(specialCharacterENDS, "")
 						.replace(specialCharacterNOT, "")
 						.replace(specialCharacterSTAR, "")
 						.replace(specialCharacterPLUS, "")}"`,
@@ -46,14 +50,21 @@ export function formatPatternElement(pe: PatternElement) {
 	if (pe.type === "subpattern") {
 		preprocessedName = `Pattern[${preprocessedName}]`;
 	}
-	if (pe.name.startsWith(specialCharacterNOT)) {
+	if (pe.name.replace(specialCharacterSTARTS, "").startsWith(specialCharacterNOT)) {
 		preprocessedName = `NOT (${preprocessedName})`;
 	}
-	if (pe.name.endsWith(specialCharacterSTAR)) {
+	if (pe.name.replace(specialCharacterENDS, "").endsWith(specialCharacterSTAR)) {
 		preprocessedName = `ZERO OR MORE (${preprocessedName})`;
 	}
-	if (pe.name.endsWith(specialCharacterPLUS)) {
+	if (pe.name.replace(specialCharacterENDS, "").endsWith(specialCharacterPLUS)) {
 		preprocessedName = `AT LEAST ONE (${preprocessedName})`;
+	}
+	if (pe.name.startsWith(specialCharacterSTARTS) && pe.name.endsWith(specialCharacterENDS)) {
+		preprocessedName = `STARTS AND ENDS WITH (${preprocessedName})`;
+	} else if (pe.name.startsWith(specialCharacterSTARTS)) {
+		preprocessedName = `STARTS WITH (${preprocessedName})`;
+	} else if (pe.name.endsWith(specialCharacterENDS)) {
+		preprocessedName = `ENDS WITH (${preprocessedName})`;
 	}
 	return preprocessedName;
 }
