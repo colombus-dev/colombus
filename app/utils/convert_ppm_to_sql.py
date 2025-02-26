@@ -57,6 +57,7 @@ def convert_or_not_stmt(sql_step_name: str, step_name: str):
 def convert_steps_to_sql_query(
     project_id: uuid.UUID, pattern: list[dict[str, Any]]
 ) -> str:
+    # TODO: BUG: zero or more (any) -> at least one ("lib_loading") -> at least one ("data_prep") -> zero or more (any)
     names_to_pos = {}
     all_cte_clauses = [
         f'FROM (SELECT * FROM profile WHERE project_id = "{project_id.hex}") AS p'
@@ -135,6 +136,7 @@ def convert_steps_to_sql_query(
             )
         if not step_ends_with_special:
             all_where_clauses.append(convert_or_not_stmt(f"s{se_i}_name", step_name))
+        if not step_name.endswith("*"):
             if prev_pos > -1:
                 diff = se_i - prev_pos
                 all_having_clauses.append(
