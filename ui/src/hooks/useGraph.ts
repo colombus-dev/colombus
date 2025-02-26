@@ -19,7 +19,7 @@ export default function useGraph(
 	);
 
 	const graph = useRef<Graph>(new Graph());
-	const renderer = useRef<Sigma | undefined>();
+	const renderer = useRef<Sigma | undefined>(undefined);
 
 	const { addNewProfile } = useGraphUtils(graph.current);
 
