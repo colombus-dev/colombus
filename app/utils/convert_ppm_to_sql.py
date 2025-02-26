@@ -72,10 +72,10 @@ def convert_steps_to_sql_query(
     all_cte_clauses = [
         f'FROM (SELECT * FROM profile WHERE project_id = "{project_id.hex}") AS p'
     ]
-    all_select_clauses = ["name"]
-    all_groups_select_clauses = ["p.id as profile_id", "p.name"]
+    all_select_clauses = []
+    all_groups_select_clauses = []
     all_where_clauses = []
-    all_groupby_clauses = ["profile_id", "name"]
+    all_groupby_clauses = []
     all_having_clauses = []
 
     flat_pattern = flatten_pattern(pattern)
@@ -137,7 +137,7 @@ def convert_steps_to_sql_query(
             )
             all_select_clauses.append(f"s{se_i}_id")
             all_cte_clauses.append(
-                f"\nINNER JOIN step AS s{se_i} ON p.id = s{se_i}.profile_id"
+                f"INNER JOIN step AS s{se_i} ON p.id = s{se_i}.profile_id"
             )
             all_groupby_clauses.append(f"s{se_i}_id")
 
@@ -165,7 +165,9 @@ def convert_steps_to_sql_query(
                     f"s{se_i}_pos = (SELECT max(position) FROM step AS substep WHERE substep.profile_id = s{se_i}_profile_id)"
                 )
         if not step_ends_with_special:
-            all_where_clauses.append(convert_or_not_stmt(f"s{se_i}_name", step_name_unbound))
+            all_where_clauses.append(
+                convert_or_not_stmt(f"s{se_i}_name", step_name_unbound)
+            )
         if not step_name_unbound.endswith(SPECIAL_CHARACTER_STAR):
             if prev_pos > -1:
                 diff = se_i - prev_pos
@@ -175,27 +177,19 @@ def convert_steps_to_sql_query(
         prev_pos = se_i
         prev_sql_position = sql_max_position
 
-    query = "WITH filtered_rows AS ("
-    query += "\nSELECT "
-    query += ", ".join(all_groups_select_clauses)
-    query += "\n"
-    query += "\n".join(all_cte_clauses)
-    query += "\n)"
-    query += "\nSELECT DISTINCT "
-    query += ", ".join(all_select_clauses)
-    query += "\nFROM filtered_rows"
+    from jinja2 import Environment, PackageLoader, select_autoescape
 
-    if all_where_clauses:
-        query += "\nWHERE "
-        query += " AND ".join(all_where_clauses)
+    env = Environment(loader=PackageLoader("app"), autoescape=select_autoescape())
+    template = env.get_template("ppm_template.sql")
 
-    query += "\nGROUP BY "
-    query += ", ".join(all_groupby_clauses)
-    if all_having_clauses:
-        query += "\nHAVING "
-        query += " AND ".join(all_having_clauses)
-
-    return query + ";"
+    return template.render(
+        all_groups_select_clauses=all_groups_select_clauses,
+        all_cte_clauses=all_cte_clauses,
+        all_select_clauses=all_select_clauses,
+        all_where_clauses=all_where_clauses,
+        all_groupby_clauses=all_groupby_clauses,
+        all_having_clauses=all_having_clauses,
+    )
 
 
 def convert_ppm_to_sql_query(project_id: uuid.UUID, pattern: list[dict[str, Any]]):
