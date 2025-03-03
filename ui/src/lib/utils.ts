@@ -2,12 +2,12 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import type { PatternElement } from "@/lib/types";
 import {
-	specialCharacterENDS,
-	specialCharacterNOT,
-	specialCharacterOR,
-	specialCharacterPLUS,
-	specialCharacterSTAR,
-	specialCharacterSTARTS,
+	metacharacterENDS,
+	metacharacterNOT,
+	metacharacterOR,
+	metacharacterPLUS,
+	metacharacterSTAR,
+	metacharacterSTARTS,
 } from "@/configuration";
 
 /**
@@ -35,35 +35,35 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function formatPatternElement(pe: PatternElement) {
 	let preprocessedName = pe.name
-		.split(specialCharacterOR)
+		.split(metacharacterOR)
 		.map((s) =>
-			s === specialCharacterSTAR
+			s === metacharacterSTAR
 				? "Any step not in next group"
 				: `"${s
-						.replace(specialCharacterSTARTS, "")
-						.replace(specialCharacterENDS, "")
-						.replace(specialCharacterNOT, "")
-						.replace(specialCharacterSTAR, "")
-						.replace(specialCharacterPLUS, "")}"`,
+						.replace(metacharacterSTARTS, "")
+						.replace(metacharacterENDS, "")
+						.replace(metacharacterNOT, "")
+						.replace(metacharacterSTAR, "")
+						.replace(metacharacterPLUS, "")}"`,
 		)
 		.join(" OR ");
 	if (pe.type === "subpattern") {
 		preprocessedName = `Pattern[${preprocessedName}]`;
 	}
-	if (pe.name.replace(specialCharacterSTARTS, "").startsWith(specialCharacterNOT)) {
+	if (pe.name.replace(metacharacterSTARTS, "").startsWith(metacharacterNOT)) {
 		preprocessedName = `NOT (${preprocessedName})`;
 	}
-	if (pe.name.replace(specialCharacterENDS, "").endsWith(specialCharacterSTAR)) {
+	if (pe.name.replace(metacharacterENDS, "").endsWith(metacharacterSTAR)) {
 		preprocessedName = `ZERO OR MORE (${preprocessedName})`;
 	}
-	if (pe.name.replace(specialCharacterENDS, "").endsWith(specialCharacterPLUS)) {
+	if (pe.name.replace(metacharacterENDS, "").endsWith(metacharacterPLUS)) {
 		preprocessedName = `AT LEAST ONE (${preprocessedName})`;
 	}
-	if (pe.name.startsWith(specialCharacterSTARTS) && pe.name.endsWith(specialCharacterENDS)) {
+	if (pe.name.startsWith(metacharacterSTARTS) && pe.name.endsWith(metacharacterENDS)) {
 		preprocessedName = `STARTS AND ENDS WITH (${preprocessedName})`;
-	} else if (pe.name.startsWith(specialCharacterSTARTS)) {
+	} else if (pe.name.startsWith(metacharacterSTARTS)) {
 		preprocessedName = `STARTS WITH (${preprocessedName})`;
-	} else if (pe.name.endsWith(specialCharacterENDS)) {
+	} else if (pe.name.endsWith(metacharacterENDS)) {
 		preprocessedName = `ENDS WITH (${preprocessedName})`;
 	}
 	return preprocessedName;

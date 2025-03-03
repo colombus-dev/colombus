@@ -21,12 +21,12 @@ export const supportedSteps = [
 	"Model Parameter Tuning",
 	"Model Validation and Assembling",
 ];
-export const specialCharacterSTARTS = "^";
-export const specialCharacterENDS = "$";
-export const specialCharacterOR = "|";
-export const specialCharacterNOT = "!";
-export const specialCharacterSTAR = "*";
-export const specialCharacterPLUS = "+";
+export const metacharacterSTARTS = "^";
+export const metacharacterENDS = "$";
+export const metacharacterOR = "|";
+export const metacharacterNOT = "!";
+export const metacharacterSTAR = "*";
+export const metacharacterPLUS = "+";
 
 // graph styling configuration
 

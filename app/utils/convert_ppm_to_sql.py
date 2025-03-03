@@ -3,12 +3,12 @@ import uuid
 from typing import Any
 
 
-SPECIAL_CHARACTER_STARTS = "^"
-SPECIAL_CHARACTER_ENDS = "$"
-SPECIAL_CHARACTER_OR = "|"
-SPECIAL_CHARACTER_NOT = "!"
-SPECIAL_CHARACTER_STAR = "*"
-SPECIAL_CHARACTER_PLUS = "+"
+METACHARACTER_STARTS = "^"
+METACHARACTER_ENDS = "$"
+METACHARACTER_OR = "|"
+METACHARACTER_NOT = "!"
+METACHARACTER_STAR = "*"
+METACHARACTER_PLUS = "+"
 
 
 def convert_meta_instructions_to_sql_query(
@@ -19,7 +19,7 @@ def convert_meta_instructions_to_sql_query(
     join_query = ""
     where_query = ""
     for mi_i, mi in enumerate(meta_instructions):
-        if mi == SPECIAL_CHARACTER_STAR:
+        if mi == METACHARACTER_STAR:
             continue
         names_to_pos[mi_i] = mi
 
@@ -29,7 +29,7 @@ def convert_meta_instructions_to_sql_query(
     prev_pos = -1
     for mi_i, mi in names_to_pos.items():
         for k, v in mi.items():
-            if k != "tasks" and v != SPECIAL_CHARACTER_STAR:
+            if k != "tasks" and v != METACHARACTER_STAR:
                 where_query += f' AND mi{step_pos}_{mi_i}.{k} = "{v}"'
         if prev_pos > -1:
             diff = mi_i - prev_pos
@@ -53,11 +53,11 @@ def flatten_pattern(pattern: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def convert_or_not_stmt(sql_step_name: str, step_name: str):
     return (
-        ("NOT (" if step_name.startswith(SPECIAL_CHARACTER_NOT) else "(")
+        ("NOT (" if step_name.startswith(METACHARACTER_NOT) else "(")
         + " OR ".join(
             f'{sql_step_name} = "{or_name}"'
-            for or_name in step_name.replace(SPECIAL_CHARACTER_NOT, "").split(
-                SPECIAL_CHARACTER_OR
+            for or_name in step_name.replace(METACHARACTER_NOT, "").split(
+                METACHARACTER_OR
             )
         )
         + ")"
@@ -82,24 +82,24 @@ def convert_steps_to_sql_query(
 
     prev_se_i_group: int | None = None
     for se_i, step in enumerate(flat_pattern):
-        if step["name"] == SPECIAL_CHARACTER_STAR:
+        if step["name"] == METACHARACTER_STAR:
             continue
         names_to_pos[se_i] = step["name"]
 
         if (
-            SPECIAL_CHARACTER_PLUS in step["name"]
-            or SPECIAL_CHARACTER_STAR in step["name"]
+            METACHARACTER_PLUS in step["name"]
+            or METACHARACTER_STAR in step["name"]
         ):
             grp_condition = convert_or_not_stmt(
                 "name",
                 step["name"]
-                .replace(SPECIAL_CHARACTER_PLUS, "")
-                .replace(SPECIAL_CHARACTER_STAR, "")
-                .replace(SPECIAL_CHARACTER_STARTS, "")
-                .replace(SPECIAL_CHARACTER_ENDS, ""),
+                .replace(METACHARACTER_PLUS, "")
+                .replace(METACHARACTER_STAR, "")
+                .replace(METACHARACTER_STARTS, "")
+                .replace(METACHARACTER_ENDS, ""),
             )
             join_type = (
-                "INNER" if SPECIAL_CHARACTER_PLUS in step["name"] else "LEFT OUTER"
+                "INNER" if METACHARACTER_PLUS in step["name"] else "LEFT OUTER"
             )
             join_condition = (
                 f"s{se_i}.id != s{prev_se_i_group}.id AND s{se_i}.profile_id = s{prev_se_i_group}.profile_id AND s{se_i}.position > s{prev_se_i_group}.position"
@@ -120,7 +120,7 @@ def convert_steps_to_sql_query(
                 f"s{se_i}.id as s{se_i}_id, s{se_i}.position AS s{se_i}_pos, s{se_i}.grp as s{se_i}_grp, s{se_i}.profile_id AS s{se_i}_profile_id"
             )
 
-            if SPECIAL_CHARACTER_PLUS in step["name"]:
+            if METACHARACTER_PLUS in step["name"]:
                 all_select_clauses.append(
                     f"GROUP_CONCAT(DISTINCT s{se_i}_id) AS res_grp_concat_s{se_i}"
                 )
@@ -144,19 +144,19 @@ def convert_steps_to_sql_query(
     prev_pos = -1
     prev_sql_position = -1
     for se_i, step_name in names_to_pos.items():
-        step_name_unbound = step_name.replace(SPECIAL_CHARACTER_STARTS, "").replace(
-            SPECIAL_CHARACTER_ENDS, ""
+        step_name_unbound = step_name.replace(METACHARACTER_STARTS, "").replace(
+            METACHARACTER_ENDS, ""
         )
-        step_ends_with_special = step_name_unbound.endswith(
-            (SPECIAL_CHARACTER_PLUS, SPECIAL_CHARACTER_STAR)
+        step_ends_with_metachar = step_name_unbound.endswith(
+            (METACHARACTER_PLUS, METACHARACTER_STAR)
         )
         sql_max_position = f"MAX(s{se_i}_pos)"
-        if se_i == 0 and step_name.startswith(SPECIAL_CHARACTER_STARTS):
+        if se_i == 0 and step_name.startswith(METACHARACTER_STARTS):
             # pattern strict starts with step_name
             all_having_clauses.append(f"MIN(s{se_i}_pos) = 0")
-        if se_i == len(flat_pattern) - 1 and step_name.endswith(SPECIAL_CHARACTER_ENDS):
+        if se_i == len(flat_pattern) - 1 and step_name.endswith(METACHARACTER_ENDS):
             # pattern strict ends with step_name
-            if step_ends_with_special:
+            if step_ends_with_metachar:
                 all_having_clauses.append(
                     f"MAX(s{se_i}_pos) = (SELECT max(position) FROM step AS substep WHERE substep.profile_id = s{se_i}_profile_id)"
                 )
@@ -164,11 +164,11 @@ def convert_steps_to_sql_query(
                 all_where_clauses.append(
                     f"s{se_i}_pos = (SELECT max(position) FROM step AS substep WHERE substep.profile_id = s{se_i}_profile_id)"
                 )
-        if not step_ends_with_special:
+        if not step_ends_with_metachar:
             all_where_clauses.append(
                 convert_or_not_stmt(f"s{se_i}_name", step_name_unbound)
             )
-        if not step_name_unbound.endswith(SPECIAL_CHARACTER_STAR):
+        if not step_name_unbound.endswith(METACHARACTER_STAR):
             if prev_pos > -1:
                 diff = se_i - prev_pos
                 all_having_clauses.append(

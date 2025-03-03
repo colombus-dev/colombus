@@ -9,12 +9,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-	specialCharacterENDS,
-	specialCharacterNOT,
-	specialCharacterOR,
-	specialCharacterPLUS,
-	specialCharacterSTAR,
-	specialCharacterSTARTS,
+	metacharacterENDS,
+	metacharacterNOT,
+	metacharacterOR,
+	metacharacterPLUS,
+	metacharacterSTAR,
+	metacharacterSTARTS,
 	stepsColorsMapping,
 	supportedSteps,
 } from "@/configuration";
@@ -70,33 +70,33 @@ const ProfilePatternEditor: React.FunctionComponent<
 										onCheckedChange={(isChecked) => {
 											const newSteps = [...(currentPattern?.elements ?? [])];
 											const nameWithoutGroupSymbols = p?.name
-												.replace(specialCharacterSTAR, "")
-												.replace(specialCharacterPLUS, "");
+												.replace(metacharacterSTAR, "")
+												.replace(metacharacterPLUS, "");
 											const group =
-												p?.name.endsWith(specialCharacterSTAR) ||
-												p?.name.endsWith(specialCharacterPLUS)
+												p?.name.endsWith(metacharacterSTAR) ||
+												p?.name.endsWith(metacharacterPLUS)
 													? p.name.at(-1)
 													: "";
 											if (isChecked) {
 												newSteps[i] = {
 													name: nameWithoutGroupSymbols
-														?.replace(specialCharacterNOT, "")
-														.split(specialCharacterOR)
+														?.replace(metacharacterNOT, "")
+														.split(metacharacterOR)
 														.filter((n) => supportedSteps.includes(n)).length
-														? `${nameWithoutGroupSymbols}${specialCharacterOR}${s}${group}`
+														? `${nameWithoutGroupSymbols}${metacharacterOR}${s}${group}`
 														: s,
 													tasks: [],
 													type: "simple",
 												};
 											} else {
 												const stepsToKeep = newSteps[i].name
-													.split(specialCharacterOR)
+													.split(metacharacterOR)
 													.filter((spl) => spl !== s);
 												if (stepsToKeep.length === 0) {
 													newSteps.splice(i, 1);
 												} else {
 													newSteps[i] = {
-														name: stepsToKeep.join(specialCharacterOR),
+														name: stepsToKeep.join(metacharacterOR),
 														tasks: [],
 														type: "simple",
 													};
@@ -111,10 +111,10 @@ const ProfilePatternEditor: React.FunctionComponent<
 											currentPattern &&
 											i < currentPattern.elements.length &&
 											currentPattern.elements[i].name
-												.replace(specialCharacterNOT, "")
-												.replace(specialCharacterSTAR, "")
-												.replace(specialCharacterPLUS, "")
-												.split(specialCharacterOR)
+												.replace(metacharacterNOT, "")
+												.replace(metacharacterSTAR, "")
+												.replace(metacharacterPLUS, "")
+												.split(metacharacterOR)
 												.includes(s)
 										}
 									>
@@ -147,7 +147,7 @@ const ProfilePatternEditor: React.FunctionComponent<
 										currentPattern &&
 										i < currentPattern.elements.length &&
 										currentPattern?.elements[i].name
-											.split(specialCharacterOR)
+											.split(metacharacterOR)
 											.includes(name)
 									}
 									// disabling current pattern to avoid recursion in ppm
@@ -168,12 +168,12 @@ const ProfilePatternEditor: React.FunctionComponent<
 									if (isChecked) {
 										newSteps[i] = {
 											...p,
-											name: `${specialCharacterSTARTS}${p.name}`,
+											name: `${metacharacterSTARTS}${p.name}`,
 										};
 									} else {
 										newSteps[i] = {
 											...p,
-											name: p.name.replace(specialCharacterSTARTS, ""),
+											name: p.name.replace(metacharacterSTARTS, ""),
 										};
 									}
 									setCurrentPattern({
@@ -181,7 +181,7 @@ const ProfilePatternEditor: React.FunctionComponent<
 										elements: newSteps,
 									});
 								}}
-								checked={p?.name.startsWith(specialCharacterSTARTS)}
+								checked={p?.name.startsWith(metacharacterSTARTS)}
 								disabled={!p}
 							>
 								Starts with (<p className="font-bold">^</p>)
@@ -196,12 +196,12 @@ const ProfilePatternEditor: React.FunctionComponent<
 									if (isChecked) {
 										newSteps[i] = {
 											...p,
-											name: `${p.name}${specialCharacterENDS}`,
+											name: `${p.name}${metacharacterENDS}`,
 										};
 									} else {
 										newSteps[i] = {
 											...p,
-											name: p.name.replace(specialCharacterENDS, ""),
+											name: p.name.replace(metacharacterENDS, ""),
 										};
 									}
 									setCurrentPattern({
@@ -209,7 +209,7 @@ const ProfilePatternEditor: React.FunctionComponent<
 										elements: newSteps,
 									});
 								}}
-								checked={p?.name.endsWith(specialCharacterENDS)}
+								checked={p?.name.endsWith(metacharacterENDS)}
 								disabled={!p}
 							>
 								Ends with (<p className="font-bold">$</p>)
@@ -222,17 +222,17 @@ const ProfilePatternEditor: React.FunctionComponent<
 									}
 									const newSteps = [...(currentPattern?.elements ?? [])];
 									if (isChecked) {
-										const prefix = p.name.startsWith(specialCharacterSTARTS)
-											? specialCharacterSTARTS
+										const prefix = p.name.startsWith(metacharacterSTARTS)
+											? metacharacterSTARTS
 											: "";
 										newSteps[i] = {
 											...p,
-											name: `${prefix}${specialCharacterNOT}${p.name.replace(specialCharacterSTARTS, "")}`,
+											name: `${prefix}${metacharacterNOT}${p.name.replace(metacharacterSTARTS, "")}`,
 										};
 									} else {
 										newSteps[i] = {
 											...p,
-											name: p.name.replace(specialCharacterNOT, ""),
+											name: p.name.replace(metacharacterNOT, ""),
 										};
 									}
 									setCurrentPattern({
@@ -240,7 +240,7 @@ const ProfilePatternEditor: React.FunctionComponent<
 										elements: newSteps,
 									});
 								}}
-								checked={p?.name.replace(specialCharacterSTAR, "").startsWith(specialCharacterNOT)}
+								checked={p?.name.replace(metacharacterSTAR, "").startsWith(metacharacterNOT)}
 								disabled={!p}
 							>
 								Not (<p className="font-bold">!</p>)
@@ -255,22 +255,22 @@ const ProfilePatternEditor: React.FunctionComponent<
 									};
 									const newSteps = [...(currentPattern?.elements ?? [])];
 									if (isChecked) {
-										const suffix = currentPatternElement.name.startsWith(specialCharacterENDS)
-											? specialCharacterENDS
+										const suffix = currentPatternElement.name.startsWith(metacharacterENDS)
+											? metacharacterENDS
 											: "";
 										newSteps[i] = {
 											...currentPatternElement,
-											name: `${currentPatternElement.name.replace(specialCharacterPLUS, "").replace(specialCharacterENDS, "")}${specialCharacterSTAR}${suffix}`,
+											name: `${currentPatternElement.name.replace(metacharacterPLUS, "").replace(metacharacterENDS, "")}${metacharacterSTAR}${suffix}`,
 										};
 									} else {
 										const newPatternElementName = currentPatternElement.name.replace(
-											specialCharacterSTAR,
+											metacharacterSTAR,
 											"",
 										);
 										if (newPatternElementName !== "") {
 											newSteps[i] = {
 												...currentPatternElement,
-												name: currentPatternElement.name.replace(specialCharacterSTAR, ""),
+												name: currentPatternElement.name.replace(metacharacterSTAR, ""),
 											};
 										} else {
 											newSteps.splice(i, 1);
@@ -281,7 +281,7 @@ const ProfilePatternEditor: React.FunctionComponent<
 										elements: newSteps,
 									});
 								}}
-								checked={p?.name.replace(specialCharacterENDS, "").endsWith(specialCharacterSTAR)}
+								checked={p?.name.replace(metacharacterENDS, "").endsWith(metacharacterSTAR)}
 							>
 								Zero or more (<p className="font-bold">*</p>)
 							</DropdownMenuCheckboxItem>
@@ -293,17 +293,17 @@ const ProfilePatternEditor: React.FunctionComponent<
 									}
 									const newSteps = [...(currentPattern?.elements ?? [])];
 									if (isChecked) {
-										const suffix = p.name.startsWith(specialCharacterENDS)
-											? specialCharacterENDS
+										const suffix = p.name.startsWith(metacharacterENDS)
+											? metacharacterENDS
 											: "";
 										newSteps[i] = {
 											...p,
-											name: `${p.name.replace(specialCharacterSTAR, "").replace(specialCharacterENDS, "")}${specialCharacterPLUS}${suffix}`,
+											name: `${p.name.replace(metacharacterSTAR, "").replace(metacharacterENDS, "")}${metacharacterPLUS}${suffix}`,
 										};
 									} else {
 										newSteps[i] = {
 											...p,
-											name: p.name.replace(specialCharacterPLUS, ""),
+											name: p.name.replace(metacharacterPLUS, ""),
 										};
 									}
 									setCurrentPattern({
@@ -311,7 +311,7 @@ const ProfilePatternEditor: React.FunctionComponent<
 										elements: newSteps,
 									});
 								}}
-								checked={p?.name.replace(specialCharacterENDS, "").endsWith(specialCharacterPLUS)}
+								checked={p?.name.replace(metacharacterENDS, "").endsWith(metacharacterPLUS)}
 								disabled={!p}
 							>
 								One or more (<p className="font-bold">+</p>)
