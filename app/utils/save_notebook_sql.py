@@ -24,6 +24,7 @@ def save_notebook_as_sql(
         total_se_i = 0
         total_mi_i = 0
         total_c_i = 0
+        previous_step = None
         for sa in json_profile:
             for se in sa["tasks"]:
                 all_metainstructions = []
@@ -53,14 +54,15 @@ def save_notebook_as_sql(
                     )
                     all_profile_codes.extend(all_codes)
                     total_mi_i += 1
-                all_steps.append(
-                    Step(
-                        name=se["name"],
-                        position=total_se_i,
-                        meta_instructions=all_metainstructions,
-                        number_children=len(se["tasks"]),
-                    )
+                new_step = Step(
+                    name=se["name"],
+                    position=total_se_i,
+                    meta_instructions=all_metainstructions,
+                    number_children=len(se["tasks"]),
+                    previous_step=previous_step,
                 )
+                all_steps.append(new_step)
+                previous_step = new_step
                 all_profile_metainstructions.extend(all_metainstructions)
                 total_se_i += 1
         profile = Profile(

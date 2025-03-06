@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from typing import Any, List
+from typing import Any, List, Optional
 
 from sqlmodel import SQLModel, Field, Relationship, create_engine, JSON, String, Column
 from sqlalchemy.dialects import mysql
@@ -67,6 +67,17 @@ class StepBase(SQLModel):
 
 class Step(StepBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(index=True)
+
+    previous_step_id: uuid.UUID | None = Field(
+        default=None, foreign_key="step.id", ondelete="CASCADE"
+    )
+    previous_step: Optional["Step"] = Relationship(
+        back_populates="next_step",
+        sa_relationship_kwargs={"remote_side": "Step.id", "uselist": False},
+    )
+
+    next_step: Optional["Step"] = Relationship(back_populates="previous_step")
 
     profile_id: uuid.UUID | None = ProfileIdFk
     profile: Profile = Relationship(back_populates="steps")

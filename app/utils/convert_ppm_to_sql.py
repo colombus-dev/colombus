@@ -74,36 +74,40 @@ def convert_steps_to_sql_query(
     ]
     all_select_clauses = []
     all_groups_select_clauses = []
-    all_where_clauses = []
     all_groupby_clauses = []
     all_having_clauses = []
 
     flat_pattern = flatten_pattern(pattern)
 
-    prev_se_i_group: int | None = None
     for se_i, step in enumerate(flat_pattern):
         if step["name"] == METACHARACTER_STAR:
             continue
         names_to_pos[se_i] = step["name"]
 
-        if (
-            METACHARACTER_PLUS in step["name"]
-            or METACHARACTER_STAR in step["name"]
-        ):
+    prev_pos = -1
+    prev_sql_position = -1
+    for se_i, step_name in names_to_pos.items():
+        step_name_unbound = step_name.replace(METACHARACTER_STARTS, "").replace(
+            METACHARACTER_ENDS, ""
+        )
+        step_ends_with_metachar = step_name_unbound.endswith(
+            (METACHARACTER_PLUS, METACHARACTER_STAR)
+        )
+        sql_max_position = f"MAX(s{se_i}_pos)"
+        sql_min_position = f"MIN(s{se_i}_pos)"
+
+        if step_ends_with_metachar:
             grp_condition = convert_or_not_stmt(
                 "name",
-                step["name"]
-                .replace(METACHARACTER_PLUS, "")
+                step_name.replace(METACHARACTER_PLUS, "")
                 .replace(METACHARACTER_STAR, "")
                 .replace(METACHARACTER_STARTS, "")
                 .replace(METACHARACTER_ENDS, ""),
             )
-            join_type = (
-                "INNER" if METACHARACTER_PLUS in step["name"] else "LEFT OUTER"
-            )
+            join_type = "INNER" if METACHARACTER_PLUS in step_name else "LEFT OUTER"
             join_condition = (
-                f"s{se_i}.id != s{prev_se_i_group}.id AND s{se_i}.profile_id = s{prev_se_i_group}.profile_id AND s{se_i}.position > s{prev_se_i_group}.position"
-                if prev_se_i_group is not None
+                f"s{se_i}.id != s{prev_pos}.id AND s{se_i}.profile_id = s{prev_pos}.profile_id AND s{se_i}.position > s{prev_pos}.position"
+                if prev_pos is not None
                 else f"s{se_i}.profile_id = p.id"
             )
             all_cte_clauses.append(
@@ -120,60 +124,49 @@ def convert_steps_to_sql_query(
                 f"s{se_i}.id as s{se_i}_id, s{se_i}.position AS s{se_i}_pos, s{se_i}.grp as s{se_i}_grp, s{se_i}.profile_id AS s{se_i}_profile_id"
             )
 
-            if METACHARACTER_PLUS in step["name"]:
+            if METACHARACTER_PLUS in step_name:
                 all_select_clauses.append(
                     f"GROUP_CONCAT(DISTINCT s{se_i}_id) AS res_grp_concat_s{se_i}"
                 )
-            elif prev_se_i_group is not None:
+            elif prev_pos is not None:
                 all_select_clauses.append(
-                    f"IF(MIN(s{se_i}_pos) - MAX(s{prev_se_i_group}_pos) > 1, NULL, GROUP_CONCAT(DISTINCT s{se_i}_id)) AS grp_concat_s{se_i}"
+                    f"IF({sql_min_position} - MAX(s{prev_pos}_pos) > 1, NULL, GROUP_CONCAT(DISTINCT s{se_i}_id)) AS grp_concat_s{se_i}"
                 )
 
             all_groupby_clauses.append(f"s{se_i}_grp")
-            prev_se_i_group = se_i
+            if not step_name_unbound.endswith(METACHARACTER_STAR) and prev_pos > -1:
+                diff = se_i - prev_pos
+                all_having_clauses.append(
+                    f"{sql_max_position} - {prev_sql_position} {'=' if diff == 1 else '>='} 1"
+                )
         else:
             all_groups_select_clauses.append(
                 f"s{se_i}.name AS s{se_i}_name, s{se_i}.id AS s{se_i}_id, s{se_i}.position AS s{se_i}_pos, s{se_i}.profile_id AS s{se_i}_profile_id"
             )
             all_select_clauses.append(f"s{se_i}_id")
+
+            optimized_join_condition = (
+                f"INNER JOIN step AS s{se_i} ON p.id = s{se_i}.profile_id AND "
+            )
+            if prev_pos > -1:
+                optimized_join_condition += (
+                    f"s{se_i}.previous_step_id = s{prev_pos}.id AND "
+                )
+
             all_cte_clauses.append(
-                f"INNER JOIN step AS s{se_i} ON p.id = s{se_i}.profile_id"
+                optimized_join_condition
+                + convert_or_not_stmt(f"s{se_i}.name", step_name_unbound)
             )
             all_groupby_clauses.append(f"s{se_i}_id")
 
-    prev_pos = -1
-    prev_sql_position = -1
-    for se_i, step_name in names_to_pos.items():
-        step_name_unbound = step_name.replace(METACHARACTER_STARTS, "").replace(
-            METACHARACTER_ENDS, ""
-        )
-        step_ends_with_metachar = step_name_unbound.endswith(
-            (METACHARACTER_PLUS, METACHARACTER_STAR)
-        )
-        sql_max_position = f"MAX(s{se_i}_pos)"
         if se_i == 0 and step_name.startswith(METACHARACTER_STARTS):
             # pattern strict starts with step_name
-            all_having_clauses.append(f"MIN(s{se_i}_pos) = 0")
+            all_having_clauses.append(f"{sql_min_position} = 0")
         if se_i == len(flat_pattern) - 1 and step_name.endswith(METACHARACTER_ENDS):
             # pattern strict ends with step_name
-            if step_ends_with_metachar:
-                all_having_clauses.append(
-                    f"MAX(s{se_i}_pos) = (SELECT max(position) FROM step AS substep WHERE substep.profile_id = s{se_i}_profile_id)"
-                )
-            else:
-                all_where_clauses.append(
-                    f"s{se_i}_pos = (SELECT max(position) FROM step AS substep WHERE substep.profile_id = s{se_i}_profile_id)"
-                )
-        if not step_ends_with_metachar:
-            all_where_clauses.append(
-                convert_or_not_stmt(f"s{se_i}_name", step_name_unbound)
+            all_having_clauses.append(
+                f"{sql_max_position} = (SELECT max(position) FROM step AS substep WHERE substep.profile_id = s{se_i}_profile_id)"
             )
-        if not step_name_unbound.endswith(METACHARACTER_STAR):
-            if prev_pos > -1:
-                diff = se_i - prev_pos
-                all_having_clauses.append(
-                    f"{sql_max_position} - {prev_sql_position} {'=' if diff == 1 else '>='} 1"
-                )
         prev_pos = se_i
         prev_sql_position = sql_max_position
 
@@ -186,7 +179,6 @@ def convert_steps_to_sql_query(
         all_groups_select_clauses=all_groups_select_clauses,
         all_cte_clauses=all_cte_clauses,
         all_select_clauses=all_select_clauses,
-        all_where_clauses=all_where_clauses,
         all_groupby_clauses=all_groupby_clauses,
         all_having_clauses=all_having_clauses,
     )
