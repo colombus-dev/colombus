@@ -1,31 +1,56 @@
 services:
   colombus_app:
     build: .
-    restart: always
     ports:
       - "8080:8080"
     volumes:
       - ./app:/code/app:rw
     environment:
-      MYSQL_FULL_URL: mysql+pymysql://christopher:pinta@colombus_mysql:3306/colombusdb
+      # MYSQL_FULL_URL: mysql+pymysql://christopher:pinta@colombus_mysql:3306/colombusdb
+      POSTGRESQL_FULL_URL: postgresql+psycopg://christopher:pinta@colombus_postgresql:5432/colombusdb
     depends_on:
-      colombus_mysql:
+      # colombus_mysql:
+      #   condition: service_healthy
+      colombus_postgresql:
         condition: service_healthy
-  colombus_mysql:
-    image: mysql:lts
-    restart: always
-    command: --group_concat_max_len=8192
+  # colombus_mysql:
+  #   image: mysql:lts
+  #   command: --group_concat_max_len=8192
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: nina
+  #     MYSQL_DATABASE: colombusdb
+  #     MYSQL_USER: christopher
+  #     MYSQL_PASSWORD: pinta
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - ./db_data:/var/lib/mysql:rw
+  #     - ./mysql-config:/etc/mysql/conf.d:rw
+  #   healthcheck:
+  #     test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+  #     timeout: 10s
+  #     retries: 10
+  colombus_postgresql:
+    image: 'postgres:latest'
     environment:
-      MYSQL_ROOT_PASSWORD: nina
-      MYSQL_DATABASE: colombusdb
-      MYSQL_USER: christopher
-      MYSQL_PASSWORD: pinta
+      POSTGRES_USER: christopher
+      POSTGRES_PASSWORD: pinta
+      POSTGRES_DB: colombusdb
     ports:
-      - "3306:3306"
+      - 5432:5432
     volumes:
-      - ./db_data:/var/lib/mysql:rw
-      - ./mysql-config:/etc/mysql/conf.d:rw
+      - ./postgres_data:/var/lib/postgresql/data/
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      test: ["CMD-SHELL", "pg_isready", "-U", "christopher", "-d", "colombusdb"]
       timeout: 10s
       retries: 10
+  colombus_pgadmin:
+    image: 'dpage/pgadmin4:latest'
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: user@domain.com
+      PGADMIN_DEFAULT_PASSWORD: pgpassword
+    depends_on:
+      colombus_postgresql:
+        condition: service_healthy

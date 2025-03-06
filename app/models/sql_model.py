@@ -152,7 +152,7 @@ class PatternElement(SQLModel, table=True):
     pattern: Pattern = Relationship(back_populates="elements")
 
 
-engine = create_engine(os.getenv("MYSQL_FULL_URL"), echo=False)
+engine = create_engine(os.getenv("POSTGRESQL_FULL_URL"), echo=False)
 
 
 def create_db_and_tables():

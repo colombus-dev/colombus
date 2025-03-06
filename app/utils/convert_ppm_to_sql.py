@@ -55,7 +55,7 @@ def convert_or_not_stmt(sql_step_name: str, step_name: str):
     return (
         ("NOT (" if step_name.startswith(METACHARACTER_NOT) else "(")
         + " OR ".join(
-            f'{sql_step_name} = "{or_name}"'
+            f"{sql_step_name} = '{or_name}'"
             for or_name in step_name.replace(METACHARACTER_NOT, "").split(
                 METACHARACTER_OR
             )
@@ -70,7 +70,7 @@ def convert_steps_to_sql_query(
     # TODO: BUG: zero or more (any) -> at least one ("lib_loading") -> at least one ("data_prep") -> zero or more (any)
     names_to_pos = {}
     all_cte_clauses = [
-        f'FROM (SELECT * FROM profile WHERE project_id = "{project_id.hex}") AS p'
+        f"FROM (SELECT * FROM profile WHERE project_id = '{project_id.hex}') AS p"
     ]
     all_select_clauses = []
     all_groups_select_clauses = []
@@ -107,13 +107,13 @@ def convert_steps_to_sql_query(
             join_type = "INNER" if METACHARACTER_PLUS in step_name else "LEFT OUTER"
             join_condition = (
                 f"s{se_i}.id != s{prev_pos}.id AND s{se_i}.profile_id = s{prev_pos}.profile_id AND s{se_i}.position > s{prev_pos}.position"
-                if prev_pos is not None
+                if prev_pos > -1
                 else f"s{se_i}.profile_id = p.id"
             )
             all_cte_clauses.append(
                 f"""
             {join_type} JOIN (
-                SELECT id, profile_id, position, position - CAST(DENSE_RANK() OVER(partition by profile_id ORDER BY position) AS SIGNED) AS grp
+                SELECT id, profile_id, position, position - DENSE_RANK() OVER(partition by profile_id ORDER BY position) AS grp
                 FROM step
                 WHERE {grp_condition}
             ) AS s{se_i} ON {join_condition}
@@ -126,11 +126,15 @@ def convert_steps_to_sql_query(
 
             if METACHARACTER_PLUS in step_name:
                 all_select_clauses.append(
-                    f"GROUP_CONCAT(DISTINCT s{se_i}_id) AS res_grp_concat_s{se_i}"
+                    f"string_agg(DISTINCT s{se_i}_id::text, ',') AS res_grp_concat_s{se_i}"
                 )
-            elif prev_pos is not None:
+            elif prev_pos > -1:
+                # all_select_clauses.append(
+                #     f"IF({sql_min_position} - MAX(s{prev_pos}_pos) > 1, NULL, string_agg(DISTINCT s{se_i}_id, ',')) AS grp_concat_s{se_i}"
+                # )
+                # TODO
                 all_select_clauses.append(
-                    f"IF({sql_min_position} - MAX(s{prev_pos}_pos) > 1, NULL, GROUP_CONCAT(DISTINCT s{se_i}_id)) AS grp_concat_s{se_i}"
+                    f"string_agg(DISTINCT s{se_i}_id::text, ',')) AS grp_concat_s{se_i}"
                 )
 
             all_groupby_clauses.append(f"s{se_i}_grp")

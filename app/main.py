@@ -233,7 +233,7 @@ async def execute_ppm(
         PpmResult(
             profile_name=r[0],
             results=[
-                [uuid.UUID(e) for e in f.split(",")] for f in r[1:] if f is not None
+                [(uuid.UUID(e) if isinstance(e, str) else e) for e in (f.split(",") if isinstance(f, str) else [f])] for f in r[1:] if f is not None
             ],
         )
         for r in session.exec(text(query)).all()
@@ -255,7 +255,7 @@ async def execute_ppm(
         PpmResult(
             profile_name=r[0],
             results=[
-                [uuid.UUID(e) for e in f.split(",")] for f in r[1:] if f is not None
+                [(uuid.UUID(e) if isinstance(e, str) else e) for e in (f.split(",") if isinstance(f, str) else [f])] for f in r[1:] if f is not None
             ],
         )
         for r in session.exec(text(query)).all()
