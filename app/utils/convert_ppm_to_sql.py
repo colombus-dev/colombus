@@ -129,12 +129,8 @@ def convert_steps_to_sql_query(
                     f"string_agg(DISTINCT s{se_i}_id::text, ',') AS res_grp_concat_s{se_i}"
                 )
             elif prev_pos > -1:
-                # all_select_clauses.append(
-                #     f"IF({sql_min_position} - MAX(s{prev_pos}_pos) > 1, NULL, string_agg(DISTINCT s{se_i}_id, ',')) AS grp_concat_s{se_i}"
-                # )
-                # TODO
                 all_select_clauses.append(
-                    f"string_agg(DISTINCT s{se_i}_id::text, ',')) AS grp_concat_s{se_i}"
+                    f"CASE WHEN {sql_min_position} - MAX(s{prev_pos}_pos) > 1 THEN NULL ELSE string_agg(DISTINCT s{se_i}_id::text, ',') END AS res_grp_concat_s{se_i}"
                 )
 
             all_groupby_clauses.append(f"s{se_i}_grp")
