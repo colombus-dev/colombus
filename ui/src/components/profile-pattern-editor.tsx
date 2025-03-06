@@ -156,7 +156,9 @@ const ProfilePatternEditor: React.FunctionComponent<
 									{name}
 								</DropdownMenuCheckboxItem>
 							))}
-							<DropdownMenuLabel>Pattern Matching elements</DropdownMenuLabel>
+							<DropdownMenuLabel>
+								Pattern Matching Metacharacters
+							</DropdownMenuLabel>
 							<DropdownMenuSeparator />
 							<DropdownMenuCheckboxItem
 								key="starts-with"
@@ -240,7 +242,9 @@ const ProfilePatternEditor: React.FunctionComponent<
 										elements: newSteps,
 									});
 								}}
-								checked={p?.name.replace(metacharacterSTAR, "").startsWith(metacharacterNOT)}
+								checked={p?.name
+									.replace(metacharacterSTAR, "")
+									.startsWith(metacharacterNOT)}
 								disabled={!p}
 							>
 								Not (<p className="font-bold">!</p>)
@@ -255,7 +259,9 @@ const ProfilePatternEditor: React.FunctionComponent<
 									};
 									const newSteps = [...(currentPattern?.elements ?? [])];
 									if (isChecked) {
-										const suffix = currentPatternElement.name.startsWith(metacharacterENDS)
+										const suffix = currentPatternElement.name.startsWith(
+											metacharacterENDS,
+										)
 											? metacharacterENDS
 											: "";
 										newSteps[i] = {
@@ -263,14 +269,15 @@ const ProfilePatternEditor: React.FunctionComponent<
 											name: `${currentPatternElement.name.replace(metacharacterPLUS, "").replace(metacharacterENDS, "")}${metacharacterSTAR}${suffix}`,
 										};
 									} else {
-										const newPatternElementName = currentPatternElement.name.replace(
-											metacharacterSTAR,
-											"",
-										);
+										const newPatternElementName =
+											currentPatternElement.name.replace(metacharacterSTAR, "");
 										if (newPatternElementName !== "") {
 											newSteps[i] = {
 												...currentPatternElement,
-												name: currentPatternElement.name.replace(metacharacterSTAR, ""),
+												name: currentPatternElement.name.replace(
+													metacharacterSTAR,
+													"",
+												),
 											};
 										} else {
 											newSteps.splice(i, 1);
@@ -281,7 +288,9 @@ const ProfilePatternEditor: React.FunctionComponent<
 										elements: newSteps,
 									});
 								}}
-								checked={p?.name.replace(metacharacterENDS, "").endsWith(metacharacterSTAR)}
+								checked={p?.name
+									.replace(metacharacterENDS, "")
+									.endsWith(metacharacterSTAR)}
 							>
 								Zero or more (<p className="font-bold">*</p>)
 							</DropdownMenuCheckboxItem>
@@ -311,30 +320,35 @@ const ProfilePatternEditor: React.FunctionComponent<
 										elements: newSteps,
 									});
 								}}
-								checked={p?.name.replace(metacharacterENDS, "").endsWith(metacharacterPLUS)}
+								checked={p?.name
+									.replace(metacharacterENDS, "")
+									.endsWith(metacharacterPLUS)}
 								disabled={!p}
 							>
 								One or more (<p className="font-bold">+</p>)
 							</DropdownMenuCheckboxItem>
-							<DropdownMenuLabel>Other actions</DropdownMenuLabel>
-							<DropdownMenuSeparator />
 							{p && (
-								<DropdownMenuItem
-									onClick={() => {
-										const newSteps = [...(currentPattern?.elements ?? [])];
-										newSteps.splice(i, 1);
-										setCurrentPattern({
-											...currentPattern,
-											elements: newSteps,
-										});
-									}}
-									disabled={p === undefined}
-									asChild
-								>
-									<Button variant="ghost" className="w-full">
-										<XCircle /> Remove
-									</Button>
-								</DropdownMenuItem>
+								<>
+									<DropdownMenuLabel>Other actions</DropdownMenuLabel>
+									<DropdownMenuSeparator />
+
+									<DropdownMenuItem
+										onClick={() => {
+											const newSteps = [...(currentPattern?.elements ?? [])];
+											newSteps.splice(i, 1);
+											setCurrentPattern({
+												...currentPattern,
+												elements: newSteps,
+											});
+										}}
+										disabled={p === undefined}
+										asChild
+									>
+										<Button variant="ghost" className="w-full">
+											<XCircle /> Remove
+										</Button>
+									</DropdownMenuItem>
+								</>
 							)}
 						</DropdownMenuContent>
 					</DropdownMenu>
