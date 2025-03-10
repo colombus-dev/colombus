@@ -9,7 +9,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlmodel import text, select, delete, Session
 
-from app.models.api_model import ProfileNodes, PpmResult
+from app.models.api_model import (
+    ProfileNodes,
+    PpmResult,
+    PatternGroup,
+    Pattern as PatternApi,
+)
 from app.models.sql_model import (
     Project,
     Pattern,
@@ -217,14 +222,14 @@ async def delete_profile(
 @app.get("/api/project/{project_id}/ppm/getAll")
 async def get_all_ppm(
     session: Session = Depends(get_session),
-) -> list[tuple[str, list[dict[str, Any]]]]:
-    return session.execute(select(Pattern.name, Pattern.json_pattern)).all()
+) -> list[PatternApi]:
+    return [res[0] for res in session.execute(select(Pattern.json_pattern)).all()]
 
 
 @app.post("/api/project/{project_id}/ppm/execute")
 async def execute_ppm(
     project_id: uuid.UUID,
-    pattern: list[dict[str, Any]],
+    pattern: list[PatternGroup],
     session: Session = Depends(get_session),
 ) -> list[PpmResult]:
     query = convert_ppm_to_sql_query(project_id, pattern)
@@ -233,7 +238,12 @@ async def execute_ppm(
         PpmResult(
             profile_name=r[0],
             results=[
-                [(uuid.UUID(e) if isinstance(e, str) else e) for e in (f.split(",") if isinstance(f, str) else [f])] for f in r[1:] if f is not None
+                [
+                    (uuid.UUID(e) if isinstance(e, str) else e)
+                    for e in (f.split(",") if isinstance(f, str) else [f])
+                ]
+                for f in r[1:]
+                if f is not None
             ],
         )
         for r in session.exec(text(query)).all()
@@ -249,13 +259,18 @@ async def execute_ppm(
             (Pattern.project_id == project_id) & (Pattern.name == name)
         )
     ).scalar_one()
-    query = convert_ppm_to_sql_query(project_id, ppm)
+    query = convert_ppm_to_sql_query(project_id, PatternGroup(**ppm))
     # TODO: improve this uuid conversion
     return [
         PpmResult(
             profile_name=r[0],
             results=[
-                [(uuid.UUID(e) if isinstance(e, str) else e) for e in (f.split(",") if isinstance(f, str) else [f])] for f in r[1:] if f is not None
+                [
+                    (uuid.UUID(e) if isinstance(e, str) else e)
+                    for e in (f.split(",") if isinstance(f, str) else [f])
+                ]
+                for f in r[1:]
+                if f is not None
             ],
         )
         for r in session.exec(text(query)).all()
@@ -266,7 +281,7 @@ async def execute_ppm(
 async def save_ppm(
     project_id: uuid.UUID,
     name: str,
-    pattern: list[dict[str, Any]],
+    pattern: PatternApi,
     session: Session = Depends(get_session),
 ) -> str:
     retrieved_session_pattern = session.execute(
@@ -275,9 +290,9 @@ async def save_ppm(
         )
     ).scalar_one_or_none()
     session_pattern = retrieved_session_pattern or Pattern(
-        project_id=project_id, name=name, json_pattern=pattern
+        project_id=project_id, name=name, json_pattern=pattern.dict()
     )
-    session_pattern.json_pattern = pattern
+    session_pattern.json_pattern = pattern.dict()
     session.add(session_pattern)
     session.commit()
     return session_pattern.name

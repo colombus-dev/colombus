@@ -1,7 +1,7 @@
 import type { GraphDefinition, PpmResult, StepNode } from "@/api/client";
 import { colors, stepsColorsMapping } from "@/configuration";
-import type { PatternElement } from "@/lib/types";
-import { type Pattern, useColombusStore } from "@/store";
+import type { Pattern, PatternGroup } from "@/lib/types";
+import { useColombusStore } from "@/store";
 import type Graph from "graphology";
 import { useCallback } from "react";
 
@@ -20,16 +20,16 @@ type PatternGroupNode = {
 	childrenIds: string[];
 };
 const expandPpm = (
-	elements: PatternElement[],
+	groups: PatternGroup[],
 	parentPatternName?: string,
-): PatternElement[] => {
-	return elements
+): PatternGroup[] => {
+	return groups
 		.flatMap((e) =>
-			e.type === "simple" ? e : expandPpm(e.tasks, parentPatternName ?? e.name),
+			e.steps ? e : expandPpm(e.subpattern?.groups ?? [], parentPatternName ?? e.name),
 		)
 		.map(
 			// replacing subpatterns names with the top pattern one
-			(e) => ({ ...e, name: parentPatternName ?? e.name }) as PatternElement,
+			(e) => ({ ...e, name: parentPatternName ?? e.name }) as PatternGroup,
 		);
 };
 
@@ -38,7 +38,7 @@ const getGroupsIds = (
 	currentPattern: Pattern,
 	steps: StepNode[],
 ) => {
-	const ppmCandiddates = expandPpm(currentPattern.elements);
+	const ppmCandiddates = expandPpm(currentPattern.groups ?? []);
 	const ppmNodes: PatternGroupNode[][] = [];
 	for (const [ri, result] of ppmResults.entries()) {
 		ppmNodes[ri] = result.results.map((r, i) => ({

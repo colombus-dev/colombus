@@ -1,14 +1,9 @@
 import type { PpmResult } from "@/api/client";
 import type { PpmNodesDisplayMode } from "@/configuration";
-import type { PatternElement } from "@/lib/types";
+import type { Pattern } from "@/lib/types";
 import { create } from "zustand";
 import type { StateCreator } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-
-export type Pattern = {
-	name?: string;
-	elements: PatternElement[];
-};
 
 interface AuthSlice {
 	apiKey?: string;

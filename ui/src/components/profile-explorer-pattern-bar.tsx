@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { PatternElement } from "@/lib/types";
+import type { PatternGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 import { useCallback } from "react";
@@ -21,7 +21,7 @@ const ProfileExplorerPatternBar: React.FunctionComponent<
 			}
 			file.text().then((r) => {
 				setCurrentPattern({
-					elements: JSON.parse(r) as PatternElement[],
+					groups: JSON.parse(r) as PatternGroup[],
 				});
 			});
 		},

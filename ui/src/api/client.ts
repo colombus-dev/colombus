@@ -1,4 +1,5 @@
-import type { PatternElement } from "@/lib/types";
+import { Pattern } from "@/lib/types";
+import type { PatternGroup } from "@/lib/types";
 import axios from "axios";
 
 export type StepNode = {
@@ -117,15 +118,13 @@ export async function postProfiles(projectId: string, files: File[]) {
 
 export async function getAllPatterns(projectId: string) {
 	return await axios
-		.get<[string, PatternElement[]][]>(
-			`${apiPath}:${apiPort}/api/project/${projectId}/ppm/getAll`,
-		)
-		.then(({ data }) => data);
+		.get<Pattern[]>(`${apiPath}:${apiPort}/api/project/${projectId}/ppm/getAll`)
+		.then(({ data }) => Pattern.array().parse(data));
 }
 
 export async function postApplyPpmFilter(
 	projectId: string,
-	pattern: PatternElement[],
+	pattern: PatternGroup[],
 ) {
 	return await axios
 		.post<PpmResult[]>(
@@ -149,7 +148,7 @@ export async function postApplyPpmFilterByName(
 export async function postSavePpm(
 	projectId: string,
 	name: string,
-	pattern: PatternElement[],
+	pattern: Pattern,
 ) {
 	return await axios
 		.post<string>(

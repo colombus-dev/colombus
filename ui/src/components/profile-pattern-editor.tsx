@@ -1,27 +1,16 @@
 import { Button } from "@/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuCheckboxItem,
-	DropdownMenuContent,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-	metacharacterENDS,
-	metacharacterNOT,
-	metacharacterOR,
-	metacharacterPLUS,
-	metacharacterSTAR,
-	metacharacterSTARTS,
-	stepsColorsMapping,
-	supportedSteps,
-} from "@/configuration";
-import { cn, formatPatternElement } from "@/lib/utils";
+import { cn, formatPatternGroup } from "@/lib/utils";
 import { useColombusStore } from "@/store";
-import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
-import { XCircle } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import ProfilePatternGroupModal from "./profile-pattern-group-modal";
+import { CirclePlus, Pencil, XCircle } from "lucide-react";
+import { PatternGroup } from "@/lib/types";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const ProfilePatternEditor: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
@@ -30,331 +19,96 @@ const ProfilePatternEditor: React.FunctionComponent<
 	const setCurrentPattern = useColombusStore(
 		(state) => state.setCurrentPattern,
 	);
-	const availablePatterns = useColombusStore((state) => state.allSavedPatterns);
-	const selectableSteps = !currentPattern?.elements?.length
-		? [undefined]
-		: [...currentPattern.elements, undefined];
+	const selectableSteps = currentPattern?.groups;
 	// TODO: currently only supporting first pattern layer
 
 	return (
-		<div {...divProps} className={cn("flex", divProps.className)}>
-			{currentPattern?.name && (
-				<p className="pt-2 px-2 font-bold">{currentPattern.name}: </p>
-			)}
-			{selectableSteps.map((p, i) => (
-				<div key={`${i}_${p}`} className="flex items-stretch">
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button variant="outline">
-								<tr key={`legend_color_${p}`}>
-									<td
-										style={{
-											backgroundColor: Object.entries(stepsColorsMapping).find(
-												(o) => o[0] === p?.name,
-											)?.[1],
-											width: "20px",
-											height: "20px",
-										}}
-									/>
-									<td>{p ? formatPatternElement(p) : "Select step..."}</td>
-								</tr>
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent>
-							<DropdownMenuLabel>Steps</DropdownMenuLabel>
-							<DropdownMenuSeparator />
-							<ScrollArea className="col-span-2 h-48">
-								{supportedSteps.map((s) => (
-									<DropdownMenuCheckboxItem
-										key={s}
-										onCheckedChange={(isChecked) => {
-											const newSteps = [...(currentPattern?.elements ?? [])];
-											const nameWithoutGroupSymbols = p?.name
-												.replace(metacharacterSTAR, "")
-												.replace(metacharacterPLUS, "");
-											const group =
-												p?.name.endsWith(metacharacterSTAR) ||
-												p?.name.endsWith(metacharacterPLUS)
-													? p.name.at(-1)
-													: "";
-											if (isChecked) {
-												newSteps[i] = {
-													name: nameWithoutGroupSymbols
-														?.replace(metacharacterNOT, "")
-														.split(metacharacterOR)
-														.filter((n) => supportedSteps.includes(n)).length
-														? `${nameWithoutGroupSymbols}${metacharacterOR}${s}${group}`
-														: s,
-													tasks: [],
-													type: "simple",
-												};
-											} else {
-												const stepsToKeep = newSteps[i].name
-													.split(metacharacterOR)
-													.filter((spl) => spl !== s);
-												if (stepsToKeep.length === 0) {
-													newSteps.splice(i, 1);
-												} else {
-													newSteps[i] = {
-														name: stepsToKeep.join(metacharacterOR),
-														tasks: [],
-														type: "simple",
-													};
-												}
+		<div {...divProps} className={cn("flex space-x-1", divProps.className)}>
+			{selectableSteps?.map((s, i) => (
+				<div key={s?.name ?? "select"}>
+					<TooltipProvider>
+						<Tooltip>
+							<TooltipTrigger>
+								<div className="border">
+									<div>
+										<p className="text-center">
+											{s?.name ?? "Create new group"}
+										</p>
+									</div>
+									<Separator />
+									<div className="flex items-center">
+										<ProfilePatternGroupModal
+											value={s}
+											onValueChange={(pe) => {
+												setCurrentPattern({
+													...currentPattern,
+													groups:
+														currentPattern?.groups?.map((e) =>
+															e.name === s?.name ? pe : e,
+														) ?? [],
+												});
+											}}
+										>
+											<Button variant="ghost" className="w-full">
+												<Pencil />
+											</Button>
+										</ProfilePatternGroupModal>
+										<Separator orientation="vertical" />
+										<Button
+											variant="ghost"
+											className="w-full"
+											onClick={() =>
+												setCurrentPattern({
+													...currentPattern,
+													groups:
+														currentPattern?.groups?.filter(
+															(e) => e.name !== s?.name,
+														) ?? [],
+												})
 											}
-											setCurrentPattern({
-												...currentPattern,
-												elements: newSteps,
-											});
-										}}
-										checked={
-											currentPattern &&
-											i < currentPattern.elements.length &&
-											currentPattern.elements[i].name
-												.replace(metacharacterNOT, "")
-												.replace(metacharacterSTAR, "")
-												.replace(metacharacterPLUS, "")
-												.split(metacharacterOR)
-												.includes(s)
-										}
-									>
-										{s}
-									</DropdownMenuCheckboxItem>
-								))}
-							</ScrollArea>
-							<DropdownMenuLabel>Saved Patterns</DropdownMenuLabel>
-							<DropdownMenuSeparator />
-							{availablePatterns.map(({ name, elements: tasks }) => (
-								<DropdownMenuCheckboxItem
-									key={name}
-									onCheckedChange={(isChecked) => {
-										if (!name) {
-											return;
-										}
-										const newSteps = [...(currentPattern?.elements ?? [])];
-										if (isChecked) {
-											newSteps[i] = { name, tasks, type: "subpattern" };
-										} else {
-											newSteps.splice(i, 1);
-										}
-										setCurrentPattern({
-											...currentPattern,
-											elements: newSteps,
-										});
-									}}
-									checked={
-										name !== undefined &&
-										currentPattern &&
-										i < currentPattern.elements.length &&
-										currentPattern?.elements[i].name
-											.split(metacharacterOR)
-											.includes(name)
-									}
-									// disabling current pattern to avoid recursion in ppm
-									disabled={name === currentPattern?.name}
-								>
-									{name}
-								</DropdownMenuCheckboxItem>
-							))}
-							<DropdownMenuLabel>
-								Pattern Matching Metacharacters
-							</DropdownMenuLabel>
-							<DropdownMenuSeparator />
-							<DropdownMenuCheckboxItem
-								key="starts-with"
-								onCheckedChange={(isChecked) => {
-									if (!p) {
-										return;
-									}
-									const newSteps = [...(currentPattern?.elements ?? [])];
-									if (isChecked) {
-										newSteps[i] = {
-											...p,
-											name: `${metacharacterSTARTS}${p.name}`,
-										};
-									} else {
-										newSteps[i] = {
-											...p,
-											name: p.name.replace(metacharacterSTARTS, ""),
-										};
-									}
-									setCurrentPattern({
-										...currentPattern,
-										elements: newSteps,
-									});
-								}}
-								checked={p?.name.startsWith(metacharacterSTARTS)}
-								disabled={!p}
-							>
-								Starts with (<p className="font-bold">^</p>)
-							</DropdownMenuCheckboxItem>
-							<DropdownMenuCheckboxItem
-								key="ends-with"
-								onCheckedChange={(isChecked) => {
-									if (!p) {
-										return;
-									}
-									const newSteps = [...(currentPattern?.elements ?? [])];
-									if (isChecked) {
-										newSteps[i] = {
-											...p,
-											name: `${p.name}${metacharacterENDS}`,
-										};
-									} else {
-										newSteps[i] = {
-											...p,
-											name: p.name.replace(metacharacterENDS, ""),
-										};
-									}
-									setCurrentPattern({
-										...currentPattern,
-										elements: newSteps,
-									});
-								}}
-								checked={p?.name.endsWith(metacharacterENDS)}
-								disabled={!p}
-							>
-								Ends with (<p className="font-bold">$</p>)
-							</DropdownMenuCheckboxItem>
-							<DropdownMenuCheckboxItem
-								key="negate"
-								onCheckedChange={(isChecked) => {
-									if (!p) {
-										return;
-									}
-									const newSteps = [...(currentPattern?.elements ?? [])];
-									if (isChecked) {
-										const prefix = p.name.startsWith(metacharacterSTARTS)
-											? metacharacterSTARTS
-											: "";
-										newSteps[i] = {
-											...p,
-											name: `${prefix}${metacharacterNOT}${p.name.replace(metacharacterSTARTS, "")}`,
-										};
-									} else {
-										newSteps[i] = {
-											...p,
-											name: p.name.replace(metacharacterNOT, ""),
-										};
-									}
-									setCurrentPattern({
-										...currentPattern,
-										elements: newSteps,
-									});
-								}}
-								checked={p?.name
-									.replace(metacharacterSTAR, "")
-									.startsWith(metacharacterNOT)}
-								disabled={!p}
-							>
-								Not (<p className="font-bold">!</p>)
-							</DropdownMenuCheckboxItem>
-							<DropdownMenuCheckboxItem
-								key="star"
-								onCheckedChange={(isChecked) => {
-									const currentPatternElement = p ?? {
-										name: "",
-										tasks: [],
-										type: "simple",
-									};
-									const newSteps = [...(currentPattern?.elements ?? [])];
-									if (isChecked) {
-										const suffix = currentPatternElement.name.startsWith(
-											metacharacterENDS,
-										)
-											? metacharacterENDS
-											: "";
-										newSteps[i] = {
-											...currentPatternElement,
-											name: `${currentPatternElement.name.replace(metacharacterPLUS, "").replace(metacharacterENDS, "")}${metacharacterSTAR}${suffix}`,
-										};
-									} else {
-										const newPatternElementName =
-											currentPatternElement.name.replace(metacharacterSTAR, "");
-										if (newPatternElementName !== "") {
-											newSteps[i] = {
-												...currentPatternElement,
-												name: currentPatternElement.name.replace(
-													metacharacterSTAR,
-													"",
-												),
-											};
-										} else {
-											newSteps.splice(i, 1);
-										}
-									}
-									setCurrentPattern({
-										...currentPattern,
-										elements: newSteps,
-									});
-								}}
-								checked={p?.name
-									.replace(metacharacterENDS, "")
-									.endsWith(metacharacterSTAR)}
-							>
-								Zero or more (<p className="font-bold">*</p>)
-							</DropdownMenuCheckboxItem>
-							<DropdownMenuCheckboxItem
-								key="plus"
-								onCheckedChange={(isChecked) => {
-									if (!p) {
-										return;
-									}
-									const newSteps = [...(currentPattern?.elements ?? [])];
-									if (isChecked) {
-										const suffix = p.name.startsWith(metacharacterENDS)
-											? metacharacterENDS
-											: "";
-										newSteps[i] = {
-											...p,
-											name: `${p.name.replace(metacharacterSTAR, "").replace(metacharacterENDS, "")}${metacharacterPLUS}${suffix}`,
-										};
-									} else {
-										newSteps[i] = {
-											...p,
-											name: p.name.replace(metacharacterPLUS, ""),
-										};
-									}
-									setCurrentPattern({
-										...currentPattern,
-										elements: newSteps,
-									});
-								}}
-								checked={p?.name
-									.replace(metacharacterENDS, "")
-									.endsWith(metacharacterPLUS)}
-								disabled={!p}
-							>
-								One or more (<p className="font-bold">+</p>)
-							</DropdownMenuCheckboxItem>
-							{p && (
-								<>
-									<DropdownMenuLabel>Other actions</DropdownMenuLabel>
-									<DropdownMenuSeparator />
-
-									<DropdownMenuItem
-										onClick={() => {
-											const newSteps = [...(currentPattern?.elements ?? [])];
-											newSteps.splice(i, 1);
-											setCurrentPattern({
-												...currentPattern,
-												elements: newSteps,
-											});
-										}}
-										disabled={p === undefined}
-										asChild
-									>
-										<Button variant="ghost" className="w-full">
-											<XCircle /> Remove
+										>
+											<XCircle />
 										</Button>
-									</DropdownMenuItem>
-								</>
-							)}
-						</DropdownMenuContent>
-					</DropdownMenu>
+									</div>
+								</div>
+							</TooltipTrigger>
+							<TooltipContent>
+								<p>{formatPatternGroup(s)}</p>
+							</TooltipContent>
+						</Tooltip>
+					</TooltipProvider>
 					{i < selectableSteps.length - 1 && <p>&#8594;</p>}
 				</div>
 			))}
+			<Button
+				className="space-x-2"
+				onClick={() => {
+					const nextGroupId =
+						Math.max(
+							0,
+							...(currentPattern?.groups
+								?.map((e) => {
+									try {
+										return Number.parseInt(e.name.split("-")[1]);
+									} catch (error) {
+										return false;
+									}
+								})
+								.filter((n) => n) as number[]),
+						) + 1;
+					setCurrentPattern({
+						...currentPattern,
+						groups: [
+							...(currentPattern?.groups ?? []),
+							PatternGroup.parse({
+								name: `Group-${nextGroupId}`,
+							} as PatternGroup),
+						],
+					});
+				}}
+			>
+				<CirclePlus /> Add group
+			</Button>
 		</div>
 	);
 };

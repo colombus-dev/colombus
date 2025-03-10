@@ -98,8 +98,8 @@ export default function ExplorerProjectIdPage() {
 			});
 		};
 		setIsLoading(true);
-		if (currentPattern?.elements.length) {
-			postApplyPpmFilter(projectId, currentPattern.elements).then(
+		if (currentPattern?.groups?.length) {
+			postApplyPpmFilter(projectId, currentPattern.groups).then(
 				(workflowsWithData) =>
 					updateAndMergeWithPosted(
 						[
@@ -194,7 +194,7 @@ export default function ExplorerProjectIdPage() {
 				<div className="col-span-2">
 					<Button
 						className="w-full"
-						onClick={() => setCurrentPattern({ elements: [] })}
+						onClick={() => setCurrentPattern({ groups: [] })}
 					>
 						<CirclePlus />
 						Create new pattern

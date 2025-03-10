@@ -53,7 +53,7 @@ const ProfilePatternActions: React.FunctionComponent<
 			</DeletePatternDialog>
 
 			<Dialog>
-				<DialogTrigger disabled={!currentPattern?.elements} asChild>
+				<DialogTrigger disabled={!currentPattern?.groups} asChild>
 					<Button variant="ghost">
 						<Save /> Save pattern
 					</Button>
@@ -73,7 +73,7 @@ const ProfilePatternActions: React.FunctionComponent<
 						<div className="space-x-2">
 							<a
 								href={`data:text/json;charset=utf-8,${encodeURIComponent(
-									JSON.stringify(currentPattern?.elements),
+									JSON.stringify(currentPattern?.groups),
 								)}`}
 								download={`${savePatternName === "" ? "pattern" : savePatternName}.json`}
 								className={cn(buttonVariants({ variant: "link" }))}
@@ -88,26 +88,20 @@ const ProfilePatternActions: React.FunctionComponent<
 								onClick={() => {
 									if (
 										savePatternName &&
-										currentPattern?.elements &&
+										currentPattern?.groups &&
 										projectId
 									) {
+										const newPattern = {
+											...currentPattern,
+											name: savePatternName,
+										}
 										postSavePpm(
 											projectId,
 											savePatternName,
-											currentPattern.elements,
-										).then((name) => {
-											setCurrentPattern({
-												...currentPattern,
-												name,
-											});
-											getAllPatterns(projectId).then((res) => {
-												setAvailablePatterns(
-													res.map(([name, elements]) => ({
-														name,
-														elements,
-													})),
-												);
-											});
+											newPattern,
+										).then(() => {
+											setCurrentPattern(newPattern);
+											getAllPatterns(projectId).then(setAvailablePatterns);
 										});
 										setSavePatternName("");
 									}

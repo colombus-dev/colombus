@@ -2,6 +2,8 @@ import uuid
 
 from typing import Any
 
+from app.models.api_model import PatternGroup
+
 
 METACHARACTER_STARTS = "^"
 METACHARACTER_ENDS = "$"
@@ -41,34 +43,29 @@ def convert_meta_instructions_to_sql_query(
     return prefix_query, join_query, where_query
 
 
-def flatten_pattern(pattern: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def flatten_pattern(pattern: list[PatternGroup]) -> list[PatternGroup]:
     flattened_pattern = []
-    for se in pattern:
-        if se["type"] == "subpattern":
-            flattened_pattern.extend(flatten_pattern(se["tasks"]))
+    for group in pattern:
+        if group.subpattern:
+            flattened_pattern.extend(flatten_pattern(group.subpattern.groups))
         else:
-            flattened_pattern.append(se)
+            flattened_pattern.append(group)
     return flattened_pattern
 
 
-def convert_or_not_stmt(sql_step_name: str, step_name: str):
+def convert_or_not_stmt(sql_step_name: str, step: PatternGroup):
     return (
-        ("NOT (" if step_name.startswith(METACHARACTER_NOT) else "(")
-        + " OR ".join(
-            f"{sql_step_name} = '{or_name}'"
-            for or_name in step_name.replace(METACHARACTER_NOT, "").split(
-                METACHARACTER_OR
-            )
-        )
+        ("NOT (" if step.metaCharacters.negate else "(")
+        + " OR ".join(f"{sql_step_name} = '{or_name}'" for or_name in step.steps)
         + ")"
     )
 
 
 def convert_steps_to_sql_query(
-    project_id: uuid.UUID, pattern: list[dict[str, Any]]
+    project_id: uuid.UUID, pattern: list[PatternGroup]
 ) -> str:
     # TODO: BUG: zero or more (any) -> at least one ("lib_loading") -> at least one ("data_prep") -> zero or more (any)
-    names_to_pos = {}
+    step_to_pos: dict[str, PatternGroup] = {}
     all_cte_clauses = [
         f"FROM (SELECT * FROM profile WHERE project_id = '{project_id.hex}') AS p"
     ]
@@ -80,31 +77,21 @@ def convert_steps_to_sql_query(
     flat_pattern = flatten_pattern(pattern)
 
     for se_i, step in enumerate(flat_pattern):
-        if step["name"] == METACHARACTER_STAR:
+        if len(step.steps) == 0:
             continue
-        names_to_pos[se_i] = step["name"]
+        step_to_pos[se_i] = step
 
     prev_pos = -1
     prev_sql_position = -1
-    for se_i, step_name in names_to_pos.items():
-        step_name_unbound = step_name.replace(METACHARACTER_STARTS, "").replace(
-            METACHARACTER_ENDS, ""
-        )
-        step_ends_with_metachar = step_name_unbound.endswith(
-            (METACHARACTER_PLUS, METACHARACTER_STAR)
-        )
+    for se_i, step in step_to_pos.items():
         sql_max_position = f"MAX(s{se_i}_pos)"
         sql_min_position = f"MIN(s{se_i}_pos)"
 
-        if step_ends_with_metachar:
-            grp_condition = convert_or_not_stmt(
-                "name",
-                step_name.replace(METACHARACTER_PLUS, "")
-                .replace(METACHARACTER_STAR, "")
-                .replace(METACHARACTER_STARTS, "")
-                .replace(METACHARACTER_ENDS, ""),
+        if step.multiplicity in (METACHARACTER_PLUS, METACHARACTER_STAR):
+            grp_condition = convert_or_not_stmt("name", step)
+            join_type = (
+                "INNER" if step.multiplicity == METACHARACTER_PLUS else "LEFT OUTER"
             )
-            join_type = "INNER" if METACHARACTER_PLUS in step_name else "LEFT OUTER"
             join_condition = (
                 f"s{se_i}.id != s{prev_pos}.id AND s{se_i}.profile_id = s{prev_pos}.profile_id AND s{se_i}.position > s{prev_pos}.position"
                 if prev_pos > -1
@@ -124,7 +111,7 @@ def convert_steps_to_sql_query(
                 f"s{se_i}.id as s{se_i}_id, s{se_i}.position AS s{se_i}_pos, s{se_i}.grp as s{se_i}_grp, s{se_i}.profile_id AS s{se_i}_profile_id"
             )
 
-            if METACHARACTER_PLUS in step_name:
+            if step.multiplicity == METACHARACTER_PLUS:
                 all_select_clauses.append(
                     f"string_agg(DISTINCT s{se_i}_id::text, ',') AS res_grp_concat_s{se_i}"
                 )
@@ -134,7 +121,7 @@ def convert_steps_to_sql_query(
                 )
 
             all_groupby_clauses.append(f"s{se_i}_grp")
-            if not step_name_unbound.endswith(METACHARACTER_STAR) and prev_pos > -1:
+            if step.multiplicity != METACHARACTER_STAR and prev_pos > -1:
                 diff = se_i - prev_pos
                 all_having_clauses.append(
                     f"{sql_max_position} - {prev_sql_position} {'=' if diff == 1 else '>='} 1"
@@ -155,14 +142,14 @@ def convert_steps_to_sql_query(
 
             all_cte_clauses.append(
                 optimized_join_condition
-                + convert_or_not_stmt(f"s{se_i}.name", step_name_unbound)
+                + convert_or_not_stmt(f"s{se_i}.name", step)
             )
             all_groupby_clauses.append(f"s{se_i}_id")
 
-        if se_i == 0 and step_name.startswith(METACHARACTER_STARTS):
+        if se_i == 0 and step.metaCharacters.startsWith:
             # pattern strict starts with step_name
             all_having_clauses.append(f"{sql_min_position} = 0")
-        if se_i == len(flat_pattern) - 1 and step_name.endswith(METACHARACTER_ENDS):
+        if se_i == len(flat_pattern) - 1 and step.metaCharacters.endsWith:
             # pattern strict ends with step_name
             all_having_clauses.append(
                 f"{sql_max_position} = (SELECT max(position) FROM step AS substep WHERE substep.profile_id = s{se_i}_profile_id)"
@@ -184,6 +171,6 @@ def convert_steps_to_sql_query(
     )
 
 
-def convert_ppm_to_sql_query(project_id: uuid.UUID, pattern: list[dict[str, Any]]):
+def convert_ppm_to_sql_query(project_id: uuid.UUID, pattern: list[PatternGroup]):
     print(convert_steps_to_sql_query(project_id, pattern))
     return convert_steps_to_sql_query(project_id, pattern)

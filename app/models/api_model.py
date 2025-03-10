@@ -1,6 +1,8 @@
 import uuid
 
-from pydantic import BaseModel
+from typing import Literal, Optional
+
+from pydantic import BaseModel, Field
 from sqlmodel import SQLModel
 
 from app.models.sql_model import ProfileBase, StepBase, MetaInstructionBase, CodeBase
@@ -31,3 +33,22 @@ class ProfileNodes(ProfileBase):
 class PpmResult(BaseModel):
     profile_name: str
     results: list[list[uuid.UUID]]
+
+
+class PatternMetaCharacters(BaseModel):
+    startsWith: bool
+    endsWith: bool
+    negate: bool
+
+
+class Pattern(BaseModel):
+    name: str
+    groups: list["PatternGroup"] = Field(default=None)
+
+
+class PatternGroup(BaseModel):
+    name: str
+    steps: list[str]
+    multiplicity: Literal["*", "+", "1"]
+    metaCharacters: PatternMetaCharacters
+    subpattern: Optional["Pattern"] = Field(default=None)

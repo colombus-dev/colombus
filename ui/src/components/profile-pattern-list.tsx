@@ -23,20 +23,13 @@ const ProfilePatternList: React.FunctionComponent<
 		if (!projectId) {
 			return;
 		}
-		getAllPatterns(projectId).then((res) => {
-			setAvailablePatterns(
-				res.map(([name, elements]) => ({
-					name,
-					elements,
-				})),
-			);
-		});
+		getAllPatterns(projectId).then(setAvailablePatterns);
 	}, [setAvailablePatterns, projectId]);
 
 	return (
 		<div {...divProps} className={cn("space-x-1", divProps.className)}>
 			<ul className="list-none space-y-1">
-				{availablePatterns.map(({ name, elements }) => (
+				{availablePatterns.map(({ name, groups }) => (
 					<li key={name} className="grid grid-cols-6 space-x-1">
 						<Button
 							className="col-span-5"
@@ -44,7 +37,7 @@ const ProfilePatternList: React.FunctionComponent<
 							onClick={() => {
 								setCurrentPattern({
 									name,
-									elements,
+									groups,
 								});
 							}}
 						>
