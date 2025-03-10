@@ -11,6 +11,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import ProfilePatternGroupMetaInstructionModal from "./profile-pattern-group-metainstruction-modal";
 
 const ProfilePatternEditor: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
@@ -25,59 +26,132 @@ const ProfilePatternEditor: React.FunctionComponent<
 	return (
 		<div {...divProps} className={cn("flex space-x-1", divProps.className)}>
 			{selectableSteps?.map((s, i) => (
-				<div key={s?.name ?? "select"}>
-					<TooltipProvider>
-						<Tooltip>
-							<TooltipTrigger>
+				<div className="grid grid-rows-2">
+					<div key={s?.name ?? "select"} className="flex row-span-1">
+						<TooltipProvider>
+							<Tooltip>
+								<TooltipTrigger>
+									<div className="border">
+										<div>
+											<p className="text-center">
+												{s?.name ?? "Create new group"}
+											</p>
+										</div>
+										<Separator />
+										<div className="flex items-center">
+											<ProfilePatternGroupModal
+												value={s}
+												onValueChange={(pe) => {
+													setCurrentPattern({
+														...currentPattern,
+														groups:
+															currentPattern?.groups?.map((e) =>
+																e.name === s?.name ? pe : e,
+															) ?? [],
+													});
+												}}
+											>
+												<Button variant="ghost" className="w-full">
+													<Pencil />
+												</Button>
+											</ProfilePatternGroupModal>
+											<Separator orientation="vertical" />
+											<Button
+												variant="ghost"
+												className="w-full"
+												onClick={() =>
+													setCurrentPattern({
+														...currentPattern,
+														groups:
+															currentPattern?.groups?.filter(
+																(e) => e.name !== s?.name,
+															) ?? [],
+													})
+												}
+											>
+												<XCircle />
+											</Button>
+										</div>
+									</div>
+								</TooltipTrigger>
+								<TooltipContent>
+									<p>{formatPatternGroup(s)}</p>
+								</TooltipContent>
+							</Tooltip>
+						</TooltipProvider>
+						{i < selectableSteps.length - 1 && <p>&#8594;</p>}
+					</div>
+					<div className="row-span-1 flex">
+						{s.metaInstructions?.map((mi, j) => (
+							<>
 								<div className="border">
 									<div>
-										<p className="text-center">
-											{s?.name ?? "Create new group"}
-										</p>
+										<p className="text-center">{`MetaInstruction-${j}`}</p>
 									</div>
 									<Separator />
 									<div className="flex items-center">
-										<ProfilePatternGroupModal
-											value={s}
+										<ProfilePatternGroupMetaInstructionModal
+											value={mi}
 											onValueChange={(pe) => {
 												setCurrentPattern({
 													...currentPattern,
 													groups:
-														currentPattern?.groups?.map((e) =>
-															e.name === s?.name ? pe : e,
-														) ?? [],
+														currentPattern?.groups?.map((e) => ({
+															...e,
+															metaInstructions: e.metaInstructions?.map(
+																(_mi, mi_i) => (mi_i === j ? pe : _mi),
+															),
+														})) ?? [],
 												});
 											}}
 										>
 											<Button variant="ghost" className="w-full">
 												<Pencil />
 											</Button>
-										</ProfilePatternGroupModal>
+										</ProfilePatternGroupMetaInstructionModal>
 										<Separator orientation="vertical" />
 										<Button
 											variant="ghost"
 											className="w-full"
-											onClick={() =>
+											onClick={() => {
 												setCurrentPattern({
 													...currentPattern,
 													groups:
-														currentPattern?.groups?.filter(
-															(e) => e.name !== s?.name,
-														) ?? [],
-												})
-											}
+														currentPattern?.groups?.map((e) => ({
+															...e,
+															metaInstructions: e.metaInstructions?.filter(
+																(_, mi_i) => mi_i !== j,
+															),
+														})) ?? [],
+												});
+											}}
 										>
 											<XCircle />
 										</Button>
 									</div>
 								</div>
-							</TooltipTrigger>
-							<TooltipContent>
-								<p>{formatPatternGroup(s)}</p>
-							</TooltipContent>
-						</Tooltip>
-					</TooltipProvider>
-					{i < selectableSteps.length - 1 && <p>&#8594;</p>}
+								{j < (s.metaInstructions ?? []).length - 1 && <p>&#8594;</p>}
+							</>
+						))}
+						<Button
+							className="space-x-2"
+							onClick={() => {
+								setCurrentPattern({
+									...currentPattern,
+									groups: currentPattern?.groups?.map((g, gi) =>
+										gi === i
+											? {
+													...g,
+													metaInstructions: [...(g.metaInstructions ?? []), {}],
+												}
+											: g,
+									),
+								});
+							}}
+						>
+							<CirclePlus /> Add metainstruction
+						</Button>
+					</div>
 				</div>
 			))}
 			<Button

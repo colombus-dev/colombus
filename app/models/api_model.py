@@ -35,20 +35,26 @@ class PpmResult(BaseModel):
     results: list[list[uuid.UUID]]
 
 
+class Pattern(BaseModel):
+    name: str
+    groups: list["PatternGroup"] = Field(default=None)
+
+
 class PatternMetaCharacters(BaseModel):
     startsWith: bool
     endsWith: bool
     negate: bool
 
 
-class Pattern(BaseModel):
-    name: str
-    groups: list["PatternGroup"] = Field(default=None)
+class PatternMetaInstruction(BaseModel):
+    library: Optional[str] = Field(default=None)
+    function: Optional[str] = Field(default=None)
 
 
 class PatternGroup(BaseModel):
     name: str
     steps: list[str]
     multiplicity: Literal["*", "+", "1"]
+    metaInstructions: Optional[list[PatternMetaInstruction]] = Field(default=None)
     metaCharacters: PatternMetaCharacters
     subpattern: Optional["Pattern"] = Field(default=None)

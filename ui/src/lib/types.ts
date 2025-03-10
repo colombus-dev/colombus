@@ -1,8 +1,16 @@
 import { z } from "zod";
 
+export const PatternGroupMetaInstruction = z.object({
+	library: z.string().optional(),
+	function: z.string().optional(),
+});
+
+export type PatternGroupMetaInstruction = z.infer<typeof PatternGroupMetaInstruction>;
+
 const basePatternGroup = z.object({
 	name: z.string(),
 	steps: z.string().array().default([]),
+	metaInstructions: PatternGroupMetaInstruction.array().optional(),
 	multiplicity: z.enum(["*", "+", "1"]).default("1"),
 	metaCharacters: z
 		.object({
@@ -20,6 +28,7 @@ const basePattern = z.object({
 export type PatternGroup = {
 	name: string;
 	steps?: string[];
+	metaInstructions?: PatternGroupMetaInstruction[];
 	multiplicity?: "*" | "+" | "1";
 	metaCharacters?: {
 		startsWith?: boolean;
