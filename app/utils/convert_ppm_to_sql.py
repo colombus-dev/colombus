@@ -167,7 +167,7 @@ def convert_steps_to_sql_query(
             if mi.function:
                 optimized_join_condition += f" AND mi_{se_i}_{mi_i}.function = '{mi.function}'"
             if prev_mi_i is not None:
-                optimized_join_condition += f" AND mi_{se_i}_{mi_i}.position > mi_{prev_mi_i}.position"
+                optimized_join_condition += f" AND mi_{se_i}_{mi_i}.position > mi_{se_i}_{prev_mi_i}.position"
             all_cte_clauses.append(optimized_join_condition)
             all_groupby_clauses.append(f"mi_{se_i}_{mi_i}_id")
             prev_mi_i = mi_i
