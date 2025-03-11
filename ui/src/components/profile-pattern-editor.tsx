@@ -26,11 +26,11 @@ const ProfilePatternEditor: React.FunctionComponent<
 	return (
 		<div {...divProps} className={cn("flex space-x-1", divProps.className)}>
 			{selectableSteps?.map((s, i) => (
-				<div className="grid grid-rows-2">
-					<div key={s?.name ?? "select"} className="flex row-span-1">
+				<div key={s?.name ?? "select"} className="grid grid-rows-2">
+					<div className="flex row-span-1">
 						<TooltipProvider>
 							<Tooltip>
-								<TooltipTrigger>
+								<TooltipTrigger asChild>
 									<div className="border">
 										<div>
 											<p className="text-center">
@@ -83,7 +83,9 @@ const ProfilePatternEditor: React.FunctionComponent<
 					</div>
 					<div className="row-span-1 flex">
 						{s.metaInstructions?.map((mi, j) => (
-							<>
+							<div
+								key={`step-${s.name}_MetaInstruction-${mi.function}-${mi.library}`}
+							>
 								<div className="border">
 									<div>
 										<p className="text-center">{`MetaInstruction-${j}`}</p>
@@ -131,7 +133,7 @@ const ProfilePatternEditor: React.FunctionComponent<
 									</div>
 								</div>
 								{j < (s.metaInstructions ?? []).length - 1 && <p>&#8594;</p>}
-							</>
+							</div>
 						))}
 						<Button
 							className="space-x-2"

@@ -5,12 +5,17 @@ export const PatternGroupMetaInstruction = z.object({
 	function: z.string().optional(),
 });
 
-export type PatternGroupMetaInstruction = z.infer<typeof PatternGroupMetaInstruction>;
+export type PatternGroupMetaInstruction = z.infer<
+	typeof PatternGroupMetaInstruction
+>;
 
 const basePatternGroup = z.object({
 	name: z.string(),
 	steps: z.string().array().default([]),
-	metaInstructions: PatternGroupMetaInstruction.array().optional(),
+	metaInstructions: PatternGroupMetaInstruction.array()
+		.nullable()
+		.transform((x) => x ?? undefined)
+		.optional(),
 	multiplicity: z.enum(["*", "+", "1"]).default("1"),
 	metaCharacters: z
 		.object({
@@ -28,7 +33,7 @@ const basePattern = z.object({
 export type PatternGroup = {
 	name: string;
 	steps?: string[];
-	metaInstructions?: PatternGroupMetaInstruction[];
+	metaInstructions?: PatternGroupMetaInstruction[] | null;
 	multiplicity?: "*" | "+" | "1";
 	metaCharacters?: {
 		startsWith?: boolean;
