@@ -203,20 +203,20 @@ export default function ExplorerProjectIdPage() {
 				<Separator />
 				<ProfilePatternList />
 			</div>
-			<div className="col-span-5 grid grid-rows-7 items-center">
+			<div className="col-span-5 grid grid-rows-10 items-center">
 				{import.meta.env.VITE_SHOW_FULL_INTERFACE === "full" &&
 					!currentPattern && (
 						<ProfileExplorerPatternBar className="row-span-1" />
 					)}
 				{currentPattern && (
-					<ScrollArea className="row-span-1 h-full mr-8">
+					<ScrollArea className="row-span-2 h-full mr-8">
 						{currentPattern && <ProfilePatternActions />}
 						<ProfilePatternEditor className="overflow-x-auto" />
 						<ScrollBar orientation="horizontal" />
 					</ScrollArea>
 				)}
 				<GraphContainer
-					className="group relative row-span-7 h-full"
+					className="group relative row-span-10 h-full"
 					containerId={GRAPH_CONTAINER_ID}
 					isLoading={isLoading}
 					graphRenderer={renderer.current}

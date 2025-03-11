@@ -1,8 +1,16 @@
 import { z } from "zod";
 
 export const PatternGroupMetaInstruction = z.object({
-	library: z.string().optional(),
-	function: z.string().optional(),
+	library: z
+		.string()
+		.nullable()
+		.transform((x) => x ?? undefined)
+		.optional(),
+	function: z
+		.string()
+		.nullable()
+		.transform((x) => x ?? undefined)
+		.optional(),
 });
 
 export type PatternGroupMetaInstruction = z.infer<
