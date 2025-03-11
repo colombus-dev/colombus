@@ -6,32 +6,14 @@ services:
     volumes:
       - ./app:/code/app:rw
     environment:
-      # MYSQL_FULL_URL: mysql+pymysql://christopher:pinta@colombus_mysql:3306/colombusdb
       POSTGRESQL_FULL_URL: postgresql+psycopg://christopher:pinta@colombus_postgresql:5432/colombusdb
     depends_on:
-      # colombus_mysql:
-      #   condition: service_healthy
       colombus_postgresql:
         condition: service_healthy
-  # colombus_mysql:
-  #   image: mysql:lts
-  #   command: --group_concat_max_len=8192
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: nina
-  #     MYSQL_DATABASE: colombusdb
-  #     MYSQL_USER: christopher
-  #     MYSQL_PASSWORD: pinta
-  #   ports:
-  #     - "3306:3306"
-  #   volumes:
-  #     - ./db_data:/var/lib/mysql:rw
-  #     - ./mysql-config:/etc/mysql/conf.d:rw
-  #   healthcheck:
-  #     test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
-  #     timeout: 10s
-  #     retries: 10
   colombus_postgresql:
-    image: 'postgres:latest'
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
     environment:
       POSTGRES_USER: christopher
       POSTGRES_PASSWORD: pinta

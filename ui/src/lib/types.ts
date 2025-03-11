@@ -13,9 +13,12 @@ export const PatternGroupMetaInstruction = z.object({
 		.optional(),
 });
 
-export type PatternGroupMetaInstruction = z.infer<
-	typeof PatternGroupMetaInstruction
->;
+// we need to explicitly define the type (instead of zod.infer) because of
+// nullable which is causing type errors in PatternGroup
+export type PatternGroupMetaInstruction = {
+	library?: string | null;
+	function?: string | null;
+}
 
 const basePatternGroup = z.object({
 	name: z.string(),

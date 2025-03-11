@@ -42,6 +42,7 @@ class Profile(ProfileBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     project_id: uuid.UUID = ProjectIdFk
     json_profile: dict[str, Any] = Field(sa_type=JSON)
+    encoded_profile: str
 
     steps: list["Step"] = Relationship(
         back_populates="profile",

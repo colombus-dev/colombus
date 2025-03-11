@@ -9,6 +9,7 @@ from app.models.sql_model import (
     MetaInstruction,
     Code,
 )
+from app.utils import encode_profile
 
 
 def save_notebook_as_sql(
@@ -18,9 +19,9 @@ def save_notebook_as_sql(
     engine: Engine,
 ):
     with Session(engine) as session:
-        all_steps = []
-        all_profile_metainstructions = []
-        all_profile_codes = []
+        all_steps: list[Step] = []
+        all_profile_metainstructions: list[MetaInstruction] = []
+        all_profile_codes: list[Code] = []
         total_se_i = 0
         total_mi_i = 0
         total_c_i = 0
@@ -69,6 +70,7 @@ def save_notebook_as_sql(
             project_id=project_id,
             name=profile_name,
             steps=all_steps,
+            encoded_profile=encode_profile([step.name for step in all_steps]),
             meta_instructions=all_profile_metainstructions,
             codes=all_profile_codes,
             json_profile=json_profile,
