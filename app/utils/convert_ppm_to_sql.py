@@ -87,6 +87,8 @@ def convert_steps_to_sql_query(
         sql_max_position = f"MAX(s{se_i}_pos)"
         sql_min_position = f"MIN(s{se_i}_pos)"
 
+        curr_prev_position_diff = se_i - prev_pos
+
         if step.multiplicity in (METACHARACTER_PLUS, METACHARACTER_STAR):
             grp_condition = convert_or_not_stmt("name", step)
             join_type = (
@@ -122,9 +124,8 @@ def convert_steps_to_sql_query(
 
             all_groupby_clauses.append(f"s{se_i}_grp")
             if step.multiplicity != METACHARACTER_STAR and prev_pos > -1:
-                diff = se_i - prev_pos
                 all_having_clauses.append(
-                    f"{sql_max_position} - {prev_sql_position} {'=' if diff == 1 else '>='} 1"
+                    f"{sql_max_position} - {prev_sql_position} {'=' if curr_prev_position_diff == 1 else '>='} 1"
                 )
         else:
             all_groups_select_clauses.append(
@@ -135,7 +136,7 @@ def convert_steps_to_sql_query(
             optimized_join_condition = (
                 f"INNER JOIN step AS s{se_i} ON p.id = s{se_i}.profile_id AND "
             )
-            if prev_pos > -1:
+            if prev_pos > -1 and curr_prev_position_diff == 1:
                 optimized_join_condition += (
                     f"s{se_i}.previous_step_id = s{prev_pos}.id AND "
                 )
@@ -157,17 +158,23 @@ def convert_steps_to_sql_query(
         # TODO: ==================== [WIP] META INSTRUCTIONS ====================
         prev_mi_i: int | None = None
         for mi_i, mi in enumerate(step.metaInstructions or []):
-            all_groups_select_clauses.append(f"mi_{se_i}_{mi_i}.id AS mi_{se_i}_{mi_i}_id")
-            all_select_clauses.append(f"mi_{se_i}_{mi_i}_id")
-            optimized_join_condition = (
-                f"INNER JOIN metainstruction AS mi_{se_i}_{mi_i} ON mi_{se_i}_{mi_i}.profile_id = s{se_i}.profile_id AND mi_{se_i}_{mi_i}.step_id = s{se_i}.id"
+            all_groups_select_clauses.append(
+                f"mi_{se_i}_{mi_i}.id AS mi_{se_i}_{mi_i}_id"
             )
+            all_select_clauses.append(f"mi_{se_i}_{mi_i}_id")
+            optimized_join_condition = f"INNER JOIN metainstruction AS mi_{se_i}_{mi_i} ON mi_{se_i}_{mi_i}.profile_id = s{se_i}.profile_id AND mi_{se_i}_{mi_i}.step_id = s{se_i}.id"
             if mi.library:
-                optimized_join_condition += f" AND mi_{se_i}_{mi_i}.library = '{mi.library}'"
+                optimized_join_condition += (
+                    f" AND mi_{se_i}_{mi_i}.library = '{mi.library}'"
+                )
             if mi.function:
-                optimized_join_condition += f" AND mi_{se_i}_{mi_i}.function = '{mi.function}'"
+                optimized_join_condition += (
+                    f" AND mi_{se_i}_{mi_i}.function = '{mi.function}'"
+                )
             if prev_mi_i is not None:
-                optimized_join_condition += f" AND mi_{se_i}_{mi_i}.position > mi_{se_i}_{prev_mi_i}.position"
+                optimized_join_condition += (
+                    f" AND mi_{se_i}_{mi_i}.position > mi_{se_i}_{prev_mi_i}.position"
+                )
             all_cte_clauses.append(optimized_join_condition)
             all_groupby_clauses.append(f"mi_{se_i}_{mi_i}_id")
             prev_mi_i = mi_i
