@@ -155,20 +155,22 @@ def convert_steps_to_sql_query(
             )
 
         # TODO: ==================== [WIP] META INSTRUCTIONS ====================
-
-        if step.metaInstructions:
-            mi = step.metaInstructions[0]
-            all_groups_select_clauses.append("mi_0.id AS mi_0_id")
-            all_select_clauses.append("mi_0_id")
+        prev_mi_i: int | None = None
+        for mi_i, mi in enumerate(step.metaInstructions or []):
+            all_groups_select_clauses.append(f"mi_{se_i}_{mi_i}.id AS mi_{se_i}_{mi_i}_id")
+            all_select_clauses.append(f"mi_{se_i}_{mi_i}_id")
             optimized_join_condition = (
-                f"INNER JOIN metainstruction AS mi_0 ON mi_0.profile_id = s{se_i}.profile_id AND mi_0.step_id = s{se_i}.id"
+                f"INNER JOIN metainstruction AS mi_{se_i}_{mi_i} ON mi_{se_i}_{mi_i}.profile_id = s{se_i}.profile_id AND mi_{se_i}_{mi_i}.step_id = s{se_i}.id"
             )
             if mi.library:
-                optimized_join_condition += f" AND mi_0.library = '{mi.library}'"
+                optimized_join_condition += f" AND mi_{se_i}_{mi_i}.library = '{mi.library}'"
             if mi.function:
-                optimized_join_condition += f" AND mi_0.function = '{mi.function}'"
+                optimized_join_condition += f" AND mi_{se_i}_{mi_i}.function = '{mi.function}'"
+            if prev_mi_i is not None:
+                optimized_join_condition += f" AND mi_{se_i}_{mi_i}.position > mi_{prev_mi_i}.position"
             all_cte_clauses.append(optimized_join_condition)
-            all_groupby_clauses.append("mi_0_id")
+            all_groupby_clauses.append(f"mi_{se_i}_{mi_i}_id")
+            prev_mi_i = mi_i
 
         # =======================================================================
 
