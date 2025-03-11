@@ -21,6 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { PatternGroupMetaInstruction } from "@/lib/types";
 import type { z } from "zod";
+import { useCallback, useState } from "react";
 
 interface ProfilePatternGroupMetaInstructionModalProps {
 	value: PatternGroupMetaInstruction;
@@ -32,22 +33,41 @@ export default function ProfilePatternGroupMetaInstructionModal({
 	onValueChange,
 	children,
 }: React.PropsWithChildren<ProfilePatternGroupMetaInstructionModalProps>) {
+	const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
 	const form = useForm<z.infer<typeof PatternGroupMetaInstruction>>({
 		resolver: zodResolver(PatternGroupMetaInstruction),
-		values: value
+		values: value,
 	});
 
+	const onFormSubmit = useCallback(
+		(pgmi: PatternGroupMetaInstruction) => {
+			onValueChange(pgmi);
+			setIsDialogOpen(false);
+		},
+		[onValueChange],
+	);
+
+	const onOpenChange = useCallback(
+		(open: boolean) => {
+			form.reset({ ...value });
+			setIsDialogOpen(open);
+		},
+		[form, value],
+	);
+
 	return (
-		<Dialog>
+		<Dialog open={isDialogOpen} onOpenChange={onOpenChange}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
 			<DialogContent className="min-w-fit">
 				<DialogHeader>
-					<DialogTitle>Edit the meta-instruction pattern matching group</DialogTitle>
+					<DialogTitle>
+						Edit the meta-instruction pattern matching group
+					</DialogTitle>
 					<DialogDescription>TODO</DialogDescription>
 				</DialogHeader>
 				<Form {...form}>
 					<form
-						onSubmit={form.handleSubmit(onValueChange)}
+						onSubmit={form.handleSubmit(onFormSubmit)}
 						className="space-y-6 max-w-7xl"
 					>
 						<FormField
