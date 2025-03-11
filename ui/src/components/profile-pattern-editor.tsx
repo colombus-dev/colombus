@@ -83,9 +83,7 @@ const ProfilePatternEditor: React.FunctionComponent<
 					</div>
 					<div className="row-span-1 flex">
 						{s.metaInstructions?.map((mi, j) => (
-							<div
-								key={`step-${s.name}_MetaInstruction-${mi.function}-${mi.library}`}
-							>
+							<div key={`step-${s.name}_MetaInstruction-${j}`}>
 								<div className="border">
 									<div>
 										<p className="text-center">{`MetaInstruction-${j}`}</p>

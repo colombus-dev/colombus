@@ -47,6 +47,7 @@ import { Input } from "@/components/ui/input";
 import { useColombusStore } from "@/store";
 import { PatternGroup } from "@/lib/types";
 import type { z } from "zod";
+import { useCallback, useState } from "react";
 
 interface ProfilePatternGroupModalProps {
 	value: PatternGroup;
@@ -58,26 +59,29 @@ export default function ProfilePatternGroupModal({
 	onValueChange,
 	children,
 }: React.PropsWithChildren<ProfilePatternGroupModalProps>) {
+	const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
 	const availablePatterns = useColombusStore((state) => state.allSavedPatterns);
 
 	const form = useForm<z.infer<typeof PatternGroup>>({
 		resolver: zodResolver(PatternGroup),
 		values: value,
-		defaultValues: {
-			name: "Group-0",
-			steps: [],
-			subpattern: undefined,
-			multiplicity: "1",
-			metaCharacters: {
-				startsWith: false,
-				endsWith: false,
-				negate: false,
-			},
-		},
 	});
 
+	const onFormSubmit = useCallback(
+		(pe: PatternGroup) => {
+			onValueChange(pe);
+			setIsDialogOpen(false);
+		},
+		[onValueChange],
+	);
+
+	const onOpenChange = useCallback((open: boolean) => {
+		form.reset({...value});
+		setIsDialogOpen(open);
+	}, [form, value]);
+
 	return (
-		<Dialog>
+		<Dialog open={isDialogOpen} onOpenChange={onOpenChange}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
 			<DialogContent className="min-w-fit">
 				<DialogHeader>
@@ -86,7 +90,7 @@ export default function ProfilePatternGroupModal({
 				</DialogHeader>
 				<Form {...form}>
 					<form
-						onSubmit={form.handleSubmit(onValueChange)}
+						onSubmit={form.handleSubmit(onFormSubmit)}
 						className="space-y-6 max-w-7xl"
 					>
 						<FormField
@@ -123,8 +127,7 @@ export default function ProfilePatternGroupModal({
 														role="combobox"
 														className={cn(
 															"justify-between",
-															!field.value?.length &&
-																"text-muted-foreground",
+															!field.value?.length && "text-muted-foreground",
 														)}
 													>
 														{field.value?.length
@@ -207,7 +210,8 @@ export default function ProfilePatternGroupModal({
 														{field.value
 															? availablePatterns
 																	.filter(
-																		(p) => p.name && field.value?.name === p.name,
+																		(p) =>
+																			p.name && field.value?.name === p.name,
 																	)
 																	.map(({ name }) => name)
 																	.join(", ")
@@ -230,7 +234,7 @@ export default function ProfilePatternGroupModal({
 																	value={p.name}
 																	key={p.name}
 																	onSelect={() => {
-																		form.setValue("subpattern", {...p})
+																		form.setValue("subpattern", { ...p });
 																	}}
 																>
 																	{p.name}
