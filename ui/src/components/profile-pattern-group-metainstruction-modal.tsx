@@ -36,7 +36,13 @@ export default function ProfilePatternGroupMetaInstructionModal({
 	const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
 	const form = useForm<z.infer<typeof PatternGroupMetaInstruction>>({
 		resolver: zodResolver(PatternGroupMetaInstruction),
-		values: value,
+		values: {
+			// TODO: replace ?? undefined once typing fixed
+			algoFamily: value.algoFamily ?? undefined,
+			algoName: value.algoName ?? undefined,
+			library: value.library ?? undefined,
+			function: value.function ?? undefined,
+		},
 	});
 
 	const onFormSubmit = useCallback(
@@ -49,7 +55,13 @@ export default function ProfilePatternGroupMetaInstructionModal({
 
 	const onOpenChange = useCallback(
 		(open: boolean) => {
-			form.reset({ ...value });
+			form.reset({
+				// TODO: replace ?? undefined once typing fixed
+				algoFamily: value.algoFamily ?? undefined,
+				algoName: value.algoName ?? undefined,
+				library: value.library ?? undefined,
+				function: value.function ?? undefined,
+			});
 			setIsDialogOpen(open);
 		},
 		[form, value],
@@ -70,6 +82,42 @@ export default function ProfilePatternGroupMetaInstructionModal({
 						onSubmit={form.handleSubmit(onFormSubmit)}
 						className="space-y-6 max-w-7xl"
 					>
+						<FormField
+							control={form.control}
+							name="algoFamily"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Algorithm Family</FormLabel>
+									<FormControl>
+										<Input
+											placeholder="algorithm family"
+											value={field.value}
+											onChange={field.onChange}
+										/>
+									</FormControl>
+									<FormDescription>TODO</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="algoName"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Algorithm Name</FormLabel>
+									<FormControl>
+										<Input
+											placeholder="algorithm name"
+											value={field.value}
+											onChange={field.onChange}
+										/>
+									</FormControl>
+									<FormDescription>TODO</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
 						<FormField
 							control={form.control}
 							name="library"

@@ -47,6 +47,8 @@ class PatternMetaCharacters(BaseModel):
 
 
 class PatternMetaInstruction(BaseModel):
+    algoFamily: Optional[str] = Field(default=None)
+    algoName: Optional[str] = Field(default=None)
     library: Optional[str] = Field(default=None)
     function: Optional[str] = Field(default=None)
 

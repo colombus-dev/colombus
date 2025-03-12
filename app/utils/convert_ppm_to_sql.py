@@ -45,24 +45,28 @@ def convert_steps_to_sql_query(
         query += f" AS res_{se_i}"
 
     prev_mi_i: int | None = None
-    query += f"\nFROM (SELECT id, name, ppm_to_regex('{converted_regex}', encoded_profile, {count_groups}) AS regex_res FROM profile) AS p"
+    query += f"\nFROM (SELECT \"id\", \"name\", ppm_to_regex('{converted_regex}', encoded_profile, {count_groups}) AS regex_res FROM profile) AS p"
     for se_i, group in zip(range(0, count_groups + 1, 2), pattern):
-        query += f"\n{'LEFT OUTER' if group.multiplicity == '*' else 'INNER'} JOIN (SELECT *, 's{se_i}' AS grp_id FROM step) AS s{se_i} ON p.id = s{se_i}.profile_id AND s{se_i}.position >= p.regex_res[{se_i + 1}] AND s{se_i}.position < p.regex_res[{se_i + 2}]"
+        query += f"\n{'LEFT OUTER' if group.multiplicity == '*' else 'INNER'} JOIN (SELECT *, 's{se_i}' AS grp_id FROM step) AS s{se_i} ON p.\"id\" = s{se_i}.\"profile_id\" AND s{se_i}.\"position\" >= p.\"regex_res\"[{se_i + 1}] AND s{se_i}.\"position\" < p.\"regex_res\"[{se_i + 2}]"
         for mi_i, mi in enumerate(group.metaInstructions or []):
-            query += f"\nINNER JOIN metainstruction AS mi_{se_i}_{mi_i} ON mi_{se_i}_{mi_i}.profile_id = s{se_i}.profile_id AND mi_{se_i}_{mi_i}.step_id = s{se_i}.id"
+            query += f"\nINNER JOIN metainstruction AS mi_{se_i}_{mi_i} ON mi_{se_i}_{mi_i}.\"profile_id\" = s{se_i}.\"profile_id\" AND mi_{se_i}_{mi_i}.\"step_id\" = s{se_i}.\"id\""
+            if mi.algoFamily:
+                query += f" AND mi_{se_i}_{mi_i}.\"algoFamily\" = '{mi.algoFamily}'"
+            if mi.algoName:
+                query += f" AND mi_{se_i}_{mi_i}.\"algoName\" = '{mi.algoName}'"
             if mi.library:
-                query += f" AND mi_{se_i}_{mi_i}.library = '{mi.library}'"
+                query += f" AND mi_{se_i}_{mi_i}.\"library\" = '{mi.library}'"
             if mi.function:
-                query += f" AND mi_{se_i}_{mi_i}.function = '{mi.function}'"
+                query += f" AND mi_{se_i}_{mi_i}.\"function\" = '{mi.function}'"
             if prev_mi_i is not None:
                 query += (
-                    f" AND mi_{se_i}_{mi_i}.position > mi_{se_i}_{prev_mi_i}.position"
+                    f" AND mi_{se_i}_{mi_i}.\"position\" > mi_{se_i}_{prev_mi_i}.\"position\""
                 )
             prev_mi_i = mi_i
 
-    query += "\nGROUP BY p.name"
+    query += "\nGROUP BY p.\"name\""
     for se_i in range(0, count_groups + 1, 2):
-        query += f", s{se_i}.grp_id"
+        query += f", s{se_i}.\"grp_id\""
 
     return query + ";"
 
