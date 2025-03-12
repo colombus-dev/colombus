@@ -211,6 +211,7 @@ export default function useGraphUtils(graph: Graph) {
 					// displaying matched ppm groups
 					for (const grpNodes of groupsNodes) {
 						let grpX = x;
+						let prevNodeId: string | undefined = undefined;
 						for (const node of grpNodes) {
 							const startStepX = steps.findIndex(
 								(s) => s.id === node.childrenIds[0],
@@ -237,6 +238,10 @@ export default function useGraphUtils(graph: Graph) {
 								y - 50,
 							);
 							addEdge(id, node.id);
+							if (prevNodeId) {
+								addEdge(prevNodeId, node.id);
+							}
+							prevNodeId = node.id;
 						}
 					}
 				}

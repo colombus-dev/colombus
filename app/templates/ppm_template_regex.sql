@@ -22,7 +22,8 @@ FROM profile AS p
         {%- endif -%} (
             SELECT s.id,
                 s.profile_id,
-                {{ loop.index }} AS grp_id
+                {{ loop.index }} AS grp_id,
+                (sub_grp."matching_groups").match_id
             FROM step AS s
                 INNER JOIN regex_steps_pattern_matching AS sub_grp ON s."profile_id" = (sub_grp."id")
                     AND (sub_grp."matching_groups").grp_id = {{ loop.index }}
@@ -53,5 +54,5 @@ FROM profile AS p
     {%- endfor %}
 GROUP BY p."name"
 {% for i in range(all_groups|count) %}
-    , s{{ i }}.grp_id
+    , s{{ i }}.grp_id, s{{ i }}.match_id
 {%- endfor -%};
