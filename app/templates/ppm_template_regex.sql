@@ -6,7 +6,7 @@ WITH regex_steps_pattern_matching AS (
 )
 SELECT p."name"
 {% for group in all_groups %}
-    , array_agg(s{{ loop.index0 }}.id::text)
+    , array_agg(DISTINCT s{{ loop.index0 }}.id::text)
     {% set grouploop = loop %}
     {% for mi in group.meta_instructions %}
         || array_agg(mi_{{ grouploop.index0 }}_{{ loop.index0 }}.id::text)
@@ -29,7 +29,7 @@ FROM profile AS p
                     AND (sub_grp."matching_groups").grp_id = {{ loop.index }}
                     AND s."position" >= (sub_grp."matching_groups").grp_start
                     AND s."position" < (sub_grp."matching_groups").grp_end
-            ) AS s{{ loop.index0 }} ON p."id" = s{{ loop.index0 }}."profile_id"
+            ) AS s{{ loop.index0 }} ON p."id" = s{{ loop.index0 }}."profile_id" {%- if loop.index0 > 0 -%}AND s{{ loop.index0 - 1 }}."match_id" = s{{ loop.index0 }}."match_id"{%- endif -%}
         {% set prev_mi_i = None %}
         {% for mi in group.meta_instructions %}
             INNER JOIN metainstruction AS mi_{{ grouploop.index0 }}_{{ loop.index0 }} ON mi_{{ grouploop.index0 }}_{{ loop.index0 }}."profile_id" = s{{ grouploop.index0 }}."profile_id"
