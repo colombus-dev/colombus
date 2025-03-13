@@ -24,28 +24,14 @@ type PatternGroupNode = {
 	number_sub_children: number;
 	childrenIds: string[];
 };
-const expandPpm = (
-	groups: PatternGroup[],
-	parentPatternName?: string,
-): PatternGroup[] => {
-	return groups
-		.flatMap((e) =>
-			e.steps
-				? e
-				: expandPpm(e.subpattern?.groups ?? [], parentPatternName ?? e.name),
-		)
-		.map(
-			// replacing subpatterns names with the top pattern one
-			(e) => ({ ...e, name: parentPatternName ?? e.name }) as PatternGroup,
-		);
-};
 
 const getGroupsIds = (
 	ppmResults: PpmResult[],
 	currentPattern: Pattern,
 	steps: StepNode[],
 ) => {
-	const ppmCandiddates = expandPpm(currentPattern.groups ?? []);
+	const ppmCandiddates =
+		currentPattern.groups?.flatMap((e) => e?.subpattern?.groups ?? e) ?? [];
 	const ppmNodes: PatternGroupNode[][] = [];
 	for (const [ri, result] of ppmResults.entries()) {
 		ppmNodes[ri] = result.results.map((r, i) => ({
@@ -53,7 +39,7 @@ const getGroupsIds = (
 			// TODO: sometimes ppmCandiddates can be undefined as the currentPattern
 			// has changed but the ppm results corresponds to the previous pattern
 			// until the API returns new ppm results
-			name: ppmCandiddates[i]?.name ?? "",
+			name: `Match-${ri}_${ppmCandiddates[i]?.name ?? ""}`,
 			position: i,
 			number_children: r.length,
 			number_sub_children: steps
