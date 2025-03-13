@@ -96,11 +96,14 @@ const ProfilePatternEditor: React.FunctionComponent<
 												setCurrentPattern({
 													...currentPattern,
 													groups:
-														currentPattern?.groups?.map((e) => ({
+														currentPattern?.groups?.map((e, gi) => ({
 															...e,
-															metaInstructions: e.metaInstructions?.map(
-																(_mi, mi_i) => (mi_i === j ? pe : _mi),
-															),
+															metaInstructions:
+																gi !== i
+																	? e.metaInstructions
+																	: e.metaInstructions?.map((_mi, mi_i) =>
+																			mi_i === j ? pe : _mi,
+																		),
 														})) ?? [],
 												});
 											}}
@@ -117,11 +120,14 @@ const ProfilePatternEditor: React.FunctionComponent<
 												setCurrentPattern({
 													...currentPattern,
 													groups:
-														currentPattern?.groups?.map((e) => ({
+														currentPattern?.groups?.map((e, gi) => ({
 															...e,
-															metaInstructions: e.metaInstructions?.filter(
-																(_, mi_i) => mi_i !== j,
-															),
+															metaInstructions:
+																gi !== i
+																	? e.metaInstructions
+																	: e.metaInstructions?.filter(
+																			(_, mi_i) => mi_i !== j,
+																		),
 														})) ?? [],
 												});
 											}}
