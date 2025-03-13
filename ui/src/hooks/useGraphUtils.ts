@@ -1,5 +1,10 @@
 import type { GraphDefinition, PpmResult, StepNode } from "@/api/client";
-import { colors, stepsColorsMapping } from "@/configuration";
+import {
+	algoNodeSuffix,
+	colors,
+	libraryFunctionNodeSuffix,
+	stepsColorsMapping,
+} from "@/configuration";
 import type { Pattern, PatternGroup } from "@/lib/types";
 import { useColombusStore } from "@/store";
 import type Graph from "graphology";
@@ -25,7 +30,9 @@ const expandPpm = (
 ): PatternGroup[] => {
 	return groups
 		.flatMap((e) =>
-			e.steps ? e : expandPpm(e.subpattern?.groups ?? [], parentPatternName ?? e.name),
+			e.steps
+				? e
+				: expandPpm(e.subpattern?.groups ?? [], parentPatternName ?? e.name),
 		)
 		.map(
 			// replacing subpatterns names with the top pattern one
@@ -266,13 +273,32 @@ export default function useGraphUtils(graph: Graph) {
 				addedX = Math.max(
 					addedX,
 					addNodes(
-						meta_instructions,
+						meta_instructions.map((m) => ({
+							...m,
+							id: `${m.id}${algoNodeSuffix}`,
+						})),
 						3,
 						x,
 						y,
-						(m) =>
-							`${m.algoFamily} | ${m.algoName} | ${m.library} | ${m.function}`,
+						(m) => `${m.algoFamily} | ${m.algoName}`,
 						(m) => m.step_id,
+					),
+				);
+			}
+			if (displayedLevel >= 3) {
+				addedX = Math.max(
+					addedX,
+					addNodes(
+						meta_instructions.map((m) => ({
+							...m,
+							id: `${m.id}${libraryFunctionNodeSuffix}`,
+						})),
+						4,
+						x,
+						y,
+						(m) => `${m.library} | ${m.function}`,
+						(m) =>
+							`${m.id.replace(libraryFunctionNodeSuffix, "")}${algoNodeSuffix}`,
 					),
 				);
 			}
@@ -281,11 +307,11 @@ export default function useGraphUtils(graph: Graph) {
 					addedX,
 					addNodes(
 						codes,
-						4,
+						5,
 						x,
 						y,
 						(c) => c.content,
-						(c) => c.meta_instruction_id,
+						(c) => `${c.meta_instruction_id}-libfunc`,
 					),
 				);
 			}

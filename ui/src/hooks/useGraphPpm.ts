@@ -1,12 +1,28 @@
-import type { PpmNodesDisplayMode } from "@/configuration";
+import {
+	algoNodeSuffix,
+	libraryFunctionNodeSuffix,
+	type PpmNodesDisplayMode,
+} from "@/configuration";
 import { useColombusStore } from "@/store";
 import { useEffect, useMemo, useState } from "react";
 import type Sigma from "sigma";
 
 const shouldHideNodeForModeMapping = {
 	"show-all": () => false,
-	"show-fixed": (allUuids, nodeUuid) => nodeUuid && !allUuids.has(nodeUuid),
-	"show-variable": (allUuids, nodeUuid) => nodeUuid && allUuids.has(nodeUuid),
+	"show-fixed": (allUuids, nodeUuid) =>
+		nodeUuid &&
+		!allUuids.has(
+			nodeUuid
+				.replace(algoNodeSuffix, "")
+				.replace(libraryFunctionNodeSuffix, ""),
+		),
+	"show-variable": (allUuids, nodeUuid) =>
+		nodeUuid &&
+		allUuids.has(
+			nodeUuid
+				.replace(algoNodeSuffix, "")
+				.replace(libraryFunctionNodeSuffix, ""),
+		),
 } as {
 	[mode in PpmNodesDisplayMode]: (
 		allUuids: Set<string>,

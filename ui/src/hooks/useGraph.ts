@@ -50,7 +50,7 @@ export default function useGraph(
 				(pr) => pr.profile_name === profile.name,
 			);
 			addNewProfile(profile, ppmResData, currentPattern, addedX, addedY);
-			addedY -= 50 * (displayedLevel + 1);
+			addedY -= 50 * (displayedLevel + 2);
 			addedX = 1;
 		}
 	}, [

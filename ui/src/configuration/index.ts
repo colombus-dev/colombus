@@ -30,7 +30,10 @@ export const metacharacterPLUS = "+";
 
 // graph styling configuration
 
-export const colors = ["#F79767", "#ffd700", "#57C7E3", "#F16667", "#D9C8AE"];
+export const colors = ["#F79767", "#ffd700", "#57C7E3", "#D9C8AE", "#808080", "#4f4f4f"];
+
+export const algoNodeSuffix = "-algo";
+export const libraryFunctionNodeSuffix = "-libfunc";
 
 export const stepsColorsMapping: { [stepName: string]: string } = {
 	"Library Loading": "#ff0029",
