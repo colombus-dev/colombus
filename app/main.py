@@ -14,6 +14,7 @@ from app.models.api_model import (
     PpmResult,
     PatternGroup,
     Pattern as PatternApi,
+    RegexCompatibleProfileElement,
 )
 from app.models.sql_model import (
     Project,
@@ -27,6 +28,7 @@ from app.models.sql_model import (
 )
 from app.utils.save_notebook_sql import save_notebook_as_sql
 from app.utils.convert_ppm_to_sql import convert_ppm_to_sql_query
+from app.utils.convert_ppm_to_regex import convert_pattern_to_regex
 
 app = FastAPI()
 
@@ -302,3 +304,28 @@ async def delete_ppm(
         )
     )
     session.commit()
+
+
+@app.post("/api/utils/generate/regex/pattern")
+async def generate_pattern_regex(
+    project_id: uuid.UUID, pattern: list[PatternGroup]
+) -> str:
+    return convert_pattern_to_regex(pattern)
+
+
+@app.post("/api/utils/generate/regex/profile")
+async def generate_profile_regex(
+    project_id: uuid.UUID, json_profile: list[dict]
+) -> list[RegexCompatibleProfileElement]:
+    return [
+        RegexCompatibleProfileElement(
+            step=se["name"],
+            algoFamily=mi["algoFamily"],
+            algoName=mi["algoName"],
+            library=mi["library"],
+            function=mi["function"],
+        )
+        for sa in json_profile
+        for se in sa["tasks"]
+        for mi in se["tasks"]
+    ]
