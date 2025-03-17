@@ -62,6 +62,7 @@ def convert_steps_to_sql_query_template(
     template = env.get_template("ppm_template_regex.sql")
 
     return template.render(
+        project_id=project_id,
         regex_text=converted_regex,
         all_groups=all_groups,
     )

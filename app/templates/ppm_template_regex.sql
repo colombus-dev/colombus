@@ -3,6 +3,7 @@ WITH regex_steps_pattern_matching AS (
         "name",
         ppm_to_regex('{{ regex_text }}', encoded_profile) AS matching_groups
     FROM profile
+    WHERE "project_id" = '{{ project_id }}'
 )
 SELECT p."name"
 {% for group in all_groups %}
