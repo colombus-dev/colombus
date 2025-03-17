@@ -4,7 +4,7 @@ import {
 	type PpmNodesDisplayMode,
 } from "@/configuration";
 import { useColombusStore } from "@/store";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type Sigma from "sigma";
 
 const shouldHideNodeForModeMapping = {
@@ -38,6 +38,39 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 		(state) => state.availableProfilesWithPpmData,
 	);
 	const [hoveredNode, setHoveredNode] = useState<string | undefined>();
+	const [hoveredNeighbors, setHoveredNeighbors] = useState<
+		Set<string> | undefined
+	>();
+
+	const getHoveredSubTree = useCallback(
+		(parentNodeId: string): string[] => {
+			const graph = graphRenderer?.getGraph();
+			if (!graph) {
+				return [];
+			}
+			const parentNodeLayeredLevel = graph.getNodeAttribute(
+				parentNodeId,
+				"layerLevel",
+			);
+			return [
+				parentNodeId,
+				...graph
+					.outNeighbors(parentNodeId)
+					.filter(
+						(n) =>
+							graph.getNodeAttribute(n, "layerLevel") > parentNodeLayeredLevel,
+					)
+					.flatMap(getHoveredSubTree),
+			];
+		},
+		[graphRenderer],
+	);
+
+	useEffect(() => {
+		setHoveredNeighbors(
+			hoveredNode ? new Set(getHoveredSubTree(hoveredNode)) : undefined,
+		);
+	}, [getHoveredSubTree, hoveredNode]);
 
 	const allUuidsToDisplay = useMemo(
 		() =>
@@ -61,8 +94,10 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 		} else {
 			graphRenderer?.setSetting("nodeReducer", (nodeId, data) => {
 				const res = { ...data };
+				const hoverShouldDisplayNode = nodeId === hoveredNode || hoveredNeighbors?.has(nodeId);
 				if (
-					res.layerLevel !== 1 && // always showing matched groups
+					!(hoverShouldDisplayNode) &&
+					res.layerLevel > 1 && // always showing matched groups
 					shouldHideNodeForModeMapping[patternCapturedNodesDisplayMode](
 						allUuidsToDisplay,
 						nodeId,
@@ -89,6 +124,7 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 		availableProfilesWithPpmData,
 		allUuidsToDisplay,
 		hoveredNode,
+		hoveredNeighbors,
 	]);
 
 	useEffect(() => {
