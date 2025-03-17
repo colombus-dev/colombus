@@ -1,19 +1,22 @@
-WITH regex_steps_pattern_matching AS (
+WITH filtered_profiles AS (
     SELECT "id",
         "name",
-        ppm_to_regex('{{ regex_text }}', encoded_profile) AS matching_groups
-    FROM profile
+        "encoded_profile"
+        FROM profile
     WHERE "project_id" = '{{ project_id }}'
+), regex_steps_pattern_matching AS (
+    SELECT fp.*, ppm_to_regex('{{ regex_text }}', fp."encoded_profile") AS matching_groups
+    FROM filtered_profiles AS fp
 )
 SELECT p."name"
 {% for group in all_groups %}
     , array_agg(DISTINCT s{{ loop.index0 }}.id::text)
     {% set grouploop = loop %}
     {% for mi in group.meta_instructions %}
-        || array_agg(mi_{{ grouploop.index0 }}_{{ loop.index0 }}.id::text)
+        || array_agg(mi_{{ grouploop.index0 }}_{{ loop.index0 }}.id::text) || array_agg(code_{{ grouploop.index0 }}_{{ loop.index0 }}.id::text)
     {%- endfor %} AS res_{{ loop.index0 }}
 {%- endfor %}
-FROM profile AS p
+FROM filtered_profiles AS p
     {% for group in all_groups -%}
         {% set grouploop = loop %}
         {%- if group.is_required -%}
@@ -51,6 +54,8 @@ FROM profile AS p
                     AND mi_{{ grouploop.index0 }}_{{ loop.index0 }}."position" > mi_{{ grouploop.index0 }}_{{ prev_mi_i }}."position"
                 {% endif %}
                 {% set prev_mi_i = loop.index0 %}
+            INNER JOIN code AS code_{{ grouploop.index0 }}_{{ loop.index0 }} ON code_{{ grouploop.index0 }}_{{ loop.index0 }}."profile_id" = s{{ grouploop.index0 }}."profile_id"
+                AND code_{{ grouploop.index0 }}_{{ loop.index0 }}."meta_instruction_id" = mi_{{ grouploop.index0 }}_{{ loop.index0 }}."id"
         {%- endfor %}
     {%- endfor %}
 GROUP BY p."name"
