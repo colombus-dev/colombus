@@ -51,11 +51,12 @@ def convert_steps_to_sql_query_template(
         {
             "is_required": g.multiplicity != "*",
             "meta_instructions": __reduce_meta_instructions(g.metaInstructions or [])
-            or [
-                PatternMetaInstruction(
-                    algoFamily=None, algoName=None, library=None, function=None
-                )
-            ],
+            # TODO
+            # or [
+            #     PatternMetaInstruction(
+            #         algoFamily=None, algoName=None, library=None, function=None
+            #     )
+            # ],
         }
         for g in flat_pattern
         if g.steps
