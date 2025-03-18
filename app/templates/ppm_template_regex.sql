@@ -33,7 +33,7 @@ FROM filtered_profiles AS p
                     AND (sub_grp."matching_groups").grp_id = {{ loop.index }}
                     AND s."position" >= (sub_grp."matching_groups").grp_start
                     AND s."position" < (sub_grp."matching_groups").grp_end
-            ) AS s{{ loop.index0 }} ON p."id" = s{{ loop.index0 }}."profile_id" {%- if loop.index0 > 0 -%}AND (s{{ loop.index0 - 1 }}."match_id" = s{{ loop.index0 }}."match_id" OR s{{ loop.index0 - 1 }}."match_id" IS NULL){%- endif -%}
+            ) AS s{{ loop.index0 }} ON p."id" = s{{ loop.index0 }}."profile_id" {%- if loop.index0 > 0 -%}AND s0."match_id" = s{{ loop.index0 }}."match_id"{%- endif -%}
         {% set prev_mi_i = None %}
         {% for mi in group.meta_instructions %}
             INNER JOIN metainstruction AS mi_{{ grouploop.index0 }}_{{ loop.index0 }} ON mi_{{ grouploop.index0 }}_{{ loop.index0 }}."profile_id" = s{{ grouploop.index0 }}."profile_id"
