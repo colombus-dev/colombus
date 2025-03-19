@@ -34,7 +34,6 @@ const getGroupsIds = (
 		currentPattern.groups
 			?.flatMap((g) => g?.subpattern?.groups ?? g)
 			.filter((g) => g.steps?.length || g.subpattern) ?? [];
-	console.log(ppmCandiddates)
 	const ppmNodes: PatternGroupNode[][] = [];
 	for (const [ri, result] of ppmResults.entries()) {
 		ppmNodes[ri] = result.results.map((r, i) => ({

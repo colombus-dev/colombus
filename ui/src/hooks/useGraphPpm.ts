@@ -42,6 +42,30 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 		Set<string> | undefined
 	>();
 
+	const getHoveredTopTree = useCallback(
+		(parentNodeId: string): string[] => {
+			const graph = graphRenderer?.getGraph();
+			if (!graph) {
+				return [];
+			}
+			const parentNodeLayeredLevel = graph.getNodeAttribute(
+				parentNodeId,
+				"layerLevel",
+			);
+			return [
+				parentNodeId,
+				...graph
+					.inNeighbors(parentNodeId)
+					.filter(
+						(n) =>
+							graph.getNodeAttribute(n, "layerLevel") < parentNodeLayeredLevel,
+					)
+					.flatMap(getHoveredTopTree),
+			];
+		},
+		[graphRenderer],
+	);
+
 	const getHoveredSubTree = useCallback(
 		(parentNodeId: string): string[] => {
 			const graph = graphRenderer?.getGraph();
@@ -68,9 +92,14 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 
 	useEffect(() => {
 		setHoveredNeighbors(
-			hoveredNode ? new Set(getHoveredSubTree(hoveredNode)) : undefined,
+			hoveredNode
+				? new Set([
+						...getHoveredSubTree(hoveredNode),
+						...getHoveredTopTree(hoveredNode),
+					])
+				: undefined,
 		);
-	}, [getHoveredSubTree, hoveredNode]);
+	}, [getHoveredSubTree, getHoveredTopTree, hoveredNode]);
 
 	const allUuidsToDisplay = useMemo(
 		() =>
@@ -81,39 +110,31 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 	);
 
 	useEffect(() => {
-		if (availableProfilesWithPpmData.length === 0) {
-			graphRenderer?.setSetting("nodeReducer", (nodeId, data) => {
-				const res = { ...data };
-				if (res.forceLabel) {
-					res.label = res.fullLabel;
-				} else {
-					res.label = nodeId === hoveredNode ? res.fullLabel : ""; // res.shortLabel;
-				}
-				return res;
-			});
-		} else {
-			graphRenderer?.setSetting("nodeReducer", (nodeId, data) => {
-				const res = { ...data };
-				const hoverShouldDisplayNode = nodeId === hoveredNode || hoveredNeighbors?.has(nodeId);
-				if (
-					!(hoverShouldDisplayNode) &&
-					res.layerLevel > 1 && // always showing matched groups
-					shouldHideNodeForModeMapping[patternCapturedNodesDisplayMode](
-						allUuidsToDisplay,
-						nodeId,
-					)
-				) {
-					res.color = "#f6f6f6";
-					res.forceLabel = false;
-				}
-				if (res.forceLabel) {
-					res.label = res.fullLabel;
-				} else {
-					res.label = nodeId === hoveredNode ? res.fullLabel : ""; // res.shortLabel;
-				}
-				return res;
-			});
-		}
+		graphRenderer?.setSetting("nodeReducer", (nodeId, data) => {
+			const res = { ...data };
+			const hoverShouldDisplayNode =
+				nodeId === hoveredNode || hoveredNeighbors?.has(nodeId);
+			if (
+				(availableProfilesWithPpmData.length > 0 || hoveredNode) &&
+				!hoverShouldDisplayNode &&
+				res.layerLevel > 1 && // always showing matched groups
+				shouldHideNodeForModeMapping[patternCapturedNodesDisplayMode](
+					allUuidsToDisplay,
+					nodeId,
+				)
+			) {
+				res.color = "#f6f6f6";
+				res.forceLabel = false;
+			}
+			if (res.forceLabel || (hoverShouldDisplayNode && data.layerLevel === 2)) {
+				// always display root and steps full label
+				res.label = res.fullLabel;
+				res.forceLabel = true;
+			} else {
+				res.label = nodeId === hoveredNode ? res.fullLabel : ""; // res.shortLabel;
+			}
+			return res;
+		});
 		graphRenderer?.refresh({
 			// We don't touch the graph data so we can skip its reindexation
 			skipIndexation: true,

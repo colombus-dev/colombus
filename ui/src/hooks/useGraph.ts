@@ -30,6 +30,31 @@ export default function useGraph(
 			if (graphContainer) {
 				renderer.current = new Sigma(graph.current, graphContainer, {
 					autoRescale: false,
+					defaultDrawNodeLabel(context, data, settings) {
+						if (!data.label) return;
+
+						const size = settings.labelSize;
+						const font = settings.labelFont;
+						const weight = settings.labelWeight;
+
+						context.font = `${weight} ${size}px ${font}`;
+						const width = context.measureText(data.label).width + 8;
+
+						context.fillStyle = "#ffffffcc";
+						context.fillRect(
+							data.x + data.size,
+							data.y + size / 3 - 15,
+							width,
+							20,
+						);
+
+						context.fillStyle = "#000";
+						context.fillText(
+							data.label,
+							data.x + data.size + 3,
+							data.y + size / 3,
+						);
+					},
 				});
 			}
 		}
