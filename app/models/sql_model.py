@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 
 
 ProjectIdFk = Field(default=None, foreign_key="project.id", ondelete="CASCADE")
-ProfileIdFk = Field(default=None, foreign_key="profile.id", ondelete="CASCADE")
+ProfileIdFk = Field(default=None, foreign_key="profile.id", ondelete="CASCADE", index=True)
 LongString = String().with_variant(mysql.LONGTEXT(), "mysql", "mariadb")
 
 
@@ -103,7 +103,7 @@ class MetaInstruction(MetaInstructionBase, table=True):
     profile: Profile = Relationship(back_populates="meta_instructions")
 
     step_id: uuid.UUID | None = Field(
-        default=None, foreign_key="step.id", ondelete="CASCADE"
+        default=None, foreign_key="step.id", ondelete="CASCADE", index=True
     )
     step: Step = Relationship(back_populates="meta_instructions")
 
@@ -122,7 +122,7 @@ class Code(CodeBase, table=True):
     profile: Profile = Relationship(back_populates="codes")
 
     meta_instruction_id: uuid.UUID | None = Field(
-        default=None, foreign_key="metainstruction.id", ondelete="CASCADE"
+        default=None, foreign_key="metainstruction.id", ondelete="CASCADE", index=True
     )
     meta_instruction: MetaInstruction = Relationship(back_populates="codes")
 
