@@ -223,9 +223,9 @@ async def delete_profile(
 
 @app.get("/api/project/{project_id}/ppm/getAll")
 async def get_all_ppm(
-    session: Session = Depends(get_session),
+    project_id, session: Session = Depends(get_session),
 ) -> list[PatternApi]:
-    return [res[0] for res in session.execute(select(Pattern.json_pattern)).all()]
+    return [res[0] for res in session.execute(select(Pattern.json_pattern).where(Pattern.project_id == project_id)).all()]
 
 
 @app.post("/api/project/{project_id}/ppm/execute")
