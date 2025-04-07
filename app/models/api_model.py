@@ -1,12 +1,15 @@
 import uuid
 
-from typing import Literal, Optional
+from datetime import datetime
+from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 from sqlmodel import SQLModel
 
 from app.models.sql_model import ProfileBase, StepBase, MetaInstructionBase, CodeBase
 
+
+# Profile Graph
 
 class StepNode(StepBase):
     id: uuid.UUID
@@ -29,6 +32,26 @@ class ProfileNodes(ProfileBase):
     meta_instructions: list[MetaInstructionNode]
     codes: list[CodeNode]
 
+
+# Profile JSON
+
+
+class ProfileMetadata(BaseModel):
+    version: str
+    generation_date: datetime
+
+    @field_serializer('generation_date', when_used='json')
+    def serialize_generation_date_as_str(self, generation_date: datetime):
+        return str(generation_date)
+
+
+class Profile(ProfileBase):
+    metadata: ProfileMetadata
+    source: list[Any]
+    outputs: dict[str, str]
+
+
+# Pattern/PPM
 
 class PpmResult(BaseModel):
     profile_name: str

@@ -85,6 +85,19 @@ class Step(StepBase, table=True):
 
     meta_instructions: list["MetaInstruction"] = Relationship(back_populates="step")
 
+    cell_outputs: list["CellOutput"] = Relationship(back_populates="step")
+
+
+
+class CellOutput(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    image: str
+
+    step_id: uuid.UUID | None = Field(
+        default=None, foreign_key="step.id", ondelete="CASCADE", index=True
+    )
+    step: Step = Relationship(back_populates="cell_outputs")
+
 
 class MetaInstructionBase(SQLModel):
     algoFamily: str | None = None

@@ -11,6 +11,7 @@ from sqlmodel import text, select, delete, Session
 
 from app.models.api_model import (
     ProfileNodes,
+    Profile as JsonProfile,
     PpmResult,
     PatternGroup,
     Pattern as PatternApi,
@@ -201,7 +202,7 @@ async def import_multiple_profile(
     for profile_file in profile_files:
         profile_path = Path(profile_file.filename)
         profile_content = await profile_file.read()
-        profile = json.loads(profile_content)
+        profile = JsonProfile.model_validate_json(profile_content)
         save_notebook_as_sql(project_id, profile_path.stem, profile, engine)
         all_imported_profiles.append(profile_path.stem)
     return all_imported_profiles
@@ -315,7 +316,7 @@ async def generate_pattern_regex(
 
 @app.post("/api/utils/generate/regex/profile")
 async def generate_profile_regex(
-    project_id: uuid.UUID, json_profile: list[dict]
+    project_id: uuid.UUID, profile: JsonProfile
 ) -> list[RegexCompatibleProfileElement]:
     return [
         RegexCompatibleProfileElement(
@@ -325,7 +326,6 @@ async def generate_profile_regex(
             library=mi["library"],
             function=mi["function"],
         )
-        for sa in json_profile
-        for se in sa["tasks"]
+        for se in profile.source
         for mi in se["tasks"]
     ]
