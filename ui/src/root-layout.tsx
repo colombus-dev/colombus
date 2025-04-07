@@ -7,8 +7,10 @@ import {
 import { Outlet } from "react-router";
 import RequireApiKey from "@/RequireApiKey";
 import { Badge } from "@/components/ui/badge";
+import { useColombusStore } from "@/store";
 
 export default function RootLayout() {
+	const projectName = useColombusStore((state) => state.projectName);
 	return (
 		<RequireApiKey>
 			<div className="flex flex-col h-screen space-y-2">
@@ -31,6 +33,7 @@ export default function RootLayout() {
 									</NavigationMenu>
 								</nav>
 							</div>
+							<p className="font-bold">{projectName}</p>
 						</div>
 						<Badge className="w-[12vw] bg-green-600 m-2">
 							MODE: {import.meta.env.VITE_INTERFACE_MODE}

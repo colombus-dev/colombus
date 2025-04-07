@@ -36,11 +36,17 @@ interface ProfilesSlice {
 	setFilteredProfilesNames: (profiles: string[]) => void;
 }
 
+interface ProjectSlice {
+	projectName?: string;
+	setProjectName: (name?: string) => void;
+}
+
 interface ColombusStore
 	extends AuthSlice,
 		PatternSlice,
 		GraphCustomizationSlice,
-		ProfilesSlice {}
+		ProfilesSlice,
+		ProjectSlice {}
 
 const createPatternSlice: StateCreator<ColombusStore, [], [], PatternSlice> = (
 	set,
@@ -95,6 +101,15 @@ const createProfilesSlice: StateCreator<
 		set((state) => ({ ...state, filteredProfilesNames: profiles })),
 });
 
+const createProjectSlice: StateCreator<ColombusStore, [], [], ProjectSlice> = (
+	set,
+) => ({
+	projectName: undefined,
+	setProjectName(name) {
+		set((state) => ({ ...state, projectName: name }));
+	},
+});
+
 export const useColombusStore = create<ColombusStore>()(
 	devtools(
 		persist(
@@ -103,6 +118,7 @@ export const useColombusStore = create<ColombusStore>()(
 				...createPatternSlice(...a),
 				...createGraphCustomizationSlice(...a),
 				...createProfilesSlice(...a),
+				...createProjectSlice(...a),
 			}),
 			{
 				name: "colombus-storage",

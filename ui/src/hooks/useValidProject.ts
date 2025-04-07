@@ -10,6 +10,9 @@ export default function useValidProject() {
 
 	const { projectId } = useParams<{ projectId: string }>();
 	const apiKey = useColombusStore((state) => state.apiKey);
+	const setProjectName = useColombusStore(
+		(state) => state.setProjectName,
+	);
 
 	useEffect(() => {
 		if (!apiKey) {
@@ -20,12 +23,12 @@ export default function useValidProject() {
 			return;
 		}
 		postRetrieveProjectName(projectId, apiKey)
-			.then(() => {
-				// TODO: use name
+			.then((name) => {
+				setProjectName(name);
 				setProjectValidity("valid");
 			})
 			.catch(() => setProjectValidity("invalid"));
-	}, [apiKey, projectId]);
+	}, [apiKey, projectId, setProjectName]);
 
 	const projectStatus = useMemo(
 		() => ({ validity: projectValidity, projectId }),

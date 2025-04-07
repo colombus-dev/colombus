@@ -15,7 +15,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatPatternGroup(pe: PatternGroup) {
 	let preprocessedName = pe.subpattern
-		? `Pattern[${pe.subpattern}]`
+		? `Pattern[${pe.subpattern.name}]`
 		: pe.steps?.join(" OR ");
 	if (pe.metaCharacters?.negate) {
 		preprocessedName = `NOT (${preprocessedName})`;
