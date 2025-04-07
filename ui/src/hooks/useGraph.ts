@@ -3,6 +3,7 @@ import { useColombusStore } from "@/store";
 import Graph from "graphology";
 import { useEffect, useRef } from "react";
 import Sigma from "sigma";
+import { createNodeImageProgram } from "@sigma/node-image";
 import useGraphUtils from "./useGraphUtils";
 
 export default function useGraph(
@@ -29,6 +30,12 @@ export default function useGraph(
 			const graphContainer = document.getElementById("graph-container");
 			if (graphContainer) {
 				renderer.current = new Sigma(graph.current, graphContainer, {
+					nodeProgramClasses: {
+						image: createNodeImageProgram({
+							keepWithinCircle: false,
+							objectFit: 'contain',
+						})
+					},
 					autoRescale: false,
 					defaultDrawNodeLabel(context, data, settings) {
 						if (!data.label) return;

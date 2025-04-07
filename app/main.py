@@ -24,6 +24,7 @@ from app.models.sql_model import (
     Step,
     MetaInstruction,
     Code,
+    CellOutput,
     engine,
     create_db_and_tables,
 )
@@ -329,3 +330,10 @@ async def generate_profile_regex(
         for se in profile.source
         for mi in se["tasks"]
     ]
+
+
+@app.get("/api/project/{project_id}/profile/step/{step_id}/output")
+async def get_step_output(
+    project_id: uuid.UUID, step_id: uuid.UUID, session: Session = Depends(get_session),
+) -> list[str]:
+    return session.exec(select(CellOutput.image).where(CellOutput.step_id == step_id)).all()

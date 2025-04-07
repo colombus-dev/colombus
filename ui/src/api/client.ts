@@ -163,3 +163,10 @@ export async function deletePpm(projectId: string, name: string) {
 		`${apiPath}:${apiPort}/api/project/${projectId}/ppm/delete/${name}`,
 	);
 }
+
+export async function getOutputImagesForStep(projectId: string, stepId: string) {
+	return await axios.get<string[]>(
+		`${apiPath}:${apiPort}/api/project/${projectId}/profile/step/${stepId}/output`,
+	).then(({ data }) => data);
+}
+

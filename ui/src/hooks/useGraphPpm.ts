@@ -1,3 +1,4 @@
+import { getOutputImagesForStep } from "@/api/client";
 import {
 	algoNodeSuffix,
 	libraryFunctionNodeSuffix,
@@ -5,6 +6,7 @@ import {
 } from "@/configuration";
 import { useColombusStore } from "@/store";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router";
 import type Sigma from "sigma";
 
 const shouldHideNodeForModeMapping = {
@@ -41,6 +43,8 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 	const [hoveredNeighbors, setHoveredNeighbors] = useState<
 		Set<string> | undefined
 	>();
+	// TODO: should we useParams or useValidProject ?
+	const { projectId } = useParams<{ projectId: string }>();
 
 	const getHoveredTopTree = useCallback(
 		(parentNodeId: string): string[] => {
@@ -147,6 +151,40 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 		hoveredNode,
 		hoveredNeighbors,
 	]);
+
+	useEffect(() => {
+		const graph = graphRenderer?.getGraph();
+		if (!graph || !projectId) {
+			return;
+		}
+		const hoveredNodeLayerLevel = hoveredNode
+			? graph.getNodeAttribute(hoveredNode, "layerLevel")
+			: undefined;
+		if (graph.hasNode("cell_output")) {
+			graph.dropNode("cell_output");
+		}
+		if (
+			!hoveredNode ||
+			hoveredNodeLayerLevel === undefined ||
+			hoveredNodeLayerLevel > 2
+		) {
+			return;
+		}
+		getOutputImagesForStep(projectId, hoveredNode).then((d) => {
+			if (d.length === 0) {
+				return;
+			}
+			graph.addNode("cell_output", {
+				x: graph.getNodeAttribute(hoveredNode, "x"),
+				y: graph.getNodeAttribute(hoveredNode, "y") + 25,
+				size: 50,
+				type: "image",
+				label: "output",
+				image: `data:image/png;base64,${d[0]}`,
+				color: "white",
+			});
+		});
+	}, [graphRenderer, projectId, hoveredNode]);
 
 	useEffect(() => {
 		graphRenderer?.on("enterNode", ({ node }) => {
