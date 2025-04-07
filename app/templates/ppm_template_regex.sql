@@ -61,4 +61,5 @@ FROM filtered_profiles AS p
 GROUP BY p."name"
 {% for i in range(all_groups|count) %}
     , s{{ i }}.grp_id, s{{ i }}.match_id
-{%- endfor -%};
+{%- endfor %}
+ORDER BY p."name";
