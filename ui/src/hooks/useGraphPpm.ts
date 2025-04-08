@@ -160,8 +160,10 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 		const hoveredNodeLayerLevel = hoveredNode
 			? graph.getNodeAttribute(hoveredNode, "layerLevel")
 			: undefined;
-		if (graph.hasNode("cell_output")) {
-			graph.dropNode("cell_output");
+		let i = 0;
+		while (graph.hasNode(`cell_output_${i}`)) {
+			graph.dropNode(`cell_output_${i}`);
+			i++;
 		}
 		if (
 			!hoveredNode ||
@@ -174,15 +176,18 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 			if (d.length === 0) {
 				return;
 			}
-			graph.addNode("cell_output", {
-				x: graph.getNodeAttribute(hoveredNode, "x"),
-				y: graph.getNodeAttribute(hoveredNode, "y") + 25,
-				size: 50,
-				type: "image",
-				label: "output",
-				image: `data:image/png;base64,${d[0]}`,
-				color: "white",
-			});
+			const totalImagesWidth = 55 * d.length;
+			for (const [i, imageData] of d.entries()) {
+				graph.addNode(`cell_output_${i}`, {
+					x: (graph.getNodeAttribute(hoveredNode, "x") + 55 * i) - Math.round(totalImagesWidth / 4),
+					y: graph.getNodeAttribute(hoveredNode, "y") + 25,
+					size: 50,
+					type: "image",
+					label: "output",
+					image: `data:image/png;base64,${imageData}`,
+					color: "white",
+				});
+			}
 		});
 	}, [graphRenderer, projectId, hoveredNode]);
 
