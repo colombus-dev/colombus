@@ -16,6 +16,7 @@ from app.models.api_model import (
     PatternGroup,
     Pattern as PatternApi,
     RegexCompatibleProfileElement,
+    DiffResult,
 )
 from app.models.sql_model import (
     Project,
@@ -225,9 +226,17 @@ async def delete_profile(
 
 @app.get("/api/project/{project_id}/ppm/getAll")
 async def get_all_ppm(
-    project_id, session: Session = Depends(get_session),
+    project_id,
+    session: Session = Depends(get_session),
 ) -> list[PatternApi]:
-    return [res[0] for res in session.execute(select(Pattern.json_pattern).where(Pattern.project_id == project_id).order_by(Pattern.name)).all()]
+    return [
+        res[0]
+        for res in session.execute(
+            select(Pattern.json_pattern)
+            .where(Pattern.project_id == project_id)
+            .order_by(Pattern.name)
+        ).all()
+    ]
 
 
 @app.post("/api/project/{project_id}/ppm/execute")
@@ -308,6 +317,17 @@ async def delete_ppm(
     session.commit()
 
 
+@app.get("/api/project/{project_id}/profile/step/{step_id}/output")
+async def get_step_output(
+    project_id: uuid.UUID,
+    step_id: uuid.UUID,
+    session: Session = Depends(get_session),
+) -> list[str]:
+    return session.exec(
+        select(CellOutput.image).where(CellOutput.step_id == step_id)
+    ).all()
+
+
 @app.post("/api/utils/generate/regex/pattern")
 async def generate_pattern_regex(
     project_id: uuid.UUID, pattern: list[PatternGroup]
@@ -332,8 +352,69 @@ async def generate_profile_regex(
     ]
 
 
-@app.get("/api/project/{project_id}/profile/step/{step_id}/output")
-async def get_step_output(
-    project_id: uuid.UUID, step_id: uuid.UUID, session: Session = Depends(get_session),
-) -> list[str]:
-    return session.exec(select(CellOutput.image).where(CellOutput.step_id == step_id)).all()
+class PostDiffSortPayload(BaseModel):
+    profiles_to_diff: list[str]
+
+
+@app.post("/api/utils/diff/sort")
+async def post_diff_sort(
+    payload: PostDiffSortPayload, session: Session = Depends(get_session)
+) -> list[DiffResult]:
+    if len(payload.profiles_to_diff) == 1:
+        return [(payload.profiles_to_diff[0].name, 1)]
+
+    from difflib import SequenceMatcher
+
+    encoded_taxonomy = {
+        "Library Loading": "a",
+        "Visualization": "b",
+        "Others": "c",
+        "Data Preparation": "d",
+        "Data Profiling and Exploratory Data Analysis": "e",
+        "Data Preparation and Exploration": "f",
+        "Data Cleaning Filtering": "g",
+        "Data Sub-sampling and Train-test Splitting": "h",
+        "Data Loading": "i",
+        "Exploratory Data Analysis": "j",
+        "Feature Engineering": "k",
+        "Feature Transformation": "l",
+        "Feature Selection": "m",
+        "Model Building and Training": "n",
+        "Model Training": "o",
+        "Model Parameter Tuning": "p",
+        "Model Validation and Assembling": "q",
+    }
+
+    profiles_ids = []
+    for ptd in payload.profiles_to_diff:
+        profiles_ids.append(
+            session.exec(select(Profile.id).where(Profile.name == ptd)).first()
+        )
+
+    profiles_content = []
+    for pid in profiles_ids:
+        profiles_content.append(
+            session.exec(select(Step.id, Step.name).where(Step.profile_id == pid)).all()
+        )
+
+    results: list[DiffResult] = []
+    # results: dist[str, int] = {payload.profiles_to_diff[0]: 1}
+    ref_element = "-".join([encoded_taxonomy[pe[1]] for pe in profiles_content[0]])
+    seq_match = SequenceMatcher(None, ref_element, None)
+
+    i = 0
+    for ptd, pc in zip(payload.profiles_to_diff, profiles_content):
+        seq_match.set_seq2("-".join([encoded_taxonomy[pe[1]] for pe in pc]))
+        results.append(
+            DiffResult(
+                profile_name=ptd,
+                results=[
+                    [e[0] for e in profiles_content[i][b[1] : b[1] + b[2]]]
+                    for b in seq_match.get_matching_blocks()[:-1]
+                ],
+                ratio=seq_match.ratio(),
+            )
+        )
+        i += 1
+
+    return sorted(results, key=lambda r: r.ratio, reverse=True)

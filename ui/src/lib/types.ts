@@ -86,3 +86,14 @@ export const PatternGroup: z.ZodType<PatternGroup> = basePatternGroup
 		),
 	})
 	.strict();
+
+export const PpmResult = z.object({
+	profile_name: z.string(),
+	results: z.string().array().array(),
+});
+
+export type PpmResult = z.infer<typeof PpmResult>;
+
+export const DiffResult = PpmResult.extend({ ratio: z.number() });
+
+export type DiffResult = z.infer<typeof DiffResult>;

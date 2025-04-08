@@ -1,5 +1,5 @@
 import { Pattern } from "@/lib/types";
-import type { PatternGroup } from "@/lib/types";
+import type { DiffResult, PatternGroup, PpmResult } from "@/lib/types";
 import axios from "axios";
 
 export type StepNode = {
@@ -30,10 +30,6 @@ export type GraphDefinition = {
 	steps: StepNode[];
 	meta_instructions: MetaInstructionNode[];
 	codes: CodeNode[];
-};
-export type PpmResult = {
-	profile_name: string;
-	results: string[][];
 };
 
 const apiPath = import.meta.env.VITE_API_HOST ?? "http://localhost";
@@ -164,9 +160,21 @@ export async function deletePpm(projectId: string, name: string) {
 	);
 }
 
-export async function getOutputImagesForStep(projectId: string, stepId: string) {
-	return await axios.get<string[]>(
-		`${apiPath}:${apiPort}/api/project/${projectId}/profile/step/${stepId}/output`,
-	).then(({ data }) => data);
+export async function getOutputImagesForStep(
+	projectId: string,
+	stepId: string,
+) {
+	return await axios
+		.get<string[]>(
+			`${apiPath}:${apiPort}/api/project/${projectId}/profile/step/${stepId}/output`,
+		)
+		.then(({ data }) => data);
 }
 
+export async function postDiffSort(profiles: string[]) {
+	return await axios
+		.post<DiffResult[]>(`${apiPath}:${apiPort}/api/utils/diff/sort`, {
+			profiles_to_diff: profiles,
+		})
+		.then(({ data }) => data);
+}

@@ -1,11 +1,11 @@
-import type { GraphDefinition, PpmResult, StepNode } from "@/api/client";
+import type { GraphDefinition, StepNode } from "@/api/client";
 import {
 	algoNodeSuffix,
 	colors,
 	libraryFunctionNodeSuffix,
 	stepsColorsMapping,
 } from "@/configuration";
-import type { Pattern } from "@/lib/types";
+import type { Pattern, PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
 import type Graph from "graphology";
 import { useCallback } from "react";

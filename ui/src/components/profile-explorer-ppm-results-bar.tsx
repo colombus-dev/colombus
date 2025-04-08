@@ -4,6 +4,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 import { useState } from "react";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 
 let beforeAllChecked: string[] = [];
 
@@ -19,6 +20,9 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 	);
 	const setFilteredProfilesNames = useColombusStore(
 		(state) => state.setFilteredProfilesNames,
+	);
+	const setReferenceDiffProfile = useColombusStore(
+		(state) => state.setReferenceDiffProfile,
 	);
 	return (
 		<div {...divProps} className={cn("space-y-2", divProps.className)}>
@@ -55,36 +59,39 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 			<ScrollArea
 				className={`h-[${import.meta.env.VITE_INTERFACE_MODE === "full" ? 45 : 55}vh]`}
 			>
-				<div className="space-y-1">
-					{availableProfilesNames
-						.filter((w) => w.toLowerCase().includes(resultSearchFilter))
-						.map((w) => (
-							<div className="flex space-x-2" key={w}>
-								<Checkbox
-									id={`cb_${w}`}
-									checked={filteredProfilesNames?.includes(w)}
-									onCheckedChange={(c) => {
-										if (!filteredProfilesNames) {
-											return;
-										}
-										setFilteredProfilesNames(
-											c
-												? [...filteredProfilesNames, w]
-												: filteredProfilesNames.filter((fw) => fw !== w),
-										);
-									}}
-								/>
-								<div className="grid gap-1.5 leading-none">
-									<label
-										htmlFor={`cb_${w}`}
-										className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-									>
-										{w}
-									</label>
+				<RadioGroup onValueChange={setReferenceDiffProfile}>
+					<div className="space-y-1">
+						{availableProfilesNames
+							.filter((w) => w.toLowerCase().includes(resultSearchFilter))
+							.map((w) => (
+								<div className="flex space-x-2" key={w}>
+									<Checkbox
+										id={`cb_${w}`}
+										checked={filteredProfilesNames?.includes(w)}
+										onCheckedChange={(c) => {
+											if (!filteredProfilesNames) {
+												return;
+											}
+											setFilteredProfilesNames(
+												c
+													? [...filteredProfilesNames, w]
+													: filteredProfilesNames.filter((fw) => fw !== w),
+											);
+										}}
+									/>
+									<RadioGroupItem value={w} id={`checkbox-${w}`} />
+									<div className="grid gap-1.5 leading-none">
+										<label
+											htmlFor={`cb_${w}`}
+											className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+										>
+											{w}
+										</label>
+									</div>
 								</div>
-							</div>
-						))}
-				</div>
+							))}
+					</div>
+				</RadioGroup>
 				<ScrollBar />
 			</ScrollArea>
 		</div>

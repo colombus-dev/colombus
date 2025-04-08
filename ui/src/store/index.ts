@@ -1,6 +1,6 @@
-import type { PpmResult } from "@/api/client";
+import { postDiffSort } from "@/api/client";
 import type { PpmNodesDisplayMode } from "@/configuration";
-import type { Pattern } from "@/lib/types";
+import type { DiffResult, Pattern, PpmResult } from "@/lib/types";
 import { create } from "zustand";
 import type { StateCreator } from "zustand";
 import { devtools, persist } from "zustand/middleware";
@@ -8,6 +8,13 @@ import { devtools, persist } from "zustand/middleware";
 interface AuthSlice {
 	apiKey?: string;
 	setApiKey: (key: string) => void;
+}
+
+interface DiffSlice {
+	referenceDiffProfile?: string;
+	diffResults: DiffResult[];
+	setReferenceDiffProfile: (r: string) => void;
+	resetReferenceDiffProfile: () => void;
 }
 
 interface PatternSlice {
@@ -43,10 +50,44 @@ interface ProjectSlice {
 
 interface ColombusStore
 	extends AuthSlice,
+		DiffSlice,
 		PatternSlice,
 		GraphCustomizationSlice,
 		ProfilesSlice,
 		ProjectSlice {}
+
+const createDiffSlice: StateCreator<ColombusStore, [], [], DiffSlice> = (
+	set,
+	get,
+) => ({
+	referenceDiffProfile: undefined,
+	diffResults: [],
+	setReferenceDiffProfile: async (p) => {
+		/**
+		 * Set the reference diff profile and query/update the results.
+		 */
+		const availableProfilesNames = get().availableProfilesNames;
+		const diffResults = await postDiffSort([
+			p,
+			...availableProfilesNames.filter((n) => n !== p),
+		]);
+		set((state) => ({
+			...state,
+			referenceDiffProfile: p,
+			diffResults,
+			availableProfilesNames: diffResults.map((r) => r.profile_name),
+			availableProfilesWithPpmData: diffResults.map(
+				({ profile_name, results }) => ({ profile_name, results }),
+			),
+		}));
+	},
+	resetReferenceDiffProfile: () =>
+		set((state) => ({
+			...state,
+			referenceDiffProfile: undefined,
+			diffResults: [],
+		})),
+});
 
 const createPatternSlice: StateCreator<ColombusStore, [], [], PatternSlice> = (
 	set,
@@ -115,6 +156,7 @@ export const useColombusStore = create<ColombusStore>()(
 		persist(
 			(...a) => ({
 				...createAuthSlice(...a),
+				...createDiffSlice(...a),
 				...createPatternSlice(...a),
 				...createGraphCustomizationSlice(...a),
 				...createProfilesSlice(...a),

@@ -1,8 +1,8 @@
 import { getOutputImagesForStep } from "@/api/client";
 import {
+	type PpmNodesDisplayMode,
 	algoNodeSuffix,
 	libraryFunctionNodeSuffix,
-	type PpmNodesDisplayMode,
 } from "@/configuration";
 import { useColombusStore } from "@/store";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -179,7 +179,10 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 			const totalImagesWidth = 55 * d.length;
 			for (const [i, imageData] of d.entries()) {
 				graph.addNode(`cell_output_${i}`, {
-					x: (graph.getNodeAttribute(hoveredNode, "x") + 55 * i) - Math.round(totalImagesWidth / 4),
+					x:
+						graph.getNodeAttribute(hoveredNode, "x") +
+						55 * i -
+						Math.round(totalImagesWidth / 4),
 					y: graph.getNodeAttribute(hoveredNode, "y") + 25,
 					size: 50,
 					type: "image",

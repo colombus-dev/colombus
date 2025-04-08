@@ -1,9 +1,9 @@
 import type { GraphDefinition } from "@/api/client";
 import { useColombusStore } from "@/store";
+import { createNodeImageProgram } from "@sigma/node-image";
 import Graph from "graphology";
 import { useEffect, useRef } from "react";
 import Sigma from "sigma";
-import { createNodeImageProgram } from "@sigma/node-image";
 import useGraphUtils from "./useGraphUtils";
 
 export default function useGraph(
@@ -17,6 +17,9 @@ export default function useGraph(
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const availableProfilesWithPpmData = useColombusStore(
 		(state) => state.availableProfilesWithPpmData,
+	);
+	const availableProfilesNames = useColombusStore(
+		(state) => state.availableProfilesNames,
 	);
 
 	const graph = useRef<Graph>(new Graph());
@@ -33,8 +36,8 @@ export default function useGraph(
 					nodeProgramClasses: {
 						image: createNodeImageProgram({
 							keepWithinCircle: false,
-							objectFit: 'contain',
-						})
+							objectFit: "contain",
+						}),
 					},
 					autoRescale: false,
 					defaultDrawNodeLabel(context, data, settings) {
@@ -74,7 +77,13 @@ export default function useGraph(
 		}
 		let addedX = 0;
 		let addedY = 0;
-		for (const profile of graphDefinitions) {
+		const sortedGraphDefinition = graphDefinitions.toSorted((a, b) =>
+			availableProfilesNames.indexOf(a.name) >
+			availableProfilesNames.indexOf(b.name)
+				? 1
+				: -1,
+		);
+		for (const profile of sortedGraphDefinition) {
 			if (!filteredProfilesNames.includes(profile.name)) {
 				continue;
 			}
@@ -88,6 +97,7 @@ export default function useGraph(
 	}, [
 		graphDefinitions,
 		availableProfilesWithPpmData,
+		availableProfilesNames,
 		currentPattern,
 		filteredProfilesNames,
 		displayedLevel,

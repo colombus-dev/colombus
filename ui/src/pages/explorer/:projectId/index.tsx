@@ -79,7 +79,7 @@ export default function ExplorerProjectIdPage() {
 			// we prioritize newly posted profiles
 			const reducedWorkflows = new Set(
 				workflowsNames.filter(([w]) => postedProfiles?.includes(w)),
-			).union(new Set(workflowsNames.slice(0, 20)));
+			).union(new Set(workflowsNames));
 			setFilteredProfilesNames([...reducedWorkflows]);
 			setAvailableProfilesWithPpmData(workflowsPpmData ?? []);
 			// TODO: to improve

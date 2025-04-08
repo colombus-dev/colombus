@@ -14,6 +14,9 @@ import { useColombusStore } from "@/store";
 const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
 > = ({ ...divProps }) => {
+	const referenceDiffProfile = useColombusStore(
+		(state) => state.referenceDiffProfile,
+	);
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const setDisplayedLevel = useColombusStore(
 		(state) => state.setDisplayedLevel,
@@ -71,7 +74,7 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 						onValueChange={(v: PpmNodesDisplayMode) =>
 							setPatternCapturedNodesDisplayMode(v)
 						}
-						disabled={!currentPattern}
+						disabled={!referenceDiffProfile && !currentPattern}
 					>
 						<div className="flex items-center space-x-2">
 							<RadioGroupItem value="show-all" id="show-all" />
