@@ -27,11 +27,11 @@ type PatternGroupNode = {
 
 const getGroupsIds = (
 	ppmResults: PpmResult[],
-	currentPattern: Pattern,
+	currentPattern: Pattern | undefined,
 	steps: StepNode[],
 ) => {
 	const ppmCandiddates =
-		currentPattern.groups
+		currentPattern?.groups
 			?.flatMap((g) => g?.subpattern?.groups ?? g)
 			.filter((g) => g.steps?.length || g.subpattern) ?? [];
 	const ppmNodes: PatternGroupNode[][] = [];
@@ -41,7 +41,7 @@ const getGroupsIds = (
 			// TODO: sometimes ppmCandiddates can be undefined as the currentPattern
 			// has changed but the ppm results corresponds to the previous pattern
 			// until the API returns new ppm results
-			name: `Match-${ri}_${ppmCandiddates[i]?.name ?? ""}`,
+			name: `Match-${ri}_${ppmCandiddates?.[i]?.name ?? ""}`,
 			position: i,
 			number_children: r.length,
 			number_sub_children: steps
@@ -197,7 +197,7 @@ export default function useGraphUtils(graph: Graph) {
 				addNode(id, name, 0, 5, addedX + Math.round((5 * codes.length) / 2), y);
 			}
 			if (displayedLevel >= 2) {
-				const hasPpmGroups = ppmResults && currentPattern;
+				const hasPpmGroups = ppmResults; // && currentPattern;
 				const groupsNodes = hasPpmGroups
 					? getGroupsIds(ppmResults, currentPattern, steps)
 					: [];

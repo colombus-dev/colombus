@@ -1,6 +1,7 @@
 import json
 import uuid
 
+from difflib import SequenceMatcher
 from typing import Annotated, Any
 from pathlib import Path
 
@@ -29,6 +30,7 @@ from app.models.sql_model import (
     engine,
     create_db_and_tables,
 )
+from app.utils import __TMP_ENCODING_MAPPING
 from app.utils.save_notebook_sql import save_notebook_as_sql
 from app.utils.convert_ppm_to_sql import convert_ppm_to_sql_query
 from app.utils.convert_ppm_to_regex import convert_pattern_to_regex
@@ -363,28 +365,6 @@ async def post_diff_sort(
     if len(payload.profiles_to_diff) == 1:
         return [(payload.profiles_to_diff[0].name, 1)]
 
-    from difflib import SequenceMatcher
-
-    encoded_taxonomy = {
-        "Library Loading": "a",
-        "Visualization": "b",
-        "Others": "c",
-        "Data Preparation": "d",
-        "Data Profiling and Exploratory Data Analysis": "e",
-        "Data Preparation and Exploration": "f",
-        "Data Cleaning Filtering": "g",
-        "Data Sub-sampling and Train-test Splitting": "h",
-        "Data Loading": "i",
-        "Exploratory Data Analysis": "j",
-        "Feature Engineering": "k",
-        "Feature Transformation": "l",
-        "Feature Selection": "m",
-        "Model Building and Training": "n",
-        "Model Training": "o",
-        "Model Parameter Tuning": "p",
-        "Model Validation and Assembling": "q",
-    }
-
     profiles_ids = []
     for ptd in payload.profiles_to_diff:
         profiles_ids.append(
@@ -398,13 +378,14 @@ async def post_diff_sort(
         )
 
     results: list[DiffResult] = []
-    # results: dist[str, int] = {payload.profiles_to_diff[0]: 1}
-    ref_element = "-".join([encoded_taxonomy[pe[1]] for pe in profiles_content[0]])
+    ref_element = "-".join(
+        [__TMP_ENCODING_MAPPING[pe[1]] for pe in profiles_content[0]]
+    )
     seq_match = SequenceMatcher(None, ref_element, None)
 
     i = 0
     for ptd, pc in zip(payload.profiles_to_diff, profiles_content):
-        seq_match.set_seq2("-".join([encoded_taxonomy[pe[1]] for pe in pc]))
+        seq_match.set_seq2("-".join([__TMP_ENCODING_MAPPING[pe[1]] for pe in pc]))
         results.append(
             DiffResult(
                 profile_name=ptd,
@@ -418,3 +399,46 @@ async def post_diff_sort(
         i += 1
 
     return sorted(results, key=lambda r: r.ratio, reverse=True)
+
+
+@app.get("/api/project/{project_id}/stats")
+async def get_project_stats(project_id: str, session: Session = Depends(get_session)):
+
+    from itertools import groupby
+
+    profiles_content = session.exec(
+        select(Profile.name, Step.id, Step.name)
+        .join(
+            Profile,
+            (Step.profile_id == Profile.id) & (Profile.project_id == project_id),
+        )
+        .order_by(Profile.name)
+    ).all()
+
+    get_grouped_profiles_content = lambda: groupby(profiles_content, lambda e: e[0])
+
+    results: list[DiffResult] = []
+
+    # retrieving matching groups for each profile compared to each other profile
+
+    for profile_id_1, profile_steps_1_iter in get_grouped_profiles_content():
+        profile_steps_1 = list(profile_steps_1_iter)
+        for profile_id_2, profile_steps_2_iter in get_grouped_profiles_content():
+            if profile_id_1 == profile_id_2:
+                continue
+            profile_steps_2 = list(profile_steps_2_iter)
+            elem_a = "".join(__TMP_ENCODING_MAPPING[pe[2]] for pe in profile_steps_1)
+            elem_b = "".join(__TMP_ENCODING_MAPPING[pe[2]] for pe in profile_steps_2)
+            seq_match = SequenceMatcher(None, elem_a, elem_b, autojunk=False)
+            results.append(
+                {
+                    "profile_name": f"{profile_id_1}_-TO-_{profile_id_2}",
+                    "results": [
+                        [(e[2], block) for e in profile_steps_2[block.b : block.b + block.size]]
+                        for block in seq_match.get_matching_blocks()[:-1]
+                    ],
+                    "ratio": seq_match.ratio(),
+                }
+            )
+
+    return sorted(results, key=lambda r: r["ratio"], reverse=True)
