@@ -1,3 +1,4 @@
+from io import BytesIO
 import json
 import uuid
 
@@ -7,6 +8,7 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, UploadFile, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlmodel import text, select, delete, Session
 
@@ -34,6 +36,7 @@ from app.utils import __TMP_ENCODING_MAPPING
 from app.utils.save_notebook_sql import save_notebook_as_sql
 from app.utils.convert_ppm_to_sql import convert_ppm_to_sql_query
 from app.utils.convert_ppm_to_regex import convert_pattern_to_regex
+from app.utils.diff_stats_exploration import get_frequent_patterns_matrix
 
 app = FastAPI()
 
@@ -442,3 +445,44 @@ async def get_project_stats(project_id: str, session: Session = Depends(get_sess
             )
 
     return sorted(results, key=lambda r: r["ratio"], reverse=True)
+
+
+@app.get("/api/project/{project_id}/stats/patterns")
+async def get_project_stats_patterns(
+    project_id: str, session: Session = Depends(get_session)
+):
+    profiles_content = session.exec(
+        text(
+            f"""
+            select p.name, s.id, s.name
+            from step as s inner join profile as p on s.profile_id = p.id and p.project_id = '{project_id}'
+            order by p.name, s.position
+            """
+        )
+    ).all()
+
+    freq_patterns_matrix = get_frequent_patterns_matrix(profiles_content)
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    MAX_NB_PATTERNS = 30
+    HEAT_THRESHOLD = 19
+
+    plt.figure(figsize=(12, 6), dpi=100)
+
+    sns.heatmap(
+        freq_patterns_matrix[:MAX_NB_PATTERNS],
+        yticklabels=freq_patterns_matrix[:MAX_NB_PATTERNS].index,
+        vmax=HEAT_THRESHOLD,
+    )
+    plt.title("Heatmap of patterns occurences in the selected profiles", fontsize=10)
+    plt.xlabel("Position in the profile (in %)", fontsize=10)
+    plt.ylabel("Pattern", fontsize=10)
+
+    plt.tight_layout()
+    buf = BytesIO()
+    plt.savefig(buf, format="png")
+    buf.seek(0)
+
+    return StreamingResponse(buf, media_type="image/png")

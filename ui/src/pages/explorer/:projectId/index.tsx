@@ -5,7 +5,8 @@ import {
 	postApplyPpmFilterByName,
 	postProfiles,
 } from "@/api/client";
-import type { GraphDefinition, PpmResult } from "@/api/client";
+import type { GraphDefinition } from "@/api/client";
+import type { PpmResult } from "@/lib/types";
 import ProfileExplorerPatternBar from "@/components/profile-explorer-pattern-bar";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
 import ProfilePatternEditor from "@/components/profile-pattern-editor";
@@ -25,6 +26,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import GraphContainer from "@/components/graph-container";
+import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
 
 const GRAPH_CONTAINER_ID = "graph-container";
 
@@ -190,6 +192,8 @@ export default function ExplorerProjectIdPage() {
 						</form>
 					</div>
 				)}
+				<p className="font-bold">Patterns Statistics</p>
+				<ProfilePatternStatsFreqMatrix />
 				<p className="font-bold">Saved patterns</p>
 				<div className="col-span-2">
 					<Button

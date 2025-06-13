@@ -178,3 +178,12 @@ export async function postDiffSort(profiles: string[]) {
 		})
 		.then(({ data }) => data);
 }
+
+export async function getFrequentPatternsMatrixImage(projectId: string) {
+	return await axios
+		.get(`${apiPath}:${apiPort}/api/project/${projectId}/stats/patterns`, {
+			responseType: "arraybuffer"
+		})
+		// TODO: to improve
+		.then(({ data }) => btoa([].reduce.call(new Uint8Array(data), function (p, c) { return p + String.fromCharCode(c) }, '')));
+}
