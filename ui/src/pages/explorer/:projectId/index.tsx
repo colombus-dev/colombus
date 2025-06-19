@@ -16,7 +16,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { stepsColorsMapping } from "@/configuration";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
@@ -27,6 +26,7 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import GraphContainer from "@/components/graph-container";
 import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
+import ProjectTaxonomyList from "@/components/project-taxonomy-list";
 
 const GRAPH_CONTAINER_ID = "graph-container";
 
@@ -226,26 +226,8 @@ export default function ExplorerProjectIdPage() {
 					graphRenderer={renderer.current}
 				/>
 			</div>
-			<div className="col-span-1 space-y-4">
-				<p className="font-bold">Legend</p>
-				<ul className="list-none space-y-1 text-sm">
-					{Object.entries(stepsColorsMapping).map(([n, c]) => (
-						<li
-							key={`legend_color_${c}`}
-							className="flex flex-row space-y-1 space-x-1"
-						>
-							<div
-								className="w-2"
-								style={{
-									backgroundColor: c,
-									width: "20px",
-									height: "20px",
-								}}
-							/>
-							<div>{n}</div>
-						</li>
-					))}
-				</ul>
+			<div className="col-span-1">
+				<ProjectTaxonomyList className="space-y-4" />
 			</div>
 		</section>
 	) : (

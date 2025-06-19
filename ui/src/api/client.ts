@@ -185,5 +185,6 @@ export async function getFrequentPatternsMatrixImage(projectId: string) {
 			responseType: "arraybuffer"
 		})
 		// TODO: to improve
+		// @ts-ignore: to improve
 		.then(({ data }) => btoa([].reduce.call(new Uint8Array(data), function (p, c) { return p + String.fromCharCode(c) }, '')));
 }

@@ -1,4 +1,10 @@
 services:
+  colombus_ui:
+      build: ./ui
+      ports:
+        - "5173:5173"
+      depends_on:
+        - colombus_app
   colombus_app:
     build: .
     ports:
