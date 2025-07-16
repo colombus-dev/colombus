@@ -3,3 +3,5 @@ mysql-config/
 db_data/
 graph_data/
 **/__pycache__
+ollama/
+huggingface_cache/

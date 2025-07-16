@@ -33,7 +33,7 @@ export type GraphDefinition = {
 };
 
 const apiPath = import.meta.env.VITE_API_HOST ?? "http://localhost";
-const apiPort = import.meta.env.VITE_API_PORT ?? 8080;
+const apiPort = import.meta.env.VITE_API_PORT ?? 8180;
 
 export async function checkApiKey(apiKey: string) {
 	return await axios
