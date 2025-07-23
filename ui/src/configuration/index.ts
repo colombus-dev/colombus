@@ -2,41 +2,41 @@
 
 export type PpmNodesDisplayMode = "show-all" | "show-fixed" | "show-variable";
 
-export const supportedSteps = [
-	"Data acquisition",
-    "Data preparation",
-    "Storage",
-    "Feature Engineering",
-    "Modeling",
-    "Training",
-    "Evaluation",
-    "Prediction",
-    "Interpretation",
-    "Communication",
-    "Deployment",
-    "Library Loading",
-    "Others",
-];
-
 // export const supportedSteps = [
-// 	"Library Loading",
-// 	"Visualization",
-// 	"Others",
-// 	"Data Preparation",
-// 	"Data Profiling and Exploratory Data Analysis",
-// 	"Data Preparation and Exploration",
-// 	"Data Cleaning Filtering",
-// 	"Data Sub-sampling and Train-test Splitting",
-// 	"Data Loading",
-// 	"Exploratory Data Analysis",
-// 	"Feature Engineering",
-// 	"Feature Transformation",
-// 	"Feature Selection",
-// 	"Model Building and Training",
-// 	"Model Training",
-// 	"Model Parameter Tuning",
-// 	"Model Validation and Assembling",
+// 	"Data acquisition",
+//     "Data preparation",
+//     "Storage",
+//     "Feature Engineering",
+//     "Modeling",
+//     "Training",
+//     "Evaluation",
+//     "Prediction",
+//     "Interpretation",
+//     "Communication",
+//     "Deployment",
+//     "Library Loading",
+//     "Others",
 // ];
+
+export const supportedSteps = [
+	"Library Loading",
+	"Visualization",
+	"Others",
+	"Data Preparation",
+	"Data Profiling and Exploratory Data Analysis",
+	"Data Preparation and Exploration",
+	"Data Cleaning Filtering",
+	"Data Sub-sampling and Train-test Splitting",
+	"Data Loading",
+	"Exploratory Data Analysis",
+	"Feature Engineering",
+	"Feature Transformation",
+	"Feature Selection",
+	"Model Building and Training",
+	"Model Training",
+	"Model Parameter Tuning",
+	"Model Validation and Assembling",
+];
 
 export const metacharacterSTARTS = "^";
 export const metacharacterENDS = "$";
