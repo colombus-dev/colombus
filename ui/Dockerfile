@@ -1,9 +1,9 @@
-FROM node:22-alpine
+FROM node:22-alpine3.22
 
 WORKDIR /app
 
-COPY yarn.lock package.json /app/
+COPY package.json yarn.lock ./
 
-RUN --mount=type=cache,target=~/.cache/yarn/v6 yarn install
+RUN --mount=type=cache,target=~/.cache/yarn/v6 yarn install --modules-folder=/node_modules
 
-CMD ["yarn", "dev", "--host"]
+CMD ["yarn", "--modules-folder=/node_modules", "vite", "--host"]
