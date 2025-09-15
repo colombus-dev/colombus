@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import GraphContainer from "@/components/graph-container";
 import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
 import ProjectTaxonomyList from "@/components/project-taxonomy-list";
+import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
 
 const GRAPH_CONTAINER_ID = "graph-container";
 
@@ -194,6 +195,7 @@ export default function ExplorerProjectIdPage() {
 				)}
 				<p className="font-bold">Patterns Statistics</p>
 				<ProfilePatternStatsFreqMatrix />
+				<ProfileStepsFrequencyChart />
 				<p className="font-bold">Saved patterns</p>
 				<div className="col-span-2">
 					<Button

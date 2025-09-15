@@ -190,3 +190,11 @@ export async function postFrequentPatternsMatrixImage(projectId: string, profile
 		// @ts-ignore: to improve
 		.then(({ data }) => btoa([].reduce.call(new Uint8Array(data), function (p, c) { return p + String.fromCharCode(c) }, '')));
 }
+
+export async function postFrequentStepsData(projectId: string, profilesNames?: string[]) {
+	return await axios
+		.post<[string, number][]>(`${apiPath}:${apiPort}/api/project/${projectId}/stats/steps/frequency`, {
+			profiles_names: profilesNames
+		})
+		.then(({ data }) => data.map((d) => ({ step: d[0], frequency: d[1] })));
+}
