@@ -10,7 +10,7 @@ from fastapi import Depends, FastAPI, UploadFile, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from sqlmodel import text, select, delete, Session
+from sqlmodel import col, func, text, select, delete, Session
 
 from app.models.api_model import (
     ProfileNodes,
@@ -447,19 +447,26 @@ async def get_project_stats(project_id: str, session: Session = Depends(get_sess
     return sorted(results, key=lambda r: r["ratio"], reverse=True)
 
 
-@app.get("/api/project/{project_id}/stats/patterns")
-async def get_project_stats_patterns(
-    project_id: str, session: Session = Depends(get_session)
+class PostStatsPatternsPayload(BaseModel):
+    profiles_names: list[str] | None = None
+
+
+@app.post("/api/project/{project_id}/stats/patterns")
+async def post_project_stats_patterns(
+    project_id: str, payload: PostStatsPatternsPayload, session: Session = Depends(get_session)
 ):
-    profiles_content = session.exec(
-        text(
-            f"""
-            select p.name, s.id, s.name
-            from step as s inner join profile as p on s.profile_id = p.id and p.project_id = '{project_id}'
-            order by p.name, s.position
-            """
-        )
-    ).all()
+    if payload.profiles_names:
+        nb_profiles = len(payload.profiles_names)
+    else:
+        nb_profiles = session.exec(select(func.count(col(Profile.id)))).one()
+    sql_query = f"""
+        select p.name, s.id, s.name
+        from step as s inner join profile as p on s.profile_id = p.id and p.project_id = '{project_id}'
+    """
+    if payload.profiles_names:
+        sql_query += f"\nwhere p.name in {tuple(payload.profiles_names)}"
+    sql_query += "\norder by p.name, s.position"
+    profiles_content = session.exec(text(sql_query)).all()
 
     freq_patterns_matrix = get_frequent_patterns_matrix(profiles_content)
 
@@ -467,7 +474,7 @@ async def get_project_stats_patterns(
     import seaborn as sns
 
     MAX_NB_PATTERNS = 30
-    HEAT_THRESHOLD = 19
+    HEAT_THRESHOLD = round(nb_profiles * 1)
 
     plt.figure(figsize=(12, 6), dpi=100)
 

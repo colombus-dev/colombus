@@ -179,9 +179,11 @@ export async function postDiffSort(profiles: string[]) {
 		.then(({ data }) => data);
 }
 
-export async function getFrequentPatternsMatrixImage(projectId: string) {
+export async function postFrequentPatternsMatrixImage(projectId: string, profilesNames?: string[]) {
 	return await axios
-		.get(`${apiPath}:${apiPort}/api/project/${projectId}/stats/patterns`, {
+		.post(`${apiPath}:${apiPort}/api/project/${projectId}/stats/patterns`, {
+			profiles_names: profilesNames
+		}, {
 			responseType: "arraybuffer"
 		})
 		// TODO: to improve

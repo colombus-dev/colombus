@@ -4,7 +4,6 @@ from datetime import datetime
 from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field, field_serializer
-from sqlmodel import SQLModel
 
 from app.models.sql_model import ProfileBase, StepBase, MetaInstructionBase, CodeBase
 

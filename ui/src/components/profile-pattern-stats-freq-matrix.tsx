@@ -1,9 +1,10 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
-import { getFrequentPatternsMatrixImage } from "@/api/client";
+import { postFrequentPatternsMatrixImage } from "@/api/client";
 import { useParams } from "react-router";
 import BounceLoader from "react-spinners/BounceLoader";
 import { Button } from "./ui/button";
+import { useColombusStore } from "@/store";
 
 const ProfilePatternStatsFreqMatrix: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
@@ -11,6 +12,7 @@ const ProfilePatternStatsFreqMatrix: React.FunctionComponent<
 	const { projectId } = useParams<{ projectId: string }>();
 	const [frequentPatternsMatrix, setFrequentPatternsMatrix] = useState<string>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const availableProfilesNames = useColombusStore((state) => state.availableProfilesNames);
 
 	if (!projectId) {
 		return;
@@ -20,7 +22,7 @@ const ProfilePatternStatsFreqMatrix: React.FunctionComponent<
 		<Dialog onOpenChange={(isOpen) => {
 			if (isOpen) {
 				setIsLoading(true);
-				getFrequentPatternsMatrixImage(projectId).then((res) => {
+				postFrequentPatternsMatrixImage(projectId, availableProfilesNames).then((res) => {
 					setFrequentPatternsMatrix(res);
 					setIsLoading(false);
 				})
