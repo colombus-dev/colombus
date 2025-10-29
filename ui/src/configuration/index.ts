@@ -1,0 +1,89 @@
+// Profile/PPM stages-related configuration
+
+export type PpmNodesDisplayMode = "show-all" | "show-fixed" | "show-variable";
+
+// export const supportedSteps = [
+// 	"Data acquisition",
+//     "Data preparation",
+//     "Storage",
+//     "Feature Engineering",
+//     "Modeling",
+//     "Training",
+//     "Evaluation",
+//     "Prediction",
+//     "Interpretation",
+//     "Communication",
+//     "Deployment",
+//     "Library Loading",
+//     "Others",
+// ];
+
+export const supportedSteps = [
+	"Library Loading",
+	"Visualization",
+	"Others",
+	"Data Preparation",
+	"Data Profiling and Exploratory Data Analysis",
+	"Data Preparation and Exploration",
+	"Data Cleaning Filtering",
+	"Data Sub-sampling and Train-test Splitting",
+	"Data Loading",
+	"Exploratory Data Analysis",
+	"Feature Engineering",
+	"Feature Transformation",
+	"Feature Selection",
+	"Model Building and Training",
+	"Model Training",
+	"Model Parameter Tuning",
+	"Model Validation and Assembling",
+];
+
+export const metacharacterSTARTS = "^";
+export const metacharacterENDS = "$";
+export const metacharacterOR = "|";
+export const metacharacterNOT = "!";
+export const metacharacterSTAR = "*";
+export const metacharacterPLUS = "+";
+
+// graph styling configuration
+
+export const colors = ["#F79767", "#ffd700", "#57C7E3", "#D9C8AE", "#808080", "#4f4f4f"];
+
+export const algoNodeSuffix = "-algo";
+export const libraryFunctionNodeSuffix = "-libfunc";
+
+// export const stepsColorsMapping: { [stepName: string]: string } = {
+// 	"Data acquisition": "#b3e900",
+//     "Data preparation": "#984ea3",
+//     "Storage": "#80b1d3",
+//     "Feature Engineering": "#a65628",
+//     "Modeling": "#bebada",
+//     "Training": "#fb8072",
+//     "Evaluation": "#fdb462",
+//     "Prediction": "#af8d00",
+//     "Interpretation": "#f781bf",
+//     "Communication": "#8dd3c7",
+//     "Deployment": "#ff7f00",
+//     "Library Loading": "#ff0029",
+//     "Others": "#66a61e",
+// };
+
+export const stepsColorsMapping: { [stepName: string]: string } = {
+	"Library Loading": "#ff0029",
+	Visualization: "#377eb8",
+	Others: "#66a61e",
+	"Data Preparation": "#984ea3",
+	"Data Profiling and Exploratory Data Analysis": "#00d2d5",
+	"Data Preparation and Exploration": "#ff7f00",
+	"Data Cleaning Filtering": "#af8d00",
+	"Data Sub-sampling and Train-test Splitting": "#7f80cd",
+	"Data Loading": "#b3e900",
+	"Exploratory Data Analysis": "#c42e60",
+	"Feature Engineering": "#a65628",
+	"Feature Transformation": "#f781bf",
+	"Feature Selection": "#8dd3c7",
+	"Model Building and Training": "#bebada",
+	"Model Training": "#fb8072",
+	"Model Parameter Tuning": "#80b1d3",
+	"Model Validation and Assembling": "#fdb462",
+};

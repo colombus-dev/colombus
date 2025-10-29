@@ -1,0 +1,121 @@
+import { getAllPatterns, postSavePpm } from "@/api/client";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { useColombusStore } from "@/store";
+import { CircleX, Download, Save, Trash } from "lucide-react";
+import { useState } from "react";
+import { useParams } from "react-router";
+import DeletePatternDialog from "./delete-pattern-dialog";
+
+const ProfilePatternActions: React.FunctionComponent<
+	React.HTMLAttributes<HTMLDivElement>
+> = ({ ...divProps }) => {
+	const currentPattern = useColombusStore((state) => state.currentPattern);
+	const setCurrentPattern = useColombusStore(
+		(state) => state.setCurrentPattern,
+	);
+	const resetCurrentPattern = useColombusStore(
+		(state) => state.resetCurrentPattern,
+	);
+	const setAvailablePatterns = useColombusStore(
+		(state) => state.setAllSavedPatterns,
+	);
+	const [savePatternName, setSavePatternName] = useState<string>(
+		currentPattern?.name ?? "",
+	);
+
+	const { projectId } = useParams<{ projectId: string }>();
+
+	return (
+		<div {...divProps} className={cn("flex", divProps.className)}>
+			<Button
+				variant="ghost"
+				onClick={() => {
+					resetCurrentPattern();
+				}}
+			>
+				<CircleX /> Close pattern
+			</Button>
+			<DeletePatternDialog patternName={currentPattern?.name}>
+				<Button variant="ghost" disabled={currentPattern?.name === undefined}>
+					<Trash /> Delete pattern
+				</Button>
+			</DeletePatternDialog>
+
+			<Dialog>
+				<DialogTrigger disabled={!currentPattern?.groups} asChild>
+					<Button variant="ghost">
+						<Save /> Save pattern
+					</Button>
+				</DialogTrigger>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Choose a name for the pattern to save</DialogTitle>
+					</DialogHeader>
+					<Input
+						id="name"
+						value={savePatternName}
+						onChange={(e) => {
+							setSavePatternName(e.target.value);
+						}}
+					/>
+					<DialogFooter>
+						<div className="space-x-2">
+							<a
+								href={`data:text/json;charset=utf-8,${encodeURIComponent(
+									JSON.stringify(currentPattern?.groups),
+								)}`}
+								download={`${savePatternName === "" ? "pattern" : savePatternName}.json`}
+								className={cn(buttonVariants({ variant: "link" }))}
+							>
+								Download Json
+								<Download />
+							</a>
+						</div>
+						<DialogClose asChild>
+							<Button
+								type="submit"
+								onClick={() => {
+									if (
+										savePatternName &&
+										currentPattern?.groups &&
+										projectId
+									) {
+										const newPattern = {
+											...currentPattern,
+											name: savePatternName,
+										}
+										postSavePpm(
+											projectId,
+											savePatternName,
+											newPattern,
+										).then(() => {
+											setCurrentPattern(newPattern);
+											getAllPatterns(projectId).then(setAvailablePatterns);
+										});
+										setSavePatternName("");
+									}
+								}}
+								disabled={savePatternName === ""}
+							>
+								Save changes
+							</Button>
+						</DialogClose>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+		</div>
+	);
+};
+
+export default ProfilePatternActions;

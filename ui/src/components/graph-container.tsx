@@ -1,0 +1,44 @@
+import BounceLoader from "react-spinners/BounceLoader";
+import ProfileExplorerPpmResultsBar from "./profile-explorer-ppm-results-bar";
+import ProfileExplorerGraphSettingsBar from "./profile-explorer-graph-settings-bar";
+import GraphControls from "./graph-controls";
+import type { Sigma } from "sigma";
+
+interface GraphContainerProps {
+	containerId: string;
+	isLoading: boolean;
+	graphRenderer?: Sigma;
+}
+
+export default function GraphContainer({
+	containerId,
+	isLoading,
+	graphRenderer,
+	...props
+}: GraphContainerProps & React.HTMLAttributes<HTMLDivElement>) {
+	return (
+		<div {...props} className={props.className}>
+			<div
+				className="h-full border-gray-500 border"
+				id={containerId}
+				style={{ height: "99%", width: "98%" }}
+			/>
+			<BounceLoader
+				className="absolute top-1/2 right-1/2"
+				color="green"
+				cssOverride={{ position: "absolute" }}
+				loading={isLoading}
+			/>
+			{!isLoading && (
+				<>
+					<ProfileExplorerPpmResultsBar className="absolute top-0 m-3 bg-white bg-opacity-80 p-2" />
+					<ProfileExplorerGraphSettingsBar className="absolute top-0 right-6 m-3 bg-white bg-opacity-80 p-2" />
+					<GraphControls
+						graphRenderer={graphRenderer}
+						className="absolute bottom-3 right-6 bg-white bg-opacity-80"
+					/>
+				</>
+			)}
+		</div>
+	);
+}
