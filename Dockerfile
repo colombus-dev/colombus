@@ -1,9 +1,26 @@
-FROM python:3.12
+FROM ghcr.io/astral-sh/uv:python3.12-alpine
 
-WORKDIR /code
+# TODO: split builder/runner to reduce image size
 
-COPY ./requirements.txt /code/requirements.txt
+LABEL version="0.1"
+LABEL description="This is the image used to build the Colombus API."
 
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+WORKDIR /colombus-builder
 
-CMD ["fastapi", "dev", "app/main.py", "--host", "0.0.0.0", "--port", "8180"]
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --locked --no-install-project --no-install-package=jupyterlab
+
+RUN adduser -D standarduser
+
+RUN chown -R standarduser:standarduser /colombus-builder
+
+USER standarduser
+
+COPY ./app/ /colombus-builder/app/
+
+CMD [".venv/bin/fastapi", "dev", "app/main.py", "--host", "0.0.0.0", "--port", "8180"]

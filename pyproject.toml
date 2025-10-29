@@ -1,22 +1,26 @@
 [project]
 name = "colombus"
 version = "0.1.0"
-description = "The Colombus exploration platform"
+description = "Colombus - The ML pipelines exploration platform"
+authors = []
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12.0,<4.0"
 dependencies = [
-    "fastapi>=0.116.1",
+    "fastapi[standard]>=0.120.2",
     "jinja2>=3.1.6",
     "matplotlib>=3.10.6",
-    "numpy>=2.3.3",
+    "numpy>=2.3.4",
     "psycopg[binary]>=3.2.10",
-    "pydantic>=2.11.7",
+    "pydantic>=2.12.3",
     "seaborn>=0.13.2",
     "sqlalchemy>=2.0.43",
     "sqlmodel>=0.0.24",
 ]
 
 [dependency-groups]
-lab = [
+dev = [
     "jupyterlab>=4.4.7",
 ]
+
+[tool.uv]
+default-groups = []
