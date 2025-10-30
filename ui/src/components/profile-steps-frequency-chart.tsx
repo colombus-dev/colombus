@@ -58,7 +58,9 @@ const ProfileStepsFrequencyChart: React.FunctionComponent<
 			}}
 		>
 			<DialogTrigger asChild>
-				<Button className="w-full">View Steps Frequency</Button>
+				<Button className="w-full" disabled={!availableProfilesNames.length}>
+					View Steps Frequency
+				</Button>
 			</DialogTrigger>
 			<DialogContent className="min-w-[1200px]">
 				<DialogHeader>
