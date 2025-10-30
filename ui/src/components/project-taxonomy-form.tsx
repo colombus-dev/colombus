@@ -1,26 +1,20 @@
-import { useCallback } from "react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useCallback } from "react";
 
 const ProjectTaxonomyForm: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
 > = ({ ...divProps }) => {
-
-	const handleProfileFormSubmit = useCallback(
-		async (_formData: FormData) => {
-			// TODO
-		},
-		[],
-	);
+	const handleProfileFormSubmit = useCallback(async (_formData: FormData) => {
+		// TODO
+	}, []);
 
 	return (
 		<div {...divProps}>
 			<form action={handleProfileFormSubmit}>
 				<div className="grid w-full max-w-sm items-center gap-1.5">
-					<Label htmlFor="profile-form">
-						Change the taxonomy
-					</Label>
+					<Label htmlFor="profile-form">Change the taxonomy</Label>
 					<Input
 						id="taxonomy-form"
 						name="taxonomy-form"

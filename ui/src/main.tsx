@@ -1,9 +1,9 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "@/index.css";
+import ExplorerProjectIdPage from "@/pages/explorer/:projectId";
 import App from "@/App.tsx";
 import { Toaster } from "@/components/ui/sonner";
-import ExplorerProjectIdPage from "@/pages/explorer/:projectId";
 import ExplorerPage from "@/pages/explorer";
 import RootLayout from "@/root-layout";
 import { BrowserRouter, Route, Routes } from "react-router";

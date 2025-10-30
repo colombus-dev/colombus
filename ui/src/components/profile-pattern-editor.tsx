@@ -1,17 +1,17 @@
 import { Button } from "@/components/ui/button";
-import { cn, formatPatternGroup } from "@/lib/utils";
-import { useColombusStore } from "@/store";
 import { Separator } from "@/components/ui/separator";
-import ProfilePatternGroupModal from "./profile-pattern-group-modal";
-import { CirclePlus, Pencil, XCircle } from "lucide-react";
-import { PatternGroup } from "@/lib/types";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { PatternGroup } from "@/lib/types";
+import { cn, formatPatternGroup } from "@/lib/utils";
+import { useColombusStore } from "@/store";
+import { CirclePlus, Pencil, XCircle } from "lucide-react";
 import ProfilePatternGroupMetaInstructionModal from "./profile-pattern-group-metainstruction-modal";
+import ProfilePatternGroupModal from "./profile-pattern-group-modal";
 
 const ProfilePatternEditor: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>

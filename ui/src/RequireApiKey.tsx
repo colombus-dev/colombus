@@ -1,10 +1,10 @@
+import { checkApiKey } from "@/api/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useColombusStore } from "@/store";
 import { useCallback } from "react";
-import { checkApiKey } from "./api/client";
-import { useColombusStore } from "./store";
 import { toast } from "sonner";
-import { Label } from "./components/ui/label";
-import { Input } from "./components/ui/input";
-import { Button } from "./components/ui/button";
 
 export default function RequireApiKey({ children }: React.PropsWithChildren) {
 	const apiKey = useColombusStore((state) => state.apiKey);

@@ -47,7 +47,14 @@ export const metacharacterPLUS = "+";
 
 // graph styling configuration
 
-export const colors = ["#F79767", "#ffd700", "#57C7E3", "#D9C8AE", "#808080", "#4f4f4f"];
+export const colors = [
+	"#F79767",
+	"#ffd700",
+	"#57C7E3",
+	"#D9C8AE",
+	"#808080",
+	"#4f4f4f",
+];
 
 export const algoNodeSuffix = "-algo";
 export const libraryFunctionNodeSuffix = "-libfunc";

@@ -10,9 +10,7 @@ export default function useValidProject() {
 
 	const { projectId } = useParams<{ projectId: string }>();
 	const apiKey = useColombusStore((state) => state.apiKey);
-	const setProjectName = useColombusStore(
-		(state) => state.setProjectName,
-	);
+	const setProjectName = useColombusStore((state) => state.setProjectName);
 
 	useEffect(() => {
 		if (!apiKey) {

@@ -1,20 +1,5 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Command,
 	CommandEmpty,
@@ -31,8 +16,22 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import {
+	Form,
+	FormControl,
+	FormDescription,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
 	metacharacterENDS,
 	metacharacterNOT,
@@ -41,13 +40,14 @@ import {
 	metacharacterSTARTS,
 	supportedSteps,
 } from "@/configuration";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Input } from "@/components/ui/input";
-import { useColombusStore } from "@/store";
 import { PatternGroup } from "@/lib/types";
-import type { z } from "zod";
+import { cn } from "@/lib/utils";
+import { useColombusStore } from "@/store";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { useCallback, useState } from "react";
+import { useForm } from "react-hook-form";
+import type { z } from "zod";
 
 interface ProfilePatternGroupModalProps {
 	value: PatternGroup;
@@ -75,10 +75,13 @@ export default function ProfilePatternGroupModal({
 		[onValueChange],
 	);
 
-	const onOpenChange = useCallback((open: boolean) => {
-		form.reset({...value});
-		setIsDialogOpen(open);
-	}, [form, value]);
+	const onOpenChange = useCallback(
+		(open: boolean) => {
+			form.reset({ ...value });
+			setIsDialogOpen(open);
+		},
+		[form, value],
+	);
 
 	return (
 		<Dialog open={isDialogOpen} onOpenChange={onOpenChange}>

@@ -86,23 +86,17 @@ const ProfilePatternActions: React.FunctionComponent<
 							<Button
 								type="submit"
 								onClick={() => {
-									if (
-										savePatternName &&
-										currentPattern?.groups &&
-										projectId
-									) {
+									if (savePatternName && currentPattern?.groups && projectId) {
 										const newPattern = {
 											...currentPattern,
 											name: savePatternName,
-										}
-										postSavePpm(
-											projectId,
-											savePatternName,
-											newPattern,
-										).then(() => {
-											setCurrentPattern(newPattern);
-											getAllPatterns(projectId).then(setAvailablePatterns);
-										});
+										};
+										postSavePpm(projectId, savePatternName, newPattern).then(
+											() => {
+												setCurrentPattern(newPattern);
+												getAllPatterns(projectId).then(setAvailablePatterns);
+											},
+										);
 										setSavePatternName("");
 									}
 								}}

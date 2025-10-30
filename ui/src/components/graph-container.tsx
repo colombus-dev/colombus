@@ -1,8 +1,8 @@
 import BounceLoader from "react-spinners/BounceLoader";
-import ProfileExplorerPpmResultsBar from "./profile-explorer-ppm-results-bar";
-import ProfileExplorerGraphSettingsBar from "./profile-explorer-graph-settings-bar";
-import GraphControls from "./graph-controls";
 import type { Sigma } from "sigma";
+import GraphControls from "./graph-controls";
+import ProfileExplorerGraphSettingsBar from "./profile-explorer-graph-settings-bar";
+import ProfileExplorerPpmResultsBar from "./profile-explorer-ppm-results-bar";
 
 interface GraphContainerProps {
 	containerId: string;

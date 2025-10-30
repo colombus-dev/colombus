@@ -6,11 +6,14 @@ import {
 	postProfiles,
 } from "@/api/client";
 import type { GraphDefinition } from "@/api/client";
-import type { PpmResult } from "@/lib/types";
+import GraphContainer from "@/components/graph-container";
 import ProfileExplorerPatternBar from "@/components/profile-explorer-pattern-bar";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
 import ProfilePatternEditor from "@/components/profile-pattern-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
+import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
+import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
+import ProjectTaxonomyList from "@/components/project-taxonomy-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,15 +22,12 @@ import { Separator } from "@/components/ui/separator";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
+import type { PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
 import { CirclePlus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import GraphContainer from "@/components/graph-container";
-import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
-import ProjectTaxonomyList from "@/components/project-taxonomy-list";
-import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
 
 const GRAPH_CONTAINER_ID = "graph-container";
 

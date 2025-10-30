@@ -179,22 +179,43 @@ export async function postDiffSort(profiles: string[]) {
 		.then(({ data }) => data);
 }
 
-export async function postFrequentPatternsMatrixImage(projectId: string, profilesNames?: string[]) {
+export async function postFrequentPatternsMatrixImage(
+	projectId: string,
+	profilesNames?: string[],
+) {
 	return await axios
-		.post(`${apiPath}:${apiPort}/api/project/${projectId}/stats/patterns`, {
-			profiles_names: profilesNames
-		}, {
-			responseType: "arraybuffer"
-		})
+		.post(
+			`${apiPath}:${apiPort}/api/project/${projectId}/stats/patterns`,
+			{
+				profiles_names: profilesNames,
+			},
+			{
+				responseType: "arraybuffer",
+			},
+		)
 		// TODO: to improve
 		// @ts-ignore: to improve
-		.then(({ data }) => btoa([].reduce.call(new Uint8Array(data), function (p, c) { return p + String.fromCharCode(c) }, '')));
+		.then(({ data }) =>
+			btoa(
+				[].reduce.call(
+					new Uint8Array(data),
+					(p, c) => p + String.fromCharCode(c),
+					"",
+				),
+			),
+		);
 }
 
-export async function postFrequentStepsData(projectId: string, profilesNames?: string[]) {
+export async function postFrequentStepsData(
+	projectId: string,
+	profilesNames?: string[],
+) {
 	return await axios
-		.post<[string, number][]>(`${apiPath}:${apiPort}/api/project/${projectId}/stats/steps/frequency`, {
-			profiles_names: profilesNames
-		})
+		.post<[string, number][]>(
+			`${apiPath}:${apiPort}/api/project/${projectId}/stats/steps/frequency`,
+			{
+				profiles_names: profilesNames,
+			},
+		)
 		.then(({ data }) => data.map((d) => ({ step: d[0], frequency: d[1] })));
 }
