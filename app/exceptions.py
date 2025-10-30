@@ -5,8 +5,9 @@ class InvalidApiKeyException(HTTPException):
 
     def __init__(self) -> None:
         super().__init__(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API KEY. Please contact project members.",
+            headers={"WWW-Authenticate": "ApiKeyAuth"},
         )
 
 

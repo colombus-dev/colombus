@@ -1,12 +1,10 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 
-from app.exceptions import InvalidApiKeyException
+from app.constants import SECURITY_API_KEY_HEADER, notebooks_storage_path, origins
+from app.dependencies import APIKeyDeps
 from app.models.sql_model import create_db_and_tables
-
-from app.constants import notebooks_storage_path, API_KEY
 
 from app.routers import (
     project_router,
@@ -25,40 +23,40 @@ async def lifespan(app: FastAPI):
     # TODO: close database session?
 
 
-app = FastAPI(lifespan=lifespan)
-
-origins = [
-    "http://localhost",
-    "http://localhost:5173",
-    "http://erebe-vm9.i3s.unice.fr",
-]
+app = FastAPI(
+    title="Colombus API",
+    description="API for the Colombus exploration platform",
+    version="0.1.0",
+    lifespan=lifespan,
+)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=[SECURITY_API_KEY_HEADER],
 )
 # TODO: add security dependency
-app.include_router(project_router.router, tags=["project"])
-app.include_router(profile_router.router, tags=["profile"])
-app.include_router(pattern_router.router, tags=["pattern"])
-app.include_router(statistics_router.router, tags=["statistics"])
-app.include_router(utils_router.router, tags=["utils"])
+app.include_router(project_router.router, tags=["project"], dependencies=[APIKeyDeps])
+app.include_router(profile_router.router, tags=["profile"], dependencies=[APIKeyDeps])
+app.include_router(pattern_router.router, tags=["pattern"], dependencies=[APIKeyDeps])
+app.include_router(
+    statistics_router.router, tags=["statistics"], dependencies=[APIKeyDeps]
+)
+app.include_router(utils_router.router, tags=["utils"], dependencies=[APIKeyDeps])
 
 
-class CheckApiKeyPayload(BaseModel):
-    api_key: str
-
-
-@app.post("/api/key")
-async def check_api_key(
-    payload: CheckApiKeyPayload,
-) -> str:
-    # TODO: replace with fastapi security
-    if payload.api_key != API_KEY:
-        raise InvalidApiKeyException()
+@app.post(
+    "/api/key",
+    tags=["auth"],
+    summary="Convenient endpoint for checking the API key validity",
+    response_description="Return HTTP Status Code 200 (ok)",
+    status_code=status.HTTP_200_OK,
+    dependencies=[APIKeyDeps],
+)
+async def check_api_key() -> str:
+    # the API key validation is done using the APIKeyDeps dependency
     return "ok"
 
 

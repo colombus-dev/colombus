@@ -1,7 +1,14 @@
 from pathlib import Path
 
 
-API_KEY = "COL-0659-PROF"
+origins = [
+    "http://localhost",
+    "http://localhost:5173",
+    "http://erebe-vm9.i3s.unice.fr",
+]
+
+SECURITY_API_KEY_HEADER = "x-api-key"
+SECURITY_API_KEY_VALUE = "COL-0659-PROF"
 
 notebooks_storage_path = Path("./data/notebooks")
 

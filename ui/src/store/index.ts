@@ -1,4 +1,4 @@
-import { postDiffSort } from "@/api/client";
+import { postDiffSort, updateHttpClientApiKey } from "@/api/client";
 import type { PpmNodesDisplayMode } from "@/configuration";
 import type { DiffResult, Pattern, PpmResult } from "@/lib/types";
 import { create } from "zustand";
@@ -105,7 +105,10 @@ const createAuthSlice: StateCreator<ColombusStore, [], [], AuthSlice> = (
 	set,
 ) => ({
 	apiKey: undefined,
-	setApiKey: (k) => set((state) => ({ ...state, apiKey: k })),
+	setApiKey: (k) => {
+		set((state) => ({ ...state, apiKey: k }));
+		updateHttpClientApiKey();
+	},
 });
 
 const createGraphCustomizationSlice: StateCreator<
