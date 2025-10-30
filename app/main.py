@@ -158,7 +158,7 @@ async def post_notebooks(
 async def get_all_profile(
     project_id: uuid.UUID,
     session: Session = Depends(get_session),
-) -> list[str]:
+) -> Sequence[str]:
     return session.exec(
         select(Profile.name).where(Profile.project_id == project_id)
     ).all()
@@ -170,7 +170,7 @@ async def get_json_profile(
 ):
     return session.exec(
         select(Profile.json_profile).where(
-            (Profile.project_id == project_id) & (Profile.name == profile_name)
+            Profile.project_id == project_id, Profile.name == profile_name
         )
     ).all()
 
@@ -183,7 +183,7 @@ async def get_all_nodes(
 ) -> list[ProfileNodes]:
     results = session.exec(
         select(Profile).where(
-            (Profile.project_id == project_id) & (Profile.name.in_(names))
+            Profile.project_id == project_id, col(Profile.name).in_(names)
         )
     ).all()
     return [
@@ -202,8 +202,10 @@ async def get_all_nodes(
 async def import_multiple_profile(
     project_id: uuid.UUID, profile_files: list[UploadFile]
 ):
-    all_imported_profiles = []
+    all_imported_profiles: list[str] = []
     for profile_file in profile_files:
+        if not profile_file.filename:
+            continue
         profile_path = Path(profile_file.filename)
         profile_content = await profile_file.read()
         profile = JsonProfile.model_validate_json(profile_content)
@@ -218,27 +220,27 @@ async def delete_profile(
     profile_id: uuid.UUID,
     session: Session = Depends(get_session),
 ):
-    session.execute(
-        delete(Profile).where(
-            (Profile.project_id == project_id) & (Profile.id == profile_id)
+    profile = session.exec(
+        select(Profile).where(
+            Profile.project_id == project_id, Profile.id == profile_id
         )
-    )
+    ).one_or_none()
+    if not profile:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Profile not found.")
+    session.delete(profile)
     session.commit()
 
 
 @app.get("/api/project/{project_id}/ppm/getAll")
 async def get_all_ppm(
-    project_id,
+    project_id: str,
     session: Session = Depends(get_session),
-) -> list[PatternApi]:
-    return [
-        res[0]
-        for res in session.execute(
-            select(Pattern.json_pattern)
-            .where(Pattern.project_id == project_id)
-            .order_by(Pattern.name)
-        ).all()
-    ]
+) -> Sequence[PatternApi]:
+    return session.exec(
+        select(Pattern.json_pattern)
+        .where(Pattern.project_id == project_id)
+        .order_by(Pattern.name)
+    ).all()
 
 
 @app.post("/api/project/{project_id}/ppm/execute")
@@ -292,15 +294,13 @@ async def save_ppm(
     pattern: PatternApi,
     session: Session = Depends(get_session),
 ) -> str:
-    retrieved_session_pattern = session.execute(
-        select(Pattern).where(
-            (Pattern.project_id == project_id) & (Pattern.name == name)
-        )
-    ).scalar_one_or_none()
+    retrieved_session_pattern = session.exec(
+        select(Pattern).where(Pattern.project_id == project_id, Pattern.name == name)
+    ).one_or_none()
     session_pattern = retrieved_session_pattern or Pattern(
-        project_id=project_id, name=name, json_pattern=pattern.dict()
+        project_id=project_id, name=name, json_pattern={}
     )
-    session_pattern.json_pattern = pattern.dict()
+    session_pattern.json_pattern = pattern.model_dump()
     session.add(session_pattern)
     session.commit()
     return session_pattern.name
@@ -311,11 +311,12 @@ async def save_ppm(
 async def delete_ppm(
     project_id: uuid.UUID, name: str, session: Session = Depends(get_session)
 ):
-    session.execute(
-        delete(Pattern).where(
-            (Pattern.project_id == project_id) & (Pattern.name == name)
-        )
-    )
+    pattern = session.exec(
+        select(Pattern).where(Pattern.project_id == project_id, Pattern.name == name)
+    ).one_or_none()
+    if not pattern:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Pattern not found.")
+    session.delete(pattern)
     session.commit()
 
 
@@ -324,7 +325,7 @@ async def get_step_output(
     project_id: uuid.UUID,
     step_id: uuid.UUID,
     session: Session = Depends(get_session),
-) -> list[str]:
+) -> Sequence[str]:
     return session.exec(
         select(CellOutput.image).where(CellOutput.step_id == step_id)
     ).all()
@@ -363,15 +364,15 @@ async def post_diff_sort(
     payload: PostDiffSortPayload, session: Session = Depends(get_session)
 ) -> list[DiffResult]:
     if len(payload.profiles_to_diff) == 1:
-        return [(payload.profiles_to_diff[0], 1)]
+        return []
 
-    profiles_ids = []
+    profiles_ids: list[uuid.UUID] = []
     for ptd in payload.profiles_to_diff:
-        profiles_ids.append(
-            session.exec(select(Profile.id).where(Profile.name == ptd)).first()
-        )
+        profile_id = session.exec(select(Profile.id).where(Profile.name == ptd)).first()
+        if profile_id:
+            profiles_ids.append(profile_id)
 
-    profiles_content = []
+    profiles_content: list[Sequence[tuple[uuid.UUID, str]]] = []
     for pid in profiles_ids:
         profiles_content.append(
             session.exec(select(Step.id, Step.name).where(Step.profile_id == pid)).all()
@@ -381,7 +382,7 @@ async def post_diff_sort(
     ref_element = "-".join(
         [__TMP_ENCODING_MAPPING[pe[1]] for pe in profiles_content[0]]
     )
-    seq_match = SequenceMatcher(None, ref_element, None)
+    seq_match = SequenceMatcher(isjunk=None, a=ref_element)
 
     i = 0
     for ptd, pc in zip(payload.profiles_to_diff, profiles_content):
@@ -408,10 +409,8 @@ async def get_project_stats(project_id: str, session: Session = Depends(get_sess
 
     profiles_content = session.exec(
         select(Profile.name, Step.id, Step.name)
-        .join(
-            Profile,
-            (Step.profile_id == Profile.id) & (Profile.project_id == project_id),
-        )
+        .join(Step)
+        .where(Profile.project_id == project_id)
         .order_by(Profile.name)
     ).all()
 
