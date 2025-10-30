@@ -12,9 +12,15 @@ services:
     ports:
       - "8180:8180"
     volumes:
-      - ./app:/code/app:rw
+      - ./app:/colombus-builder/app:rw
     environment:
       POSTGRESQL_FULL_URL: postgresql+psycopg://christopher:pinta@colombus_postgresql:5432/colombusdb
+    healthcheck:
+      test: curl -f http://localhost:8180/health || exit 1
+      interval: 5m
+      timeout: 3s
+      retries: 3
+      start_period: 20s
     depends_on:
       colombus_postgresql:
         condition: service_healthy

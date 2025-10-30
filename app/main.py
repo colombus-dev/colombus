@@ -1,12 +1,10 @@
 from io import BytesIO
-import json
 import uuid
 
 from difflib import SequenceMatcher
-from typing import Annotated, Any
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, UploadFile, Query, HTTPException
+from fastapi import Depends, FastAPI, UploadFile, Query, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -26,8 +24,6 @@ from app.models.sql_model import (
     Pattern,
     Profile,
     Step,
-    MetaInstruction,
-    Code,
     CellOutput,
     engine,
     create_db_and_tables,
@@ -437,7 +433,10 @@ async def get_project_stats(project_id: str, session: Session = Depends(get_sess
                 {
                     "profile_name": f"{profile_id_1}_-TO-_{profile_id_2}",
                     "results": [
-                        [(e[2], block) for e in profile_steps_2[block.b : block.b + block.size]]
+                        [
+                            (e[2], block)
+                            for e in profile_steps_2[block.b : block.b + block.size]
+                        ]
                         for block in seq_match.get_matching_blocks()[:-1]
                     ],
                     "ratio": seq_match.ratio(),
@@ -453,7 +452,9 @@ class PostStatsProfilesFilterPayload(BaseModel):
 
 @app.post("/api/project/{project_id}/stats/patterns")
 async def post_project_stats_patterns(
-    project_id: str, payload: PostStatsProfilesFilterPayload, session: Session = Depends(get_session)
+    project_id: str,
+    payload: PostStatsProfilesFilterPayload,
+    session: Session = Depends(get_session),
 ):
     if payload.profiles_names:
         nb_profiles = len(payload.profiles_names)
@@ -497,7 +498,9 @@ async def post_project_stats_patterns(
 
 @app.post("/api/project/{project_id}/stats/steps/frequency")
 async def post_steps_frequency(
-    project_id: str, payload: PostStatsProfilesFilterPayload, session: Session = Depends(get_session)
+    project_id: str,
+    payload: PostStatsProfilesFilterPayload,
+    session: Session = Depends(get_session),
 ) -> list[tuple[str, int]]:
     sql_query = f"""
         select s.name, count(s.*)
@@ -507,3 +510,14 @@ async def post_steps_frequency(
         sql_query += f"\nwhere p.name in {tuple(payload.profiles_names)}"
     sql_query += "\ngroup by s.name"
     return session.exec(text(sql_query)).all()
+
+
+@app.get(
+    "/health",
+    tags=["healthcheck"],
+    summary="Perform a Health Check",
+    response_description="Return HTTP Status Code 200 (OK)",
+    status_code=status.HTTP_200_OK,
+)
+def get_health():
+    return "OK"
