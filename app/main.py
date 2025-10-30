@@ -1,5 +1,6 @@
 from io import BytesIO
 import uuid
+from typing import Sequence
 
 from difflib import SequenceMatcher
 from pathlib import Path
@@ -362,7 +363,7 @@ async def post_diff_sort(
     payload: PostDiffSortPayload, session: Session = Depends(get_session)
 ) -> list[DiffResult]:
     if len(payload.profiles_to_diff) == 1:
-        return [(payload.profiles_to_diff[0].name, 1)]
+        return [(payload.profiles_to_diff[0], 1)]
 
     profiles_ids = []
     for ptd in payload.profiles_to_diff:
@@ -460,14 +461,16 @@ async def post_project_stats_patterns(
         nb_profiles = len(payload.profiles_names)
     else:
         nb_profiles = session.exec(select(func.count(col(Profile.id)))).one()
-    sql_query = f"""
-        select p.name, s.id, s.name
-        from step as s inner join profile as p on s.profile_id = p.id and p.project_id = '{project_id}'
-    """
+
+    query = (
+        select(Profile.name, Step.id, Step.name)
+        .join(Step)
+        .where(Profile.project_id == project_id)
+    )
     if payload.profiles_names:
-        sql_query += f"\nwhere p.name in {tuple(payload.profiles_names)}"
-    sql_query += "\norder by p.name, s.position"
-    profiles_content = session.exec(text(sql_query)).all()
+        query = query.where(col(Profile.name).in_(payload.profiles_names))
+    query = query.order_by(Profile.name, col(Step.position))
+    profiles_content = session.exec(query).all()
 
     freq_patterns_matrix = get_frequent_patterns_matrix(profiles_content)
 
@@ -501,15 +504,16 @@ async def post_steps_frequency(
     project_id: str,
     payload: PostStatsProfilesFilterPayload,
     session: Session = Depends(get_session),
-) -> list[tuple[str, int]]:
-    sql_query = f"""
-        select s.name, count(s.*)
-        from step as s inner join profile as p on s.profile_id = p.id and p.project_id = '{project_id}'
-    """
+) -> Sequence[tuple[str, int]]:
+    query = (
+        select(Step.name, func.count(col(Step.id)))
+        .join(Profile)
+        .where(Profile.project_id == project_id)
+    )
     if payload.profiles_names:
-        sql_query += f"\nwhere p.name in {tuple(payload.profiles_names)}"
-    sql_query += "\ngroup by s.name"
-    return session.exec(text(sql_query)).all()
+        query = query.where(col(Profile.name).in_(payload.profiles_names))
+    query = query.group_by(Step.name)
+    return session.exec(query).all()
 
 
 @app.get(

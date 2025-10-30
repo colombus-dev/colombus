@@ -46,7 +46,7 @@ const ProfilePatternStatsFreqMatrix: React.FunctionComponent<
 			}}
 		>
 			<DialogTrigger asChild>
-				<Button className="w-full" disabled={!availableProfilesNames.length}>
+				<Button className="w-full" disabled={availableProfilesNames.length < 2}>
 					View Frequent Patterns Matrix
 				</Button>
 			</DialogTrigger>
