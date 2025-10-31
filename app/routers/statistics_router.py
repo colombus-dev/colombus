@@ -1,6 +1,7 @@
 from difflib import SequenceMatcher
 from io import BytesIO
-from typing import Sequence
+from typing import Any, Sequence
+
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -8,7 +9,6 @@ from sqlmodel import col, func, select
 
 from app.constants import __TMP_ENCODING_MAPPING
 from app.dependencies import DatabaseSession
-from app.models.api_model import DiffResult
 from app.models.sql_model import Profile, Step
 from app.utils.diff_stats_exploration import get_frequent_patterns_matrix
 
@@ -18,6 +18,7 @@ router = APIRouter()
 
 @router.get("/api/project/{project_id}/stats")
 async def get_project_stats(project_id: str, session: DatabaseSession):
+    # TODO: seems duplicated with get_frequent_patterns_matrix
 
     from itertools import groupby
 
@@ -28,15 +29,21 @@ async def get_project_stats(project_id: str, session: DatabaseSession):
         .order_by(Profile.name)
     ).all()
 
-    get_grouped_profiles_content = lambda: groupby(profiles_content, lambda e: e[0])
+    def get_grouped_profiles_content():
+        return groupby(profiles_content, lambda e: e[0])
 
-    results: list[DiffResult] = []
+    # TODO: replace with DiffResult
+    results: list[dict[str, Any]] = []
 
-    # retrieving matching groups for each profile compared to each other profile
+    # retrieving matching groups for each profile compared to each
+    # other profile
 
     for profile_id_1, profile_steps_1_iter in get_grouped_profiles_content():
         profile_steps_1 = list(profile_steps_1_iter)
-        for profile_id_2, profile_steps_2_iter in get_grouped_profiles_content():
+        for (
+            profile_id_2,
+            profile_steps_2_iter,
+        ) in get_grouped_profiles_content():
             if profile_id_1 == profile_id_2:
                 continue
             profile_steps_2 = list(profile_steps_2_iter)
@@ -57,7 +64,10 @@ async def get_project_stats(project_id: str, session: DatabaseSession):
                 }
             )
 
-    return sorted(results, key=lambda r: r["ratio"], reverse=True)
+    def ratio_sort_key(r: dict[str, Any]) -> int:
+        return r["ratio"]
+
+    return sorted(results, key=ratio_sort_key, reverse=True)
 
 
 class PostStatsProfilesFilterPayload(BaseModel):

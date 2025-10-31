@@ -1,8 +1,8 @@
+from difflib import Match, SequenceMatcher
 from itertools import groupby
 
-from difflib import SequenceMatcher, Match
-from pydantic import BaseModel
 import pandas as pd
+from pydantic import BaseModel
 
 from app.utils import __TMP_ENCODING_MAPPING
 
@@ -20,14 +20,20 @@ class Result(BaseModel):
     ratio: float
 
 
-def get_frequent_patterns_matrix(profiles_content: list[tuple[str]]) -> pd.DataFrame:
-    get_grouped_profiles_content = lambda: groupby(profiles_content, lambda e: e[0])
+def get_frequent_patterns_matrix(
+    profiles_content: list[tuple[str]],
+) -> pd.DataFrame:
+    def get_grouped_profiles_content():
+        return groupby(profiles_content, lambda e: e[0])
 
     all_comb_results: list[Result] = []
 
     for profile_id_1, profile_steps_1_iter in get_grouped_profiles_content():
         profile_steps_1 = list(profile_steps_1_iter)
-        for profile_id_2, profile_steps_2_iter in get_grouped_profiles_content():
+        for (
+            profile_id_2,
+            profile_steps_2_iter,
+        ) in get_grouped_profiles_content():
             if profile_id_1 == profile_id_2:
                 continue
             profile_steps_2 = list(profile_steps_2_iter)
@@ -53,16 +59,14 @@ def get_frequent_patterns_matrix(profiles_content: list[tuple[str]]) -> pd.DataF
                 )
             )
 
-    all_matches = set(
-        " -> ".join(m.letters) for r in all_comb_results for m in r.results
-    )
+    all_matches = {" -> ".join(m.letters) for r in all_comb_results for m in r.results}
     matching_matrix = {
-        k: set(
+        k: {
             n
             for v in all_comb_results
             for n in v.profile_name.split("_-TO-_")
             if k in [" -> ".join(m.letters) for m in v.results]
-        )
+        }
         for k in all_matches
     }
 
@@ -71,8 +75,7 @@ def get_frequent_patterns_matrix(profiles_content: list[tuple[str]]) -> pd.DataF
     )
 
     positions_register = {
-        " -> ".join(m.letters)
-        + f" :: {r.profile_name.split('_-TO-_')[0]}": (
+        " -> ".join(m.letters) + f" :: {r.profile_name.split('_-TO-_')[0]}": (
             m.match.a,
             m.match.size,
             r.total_size_a,
@@ -97,12 +100,13 @@ def get_frequent_patterns_matrix(profiles_content: list[tuple[str]]) -> pd.DataF
         for p in v:
             try:
                 start, size, total = positions_register[f"{k} :: {p}"]
-            except:
+            except:  # noqa: E722
                 errors += 1
                 # TODO: fix these errors
                 continue
-            start_percentage, end_percentage = int(start * 100 / total), int(
-                (start + size) * 100 / total
+            start_percentage, end_percentage = (
+                int(start * 100 / total),
+                int((start + size) * 100 / total),
             )
             for i in range(
                 int(start_percentage / PERCENTAGE_TICK),
@@ -110,11 +114,11 @@ def get_frequent_patterns_matrix(profiles_content: list[tuple[str]]) -> pd.DataF
             ):
                 k_positions[i] += 1
             k_positions[-1] += 1
-    
+
     print("errors=", errors)
 
     df = pd.DataFrame(matrix, index=columns_matches)
     df.columns = df.columns.tolist()[:-1] + ["Total"]
-    
+
     # returning sorted df by max value per row
-    return df.reindex(df.iloc[:,:-1].max(1).sort_values(ascending=False).index)
+    return df.reindex(df.iloc[:, :-1].max(1).sort_values(ascending=False).index)

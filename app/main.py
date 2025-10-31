@@ -1,15 +1,19 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.constants import SECURITY_API_KEY_HEADER, notebooks_storage_path, origins
+from app.constants import (
+    notebooks_storage_path,
+    origins,
+    SECURITY_API_KEY_HEADER,
+)
 from app.dependencies import APIKeyDeps
 from app.models.sql_model import create_db_and_tables
-
 from app.routers import (
-    project_router,
-    profile_router,
     pattern_router,
+    profile_router,
+    project_router,
     statistics_router,
     utils_router,
 )

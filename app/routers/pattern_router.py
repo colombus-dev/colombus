@@ -1,11 +1,13 @@
-from typing import Sequence
 import uuid
+from typing import Sequence
+
 from fastapi import APIRouter
 from sqlmodel import select, text
 
 from app.dependencies import DatabaseSession
 from app.exceptions import ElementNotFoundException
-from app.models.api_model import PatternGroup, Pattern as PatternApi, PpmResult
+from app.models.api_model import Pattern as PatternApi
+from app.models.api_model import PatternGroup, PpmResult
 from app.models.sql_model import Pattern
 from app.utils.convert_ppm_to_sql import convert_ppm_to_sql_query
 
@@ -43,7 +45,7 @@ async def execute_ppm(
 
 
 @router.post("/api/project/{project_id}/ppm/execute/{name}")
-async def execute_ppm(
+async def execute_ppm_with_name(
     project_id: uuid.UUID, name: str, session: DatabaseSession
 ) -> list[PpmResult]:
     ppm = session.execute(

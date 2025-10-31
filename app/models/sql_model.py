@@ -1,15 +1,24 @@
 import os
 import uuid
+from typing import Any, Optional
 
-from typing import Any, List, Optional
-
-from sqlmodel import SQLModel, Field, Relationship, create_engine, JSON, String, Column
 from sqlalchemy.dialects import mysql
 from sqlalchemy.orm import relationship
+from sqlmodel import (
+    Column,
+    create_engine,
+    Field,
+    JSON,
+    Relationship,
+    SQLModel,
+    String,
+)
 
 
 ProjectIdFk = Field(default=None, foreign_key="project.id", ondelete="CASCADE")
-ProfileIdFk = Field(default=None, foreign_key="profile.id", ondelete="CASCADE", index=True)
+ProfileIdFk = Field(
+    default=None, foreign_key="profile.id", ondelete="CASCADE", index=True
+)
 LongString = String().with_variant(mysql.LONGTEXT(), "mysql", "mariadb")
 
 
@@ -17,7 +26,6 @@ LongString = String().with_variant(mysql.LONGTEXT(), "mysql", "mariadb")
 
 
 class Project(SQLModel, table=True):
-
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str
 
@@ -88,7 +96,6 @@ class Step(StepBase, table=True):
     cell_outputs: list["CellOutput"] = Relationship(back_populates="step")
 
 
-
 class CellOutput(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     image: str
@@ -135,7 +142,10 @@ class Code(CodeBase, table=True):
     profile: Profile = Relationship(back_populates="codes")
 
     meta_instruction_id: uuid.UUID | None = Field(
-        default=None, foreign_key="metainstruction.id", ondelete="CASCADE", index=True
+        default=None,
+        foreign_key="metainstruction.id",
+        ondelete="CASCADE",
+        index=True,
     )
     meta_instruction: MetaInstruction = Relationship(back_populates="codes")
 
@@ -144,7 +154,6 @@ class Code(CodeBase, table=True):
 
 
 class Pattern(SQLModel, table=True):
-
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     project_id: uuid.UUID = ProjectIdFk
     name: str
@@ -155,7 +164,6 @@ class Pattern(SQLModel, table=True):
 
 
 class PatternElement(SQLModel, table=True):
-
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str
     position: int

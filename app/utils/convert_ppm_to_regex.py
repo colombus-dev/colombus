@@ -14,7 +14,6 @@ def flatten_pattern(pattern: list[PatternGroup]) -> list[PatternGroup]:
 
 def convert_pattern_to_regex(pattern: list[PatternGroup]) -> str:
     flat_pattern = flatten_pattern(pattern)
-    count_groups = len([g for g in flat_pattern if g.steps])
     converted_regex = r""
 
     def __reduce_meta_instructions(_mi_list: list[PatternMetaInstruction]):

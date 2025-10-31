@@ -18,7 +18,6 @@ def convert_steps_to_sql_query_template(
     project_id: uuid.UUID, pattern: list[PatternGroup]
 ) -> str:
     flat_pattern = flatten_pattern(pattern)
-    count_groups = len([g for g in flat_pattern if g.steps])
     converted_regex = ""
     for group in flat_pattern:
         if group.metaCharacters.startsWith:
@@ -50,11 +49,12 @@ def convert_steps_to_sql_query_template(
     all_groups = [
         {
             "is_required": g.multiplicity != "*",
-            "meta_instructions": __reduce_meta_instructions(g.metaInstructions or [])
+            "meta_instructions": __reduce_meta_instructions(g.metaInstructions or []),
             # TODO
             # or [
             #     PatternMetaInstruction(
-            #         algoFamily=None, algoName=None, library=None, function=None
+            #         algoFamily=None, algoName=None,
+            #         library=None, function=None
             #     )
             # ],
         }

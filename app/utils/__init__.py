@@ -2,7 +2,11 @@ from app.constants import __TMP_ENCODING_MAPPING
 
 
 def format_template(
-    step_name: str, algo_family: str, algo_name: str, library: str, function: str
+    step_name: str,
+    algo_family: str,
+    algo_name: str,
+    library: str,
+    function: str,
 ) -> str:
     return (
         r"\{\s*"

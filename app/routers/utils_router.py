@@ -1,6 +1,7 @@
+import uuid
 from difflib import SequenceMatcher
 from typing import Sequence
-import uuid
+
 from fastapi import APIRouter
 from pydantic import BaseModel
 from sqlmodel import select
@@ -10,7 +11,9 @@ from app.dependencies import DatabaseSession
 from app.models.api_model import (
     DiffResult,
     PatternGroup,
-    Profile as JsonProfile,
+)
+from app.models.api_model import Profile as JsonProfile
+from app.models.api_model import (
     RegexCompatibleProfileElement,
 )
 from app.models.sql_model import CellOutput, Profile, Step
@@ -83,8 +86,7 @@ async def post_diff_sort(
     )
     seq_match = SequenceMatcher(isjunk=None, a=ref_element)
 
-    i = 0
-    for ptd, pc in zip(payload.profiles_to_diff, profiles_content):
+    for i, (ptd, pc) in enumerate(zip(payload.profiles_to_diff, profiles_content)):
         seq_match.set_seq2("-".join([__TMP_ENCODING_MAPPING[pe[1]] for pe in pc]))
         results.append(
             DiffResult(
@@ -96,6 +98,5 @@ async def post_diff_sort(
                 ratio=seq_match.ratio(),
             )
         )
-        i += 1
 
     return sorted(results, key=lambda r: r.ratio, reverse=True)

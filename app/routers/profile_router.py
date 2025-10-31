@@ -1,11 +1,16 @@
-from typing import Sequence
 import uuid
+from typing import Sequence
+
 from fastapi import APIRouter, Query, UploadFile
 from sqlmodel import col, select
 
 from app.dependencies import DatabaseSession
-from app.exceptions import ElementNotFoundException, UnsupportedTaxonomyException
-from app.models.api_model import ProfileNodes, Profile as JsonProfile
+from app.exceptions import (
+    ElementNotFoundException,
+    UnsupportedTaxonomyException,
+)
+from app.models.api_model import Profile as JsonProfile
+from app.models.api_model import ProfileNodes
 from app.models.sql_model import Profile
 from app.utils.save_notebook_sql import (
     is_steps_taxonomy_supported,
@@ -38,7 +43,8 @@ async def get_json_profile(
 
 
 @router.get(
-    "/api/project/{project_id}/profile/nodes", response_model=list[ProfileNodes]
+    "/api/project/{project_id}/profile/nodes",
+    response_model=list[ProfileNodes],
 )
 async def get_all_nodes(
     project_id: uuid.UUID,
