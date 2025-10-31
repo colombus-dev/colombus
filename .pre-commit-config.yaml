@@ -1,4 +1,5 @@
 repos:
+# general
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -6,6 +7,7 @@ repos:
     -   id: end-of-file-fixer
     -   id: check-yaml
     -   id: check-added-large-files
+# python
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.3
     hooks:
@@ -24,3 +26,12 @@ repos:
       - id: vulture
         language: python
         files: ^app/
+# nodejs
+-   repo: https://github.com/biomejs/pre-commit
+    rev: v2.3.2
+    hooks:
+      - id: biome-check
+        files: ^ui/src/
+        entry: ./ui_pre-commit_lint.sh
+        language: system
+        types: [text]
