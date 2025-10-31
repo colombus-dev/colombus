@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { useParams } from "react-router";
+import BounceLoader from "react-spinners/BounceLoader";
 import { postFrequentPatternsMatrixImage } from "@/api/client";
 import {
 	Dialog,
@@ -8,9 +11,6 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { useColombusStore } from "@/store";
-import { useState } from "react";
-import { useParams } from "react-router";
-import BounceLoader from "react-spinners/BounceLoader";
 import { Button } from "./ui/button";
 
 const ProfilePatternStatsFreqMatrix: React.FunctionComponent<

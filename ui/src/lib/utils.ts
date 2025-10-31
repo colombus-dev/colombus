@@ -1,7 +1,7 @@
-import { metacharacterPLUS, metacharacterSTAR } from "@/configuration";
-import type { PatternGroup } from "@/lib/types";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { metacharacterPLUS, metacharacterSTAR } from "@/configuration";
+import type { PatternGroup } from "@/lib/types";
 
 /**
  * Merge the given tailwind class values.

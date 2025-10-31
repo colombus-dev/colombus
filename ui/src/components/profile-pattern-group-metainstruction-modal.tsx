@@ -1,3 +1,7 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useCallback, useState } from "react";
+import { useForm } from "react-hook-form";
+import type { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -18,10 +22,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PatternGroupMetaInstruction } from "@/lib/types";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useState } from "react";
-import { useForm } from "react-hook-form";
-import type { z } from "zod";
 
 interface ProfilePatternGroupMetaInstructionModalProps {
 	value: PatternGroupMetaInstruction;

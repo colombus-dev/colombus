@@ -1,3 +1,8 @@
+import { CirclePlus } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
+import { toast } from "sonner";
+import type { GraphDefinition } from "@/api/client";
 import {
 	getAllProfiles,
 	getGraphNodes,
@@ -5,7 +10,6 @@ import {
 	postApplyPpmFilterByName,
 	postProfiles,
 } from "@/api/client";
-import type { GraphDefinition } from "@/api/client";
 import GraphContainer from "@/components/graph-container";
 import ProfileExplorerPatternBar from "@/components/profile-explorer-pattern-bar";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
@@ -24,10 +28,6 @@ import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
 import type { PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
-import { CirclePlus } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router";
-import { toast } from "sonner";
 
 const GRAPH_CONTAINER_ID = "graph-container";
 
@@ -70,6 +70,8 @@ export default function ExplorerProjectIdPage() {
 		}
 	}, [projectValidity, navigate]);
 
+	// TODO
+	// biome-ignore lint/correctness/useExhaustiveDependencies: we should refactor this file
 	useEffect(() => {
 		if (!projectId || projectValidity !== "valid") {
 			return;

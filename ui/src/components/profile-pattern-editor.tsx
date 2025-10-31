@@ -1,3 +1,4 @@
+import { CirclePlus, Pencil, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -9,7 +10,6 @@ import {
 import { PatternGroup } from "@/lib/types";
 import { cn, formatPatternGroup } from "@/lib/utils";
 import { useColombusStore } from "@/store";
-import { CirclePlus, Pencil, XCircle } from "lucide-react";
 import ProfilePatternGroupMetaInstructionModal from "./profile-pattern-group-metainstruction-modal";
 import ProfilePatternGroupModal from "./profile-pattern-group-modal";
 
@@ -169,8 +169,8 @@ const ProfilePatternEditor: React.FunctionComponent<
 							...(currentPattern?.groups
 								?.map((e) => {
 									try {
-										return Number.parseInt(e.name.split("-")[1]);
-									} catch (error) {
+										return Number.parseInt(e.name.split("-")[1], 10);
+									} catch {
 										return false;
 									}
 								})

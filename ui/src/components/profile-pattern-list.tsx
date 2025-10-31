@@ -1,10 +1,10 @@
+import { Trash } from "lucide-react";
+import { useEffect } from "react";
+import { useParams } from "react-router";
 import { getAllPatterns } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
-import { Trash } from "lucide-react";
-import { useEffect } from "react";
-import { useParams } from "react-router";
 import DeletePatternDialog from "./delete-pattern-dialog";
 
 const ProfilePatternList: React.FunctionComponent<

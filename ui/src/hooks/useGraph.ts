@@ -1,9 +1,9 @@
-import type { GraphDefinition } from "@/api/client";
-import { useColombusStore } from "@/store";
 import { createNodeImageProgram } from "@sigma/node-image";
 import Graph from "graphology";
 import { useEffect, useRef } from "react";
 import Sigma from "sigma";
+import type { GraphDefinition } from "@/api/client";
+import { useColombusStore } from "@/store";
 import useGraphUtils from "./useGraphUtils";
 
 export default function useGraph(

@@ -31,7 +31,13 @@ repos:
     rev: v2.3.2
     hooks:
       - id: biome-check
-        files: ^ui/src/
+        files: ^ui/
+        exclude: |
+            (?x)^(
+                ui/.pnp.cjs|
+                ui/.pnp.loader.mjs|
+                ui/node_modules/
+            )$
         entry: ./ui_pre-commit_lint.sh
         language: system
         types: [text]

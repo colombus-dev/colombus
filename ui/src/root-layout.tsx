@@ -1,4 +1,4 @@
-import RequireApiKey from "@/RequireApiKey";
+import { Outlet } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import {
 	NavigationMenu,
@@ -6,8 +6,8 @@ import {
 	NavigationMenuLink,
 	NavigationMenuList,
 } from "@/components/ui/navigation-menu";
+import RequireApiKey from "@/RequireApiKey";
 import { useColombusStore } from "@/store";
-import { Outlet } from "react-router";
 
 export default function RootLayout() {
 	const projectName = useColombusStore((state) => state.projectName);

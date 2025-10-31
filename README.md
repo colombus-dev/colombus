@@ -25,4 +25,10 @@ $ uv tool install pre-commit --with pre-commit-uv
 $ pre-commit install
 ```
 
+To test the installation, run the following command:
+
+```bash
+$ pre-commit run --all-files
+```
+
 For more information, see https://adamj.eu/tech/2025/05/07/pre-commit-install-uv/.

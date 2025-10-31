@@ -1,3 +1,6 @@
+import { CircleX, Download, Save, Trash } from "lucide-react";
+import { useState } from "react";
+import { useParams } from "react-router";
 import { getAllPatterns, postSavePpm } from "@/api/client";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -12,9 +15,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
-import { CircleX, Download, Save, Trash } from "lucide-react";
-import { useState } from "react";
-import { useParams } from "react-router";
 import DeletePatternDialog from "./delete-pattern-dialog";
 
 const ProfilePatternActions: React.FunctionComponent<

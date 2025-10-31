@@ -1,7 +1,7 @@
+import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useCallback } from "react";
 
 const ProjectTaxonomyForm: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>

@@ -1,7 +1,7 @@
-import { postRetrieveProjectName } from "@/api/client";
-import { useColombusStore } from "@/store";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
+import { postRetrieveProjectName } from "@/api/client";
+import { useColombusStore } from "@/store";
 
 export default function useValidProject() {
 	const [projectValidity, setProjectValidity] = useState<

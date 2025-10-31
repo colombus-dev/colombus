@@ -1,3 +1,8 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { useCallback, useState } from "react";
+import { useForm } from "react-hook-form";
+import type { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -43,11 +48,6 @@ import {
 import { PatternGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { useCallback, useState } from "react";
-import { useForm } from "react-hook-form";
-import type { z } from "zod";
 
 interface ProfilePatternGroupModalProps {
 	value: PatternGroup;
@@ -126,7 +126,6 @@ export default function ProfilePatternGroupModal({
 												<FormControl className="text-ellipsis">
 													<Button
 														variant="outline"
-														// biome-ignore lint/a11y/useSemanticElements: <explanation>
 														role="combobox"
 														className={cn(
 															"justify-between",
@@ -203,7 +202,6 @@ export default function ProfilePatternGroupModal({
 												<FormControl className="text-ellipsis">
 													<Button
 														variant="outline"
-														// biome-ignore lint/a11y/useSemanticElements: <explanation>
 														role="combobox"
 														className={cn(
 															"justify-between",

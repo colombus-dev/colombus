@@ -1,3 +1,7 @@
+import { useState } from "react";
+import { useParams } from "react-router";
+import BounceLoader from "react-spinners/BounceLoader";
+import { Legend, PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
 import { postFrequentStepsData } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,10 +19,6 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { useColombusStore } from "@/store";
-import { useState } from "react";
-import { useParams } from "react-router";
-import BounceLoader from "react-spinners/BounceLoader";
-import { Legend, PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
 
 const chartConfig = {
 	step: {
@@ -76,7 +76,7 @@ const ProfileStepsFrequencyChart: React.FunctionComponent<
 						) : (
 							<ChartContainer
 								config={chartConfig}
-								className="mx-auto aspect-square max-h-[400px]"
+								className="mx-auto max-h-[500px]"
 							>
 								<RadarChart data={frequentStepsData}>
 									<ChartTooltip

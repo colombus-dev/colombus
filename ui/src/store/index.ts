@@ -1,9 +1,9 @@
+import type { StateCreator } from "zustand";
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
 import { postDiffSort, updateHttpClientApiKey } from "@/api/client";
 import type { PpmNodesDisplayMode } from "@/configuration";
 import type { DiffResult, Pattern, PpmResult } from "@/lib/types";
-import { create } from "zustand";
-import type { StateCreator } from "zustand";
-import { devtools, persist } from "zustand/middleware";
 
 interface AuthSlice {
 	apiKey?: string;

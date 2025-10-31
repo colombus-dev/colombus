@@ -1,3 +1,5 @@
+import { LocateFixed, ZoomIn, ZoomOut } from "lucide-react";
+import type Sigma from "sigma";
 import { Button } from "@/components/ui/button";
 import {
 	Tooltip,
@@ -6,8 +8,6 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { LocateFixed, ZoomIn, ZoomOut } from "lucide-react";
-import type Sigma from "sigma";
 
 interface GraphControlsProps extends React.HTMLAttributes<HTMLDivElement> {
 	graphRenderer?: Sigma;

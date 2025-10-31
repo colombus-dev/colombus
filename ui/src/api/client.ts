@@ -1,7 +1,7 @@
-import { Pattern } from "@/lib/types";
-import type { DiffResult, PatternGroup, PpmResult } from "@/lib/types";
-import { useColombusStore } from "@/store";
 import axios from "axios";
+import type { DiffResult, PatternGroup, PpmResult } from "@/lib/types";
+import { Pattern } from "@/lib/types";
+import { useColombusStore } from "@/store";
 
 export type StepNode = {
 	id: string;
@@ -54,7 +54,7 @@ export function updateHttpClientApiKey() {
 
 export async function checkApiKey(apiKey: string) {
 	return await axiosInstance
-		.post<string>(`/key`, undefined, {
+		.post<string>("/key", undefined, {
 			headers: { [API_KEY_HEADER_NAME]: apiKey },
 		})
 		.then(({ data }) => data);
@@ -62,7 +62,7 @@ export async function checkApiKey(apiKey: string) {
 
 export async function createNewProject(name: string) {
 	return await axiosInstance
-		.post<string>(`/project`, {
+		.post<string>("/project", {
 			name,
 		})
 		.then(({ data }) => data);
@@ -163,7 +163,7 @@ export async function getOutputImagesForStep(
 
 export async function postDiffSort(profiles: string[]) {
 	return await axiosInstance
-		.post<DiffResult[]>(`/utils/diff/sort`, {
+		.post<DiffResult[]>("/utils/diff/sort", {
 			profiles_to_diff: profiles,
 		})
 		.then(({ data }) => data);
@@ -183,10 +183,10 @@ export async function postFrequentPatternsMatrixImage(
 				responseType: "arraybuffer",
 			},
 		)
-		// TODO: to improve
-		// @ts-ignore: to improve
 		.then(({ data }) =>
 			btoa(
+				// TODO: to improve
+				// @ts-expect-error: to improve
 				[].reduce.call(
 					new Uint8Array(data),
 					(p, c) => p + String.fromCharCode(c),
