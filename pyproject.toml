@@ -25,16 +25,9 @@ dev = [
 [tool.uv]
 default-groups = []
 
-[tool.black]
-line-length = 120
-
-[tool.isort]
-profile = "black"
-line_length = 120
-multi_line_output = 3
-include_trailing_comma = true
-lines_after_imports = 2
-force_alphabetical_sort_within_sections = true
-
-[tool.flake8]
-max-line-length = 120
+[tool.vulture]
+make_whitelist = true
+min_confidence = 80
+paths = ["app/"]
+sort_by_size = true
+verbose = false
