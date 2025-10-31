@@ -10,11 +10,14 @@ repos:
     rev: 25.9.0
     hooks:
     -   id: black
+        language: python
+        files: ^app/
 -   repo: https://github.com/pycqa/isort
     rev: 7.0.0
     hooks:
       - id: isort
-
+        language: python
+        files: ^app/
 -   repo: https://github.com/pycqa/flake8
     rev: 7.3.0
     hooks:
@@ -23,4 +26,15 @@ repos:
           - flake8-bugbear==24.2.6
           - flake8-comprehensions
           - flake8-simplify
-        exclude: ^src/blib2to3/
+        language: python
+        files: ^app/
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v3.21.0
+    hooks:
+      - id: pyupgrade
+-   repo: https://github.com/jendrikseipp/vulture
+    rev: v2.14
+    hooks:
+      - id: vulture
+        language: python
+        files: ^app/
