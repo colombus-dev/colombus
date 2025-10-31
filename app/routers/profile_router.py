@@ -1,14 +1,16 @@
-from pathlib import Path
 from typing import Sequence
 import uuid
 from fastapi import APIRouter, Query, UploadFile
 from sqlmodel import col, select
 
 from app.dependencies import DatabaseSession
-from app.exceptions import ElementNotFoundException
+from app.exceptions import ElementNotFoundException, UnsupportedTaxonomyException
 from app.models.api_model import ProfileNodes, Profile as JsonProfile
-from app.models.sql_model import Profile, engine
-from app.utils.save_notebook_sql import save_notebook_as_sql
+from app.models.sql_model import Profile
+from app.utils.save_notebook_sql import (
+    is_steps_taxonomy_supported,
+    save_notebook_as_sql,
+)
 
 
 router = APIRouter()
@@ -35,7 +37,9 @@ async def get_json_profile(
     ).all()
 
 
-@router.get("/api/project/{project_id}/profile/nodes", response_model=list[ProfileNodes])
+@router.get(
+    "/api/project/{project_id}/profile/nodes", response_model=list[ProfileNodes]
+)
 async def get_all_nodes(
     project_id: uuid.UUID,
     session: DatabaseSession,
@@ -60,18 +64,21 @@ async def get_all_nodes(
 
 @router.post("/api/project/{project_id}/profile/import/multiple")
 async def import_multiple_profile(
-    project_id: uuid.UUID, profile_files: list[UploadFile]
+    project_id: uuid.UUID,
+    profile_files: list[UploadFile],
+    session: DatabaseSession,
 ):
-    all_imported_profiles: list[str] = []
+    all_profiles_to_import: list[JsonProfile] = []
     for profile_file in profile_files:
-        if not profile_file.filename:
-            continue
-        profile_path = Path(profile_file.filename)
         profile_content = await profile_file.read()
         profile = JsonProfile.model_validate_json(profile_content)
-        save_notebook_as_sql(project_id, profile_path.stem, profile, engine)
-        all_imported_profiles.append(profile_path.stem)
-    return all_imported_profiles
+        if not is_steps_taxonomy_supported(profile):
+            raise UnsupportedTaxonomyException()
+        all_profiles_to_import.append(profile)
+    for profile in all_profiles_to_import:
+        save_notebook_as_sql(project_id, profile, session)
+    session.commit()
+    return [profile.name for profile in all_profiles_to_import]
 
 
 @router.delete("/api/project/{project_id}/profile/delete/{profile_id}")

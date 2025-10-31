@@ -22,6 +22,6 @@ createRoot(document.getElementById("root")!).render(
 				</Route>
 			</Routes>
 		</BrowserRouter>
-		<Toaster />
+		<Toaster richColors />
 	</StrictMode>,
 );

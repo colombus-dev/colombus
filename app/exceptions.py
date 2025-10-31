@@ -27,3 +27,12 @@ class UnsupportedFilesException(HTTPException):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Unsupported files. Expected files extension is .ipynb",
         )
+
+
+class UnsupportedTaxonomyException(HTTPException):
+
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unsupported taxonomy.",
+        )

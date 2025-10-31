@@ -45,6 +45,7 @@ class ProfileMetadata(BaseModel):
 
 
 class Profile(ProfileBase):
+    name: str
     metadata: ProfileMetadata
     source: list[Any]
     outputs: dict[str, str]

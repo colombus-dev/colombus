@@ -152,9 +152,17 @@ export default function ExplorerProjectIdPage() {
 			if (!files || !projectId) {
 				return;
 			}
-			await postProfiles(projectId, files).then((r) => {
-				toast.success("Profile(s) successfuly imported.");
-				setPostedProfiles(r);
+			toast.promise(postProfiles(projectId, files), {
+				loading: "Loading...",
+				success: (r) => {
+					setPostedProfiles(r);
+					return "Profile(s) successfuly imported.";
+				},
+				error: ({
+					response: {
+						data: { detail },
+					},
+				}) => `Failed to import profile(s). ${detail}`,
 			});
 		},
 		[projectId],
