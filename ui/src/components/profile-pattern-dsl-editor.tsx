@@ -8,23 +8,26 @@ import useCanopusCompletion from "@/hooks/editor/useCanopusCompletion";
 import useCanopusGrammar from "@/hooks/editor/useCanopusGrammar";
 import useCanopusTheme from "@/hooks/editor/useCanopusTheme";
 import useCompletionActions from "@/hooks/editor/useCompletionActions";
-import { EDITOR_LANGUAGE_ID } from "@/lib/constants";
+import { DEFAULT_DSL_CODE, EDITOR_LANGUAGE_ID } from "@/lib/constants";
 import type { MonacoEditor } from "@/lib/types";
+import { useColombusStore } from "@/store";
 
 interface PatternDslEditorProps {
-	value?: string;
-	onValueChange?: (newContent: string) => void;
 	onSubmitted?: (content: string) => void;
 }
 
 export default function PatternDslEditor({
-	value,
-	onValueChange,
 	onSubmitted,
 	...props
-}: PatternDslEditorProps & React.HTMLAttributes<HTMLDivElement>) {
+}: PatternDslEditorProps &
+	React.HTMLAttributes<HTMLDivElement> &
+	React.RefAttributes<HTMLDivElement>) {
 	const monaco = useMonaco();
 	const editorRef = useRef<monaco_editor.editor.IStandaloneCodeEditor>(null);
+
+	const currentPatternContent = useColombusStore(
+		(state) => state.currentPattern?.dsl_content,
+	);
 
 	const { validateGrammarModel } = useCanopusGrammar(monaco);
 	const { themeName } = useCanopusTheme(monaco);
@@ -37,15 +40,18 @@ export default function PatternDslEditor({
 		};
 	}, []);
 
+	useEffect(() => {
+		editorRef.current?.setValue(currentPatternContent ?? DEFAULT_DSL_CODE);
+	}, [currentPatternContent]);
+
 	const onModelContentChange = useCallback(
 		(newContent: string | undefined) => {
 			const model = editorRef.current?.getModel();
 			if (model && newContent) {
 				validateGrammarModel(model);
 			}
-			onValueChange?.(newContent ?? "");
 		},
-		[validateGrammarModel, onValueChange],
+		[validateGrammarModel],
 	);
 
 	const handleEditorDidMount: OnMount = useCallback(
@@ -75,8 +81,7 @@ export default function PatternDslEditor({
 			<Editor
 				theme={themeName}
 				defaultLanguage={EDITOR_LANGUAGE_ID}
-				defaultValue={value}
-				value={value}
+				defaultValue={currentPatternContent ?? DEFAULT_DSL_CODE}
 				onChange={onModelContentChange}
 				onMount={handleEditorDidMount}
 				options={{

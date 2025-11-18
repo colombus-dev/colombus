@@ -25,7 +25,6 @@ import { Separator } from "@/components/ui/separator";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
-import { DEFAULT_DSL_CODE } from "@/lib/constants";
 import type { PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
 
@@ -39,7 +38,6 @@ export default function ExplorerProjectIdPage() {
 		GraphDefinition[] | undefined
 	>();
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
-	const [code, setCode] = useState<string>(DEFAULT_DSL_CODE);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const setAvailableProfilesWithPpmData = useColombusStore(
@@ -144,10 +142,6 @@ export default function ExplorerProjectIdPage() {
 	]);
 
 	useEffect(() => {
-		setCode(currentPattern?.dsl_content ?? DEFAULT_DSL_CODE);
-	}, [currentPattern]);
-
-	useEffect(() => {
 		if (isLoading) {
 			setFilteredWorkflowsNodes([]);
 		}
@@ -173,6 +167,19 @@ export default function ExplorerProjectIdPage() {
 			});
 		},
 		[projectId],
+	);
+
+	const handleExecuteCodeSubmit = useCallback(
+		(content: string) => {
+			if (!projectId) {
+				return;
+			}
+			parsePpm(projectId, content).then((p) => {
+				// TODO: check sync here
+				setCurrentPattern({ ...p, dsl_content: content });
+			});
+		},
+		[projectId, setCurrentPattern],
 	);
 
 	useEffect(() => {
@@ -229,14 +236,7 @@ export default function ExplorerProjectIdPage() {
 				{currentPattern && projectId && (
 					<PatternDslEditor
 						className="group relative row-span-2 h-full"
-						value={code}
-						onValueChange={setCode}
-						onSubmitted={(content) => {
-							parsePpm(projectId, content).then((p) => {
-								// TODO: check sync here
-								setCurrentPattern({ ...p, dsl_content: code });
-							});
-						}}
+						onSubmitted={handleExecuteCodeSubmit}
 					/>
 				)}
 				<GraphContainer
