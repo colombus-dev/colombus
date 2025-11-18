@@ -1,7 +1,14 @@
 import type * as monaco_editor from "monaco-editor";
 import { useEffect } from "react";
+import { supportedSteps } from "@/configuration";
 import { EDITOR_LANGUAGE_ID } from "@/lib/constants";
 import type { MonacoEditor } from "@/lib/types";
+
+const keyCompletions: { [key: string]: () => string[] } = {
+	step: () => supportedSteps,
+};
+
+// TODO: check replace instead of insert for completion
 
 export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 	useEffect(() => {
@@ -36,7 +43,7 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 				return { suggestions };
 			},
 		});
-		// register key filter completion
+		// register keys completion
 		monaco.languages.registerCompletionItemProvider(EDITOR_LANGUAGE_ID, {
 			triggerCharacters: ["[", ","],
 			provideCompletionItems(
@@ -75,6 +82,59 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 						endColumn: position.column,
 					},
 				}));
+
+				return { suggestions };
+			},
+		});
+		// register values completion
+		monaco.languages.registerCompletionItemProvider(EDITOR_LANGUAGE_ID, {
+			triggerCharacters: ['"'],
+			provideCompletionItems(
+				model,
+				position,
+			): monaco_editor.languages.CompletionList {
+				const textUntilPosition = model
+					.getValueInRange({
+						startLineNumber: position.lineNumber,
+						startColumn: 1,
+						endLineNumber: position.lineNumber,
+						endColumn: position.column,
+					})
+					.trim();
+				// Only trigger suggestions when typing a value
+				const isInsideBracket = /\[/.test(textUntilPosition);
+				const isBracketClosed = /\]/.test(textUntilPosition);
+				const isAfterStep = /=/.test(textUntilPosition);
+
+				if (!(isInsideBracket && isAfterStep && !isBracketClosed)) {
+					return { suggestions: [] };
+				}
+
+				const currentKeyValuePair = textUntilPosition.split(",").at(-1);
+				const currentKey = currentKeyValuePair
+					?.split("=")
+					.at(-2)
+					?.replace("[", "")
+					.trim();
+
+				if (!currentKey || !Object.keys(keyCompletions).includes(currentKey)) {
+					return { suggestions: [] };
+				}
+
+				const suggestions: monaco_editor.languages.CompletionItem[] =
+					keyCompletions[currentKey]().map((value) => ({
+						label: value,
+						kind: monaco.languages.CompletionItemKind.Property,
+						insertText: value,
+						detail: "Available values",
+						documentation: `Insert the value "${value}"`,
+						range: {
+							startLineNumber: position.lineNumber,
+							endLineNumber: position.lineNumber,
+							startColumn: position.column,
+							endColumn: position.column,
+						},
+					}));
 
 				return { suggestions };
 			},
