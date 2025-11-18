@@ -9,7 +9,7 @@ def convert_pattern_to_legacy(pattern: CanopusPattern) -> Pattern:
         if "name" in dir(group) and group.name == "#start":
             strict_start = True
             continue
-        if "name" in dir(group) and group.name == "#start":
+        if "name" in dir(group) and group.name == "#end":
             colombus_pattern.groups[-1].metaCharacters.endsWith = True
         else:
             colombus_pattern.groups.append(
