@@ -7,12 +7,20 @@ LABEL description="This is the image used to build the Colombus API."
 
 WORKDIR /colombus-builder
 
+# Install git
+RUN apk update && \
+    apk upgrade && \
+    apk add --no-cache git openssh-client
+
 COPY pyproject.toml uv.lock ./
+
+RUN mkdir -p -m 0700 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
 
 # Install dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=ssh \
     uv sync --locked --no-install-project --no-install-package=jupyterlab
 
 RUN adduser -D standarduser

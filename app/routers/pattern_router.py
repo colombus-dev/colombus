@@ -1,7 +1,9 @@
 import uuid
 from typing import Sequence
 
+import canopus_dsl
 from fastapi import APIRouter
+from pydantic import BaseModel
 from sqlmodel import select, text
 
 from app.dependencies import DatabaseSession
@@ -9,6 +11,7 @@ from app.exceptions import ElementNotFoundException
 from app.models.api_model import Pattern as PatternApi
 from app.models.api_model import PatternGroup, PpmResult
 from app.models.sql_model import Pattern
+from app.utils.convert_canopus_to_legacy import convert_pattern_to_legacy
 from app.utils.convert_ppm_to_sql import convert_ppm_to_sql_query
 
 
@@ -25,6 +28,25 @@ async def get_all_ppm(
         .where(Pattern.project_id == project_id)
         .order_by(Pattern.name)
     ).all()
+
+
+class ParsePpmParams(BaseModel):
+    pattern_dsl: str
+
+
+class ExecutePpmResponse(BaseModel):
+    pattern: PatternApi
+    results: list[PpmResult]
+
+
+@router.post("/api/project/{project_id}/ppm/parse")
+async def parse_ppm(
+    project_id: uuid.UUID,
+    params: ParsePpmParams,
+) -> PatternApi:
+    canopus_listener = canopus_dsl.parse_string(params.pattern_dsl)
+    # TODO: currently restricted to the first pattern
+    return convert_pattern_to_legacy(canopus_listener.patterns[0])
 
 
 @router.post("/api/project/{project_id}/ppm/execute")

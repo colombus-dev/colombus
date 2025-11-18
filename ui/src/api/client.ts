@@ -120,6 +120,14 @@ export async function getAllPatterns(projectId: string) {
 		.then(({ data }) => Pattern.array().parse(data));
 }
 
+export async function parsePpm(projectId: string, content: string) {
+	return await axiosInstance
+		.post<Pattern>(`/project/${projectId}/ppm/parse`, {
+			pattern_dsl: content,
+		})
+		.then(({ data }) => data);
+}
+
 export async function postApplyPpmFilter(
 	projectId: string,
 	pattern: PatternGroup[],

@@ -6,6 +6,7 @@ import type { GraphDefinition } from "@/api/client";
 import {
 	getAllProfiles,
 	getGraphNodes,
+	parsePpm,
 	postApplyPpmFilter,
 	postApplyPpmFilterByName,
 	postProfiles,
@@ -13,6 +14,7 @@ import {
 import GraphContainer from "@/components/graph-container";
 import ProfileExplorerPatternBar from "@/components/profile-explorer-pattern-bar";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
+import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
 import ProfilePatternEditor from "@/components/profile-pattern-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
 import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
@@ -39,6 +41,7 @@ export default function ExplorerProjectIdPage() {
 		GraphDefinition[] | undefined
 	>();
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
+	const [code, setCode] = useState<string>("# Create a new pattern below\n");
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const setAvailableProfilesWithPpmData = useColombusStore(
@@ -224,12 +227,15 @@ export default function ExplorerProjectIdPage() {
 					!currentPattern && (
 						<ProfileExplorerPatternBar className="row-span-1" />
 					)}
-				{currentPattern && (
-					<ScrollArea className="row-span-2 h-full mr-8">
-						{currentPattern && <ProfilePatternActions />}
-						<ProfilePatternEditor className="overflow-x-auto" />
-						<ScrollBar orientation="horizontal" />
-					</ScrollArea>
+				{currentPattern && <ProfilePatternActions />}
+				{currentPattern && projectId && (
+					<PatternDslEditor
+						value={code}
+						onValueChange={setCode}
+						onSubmitted={(content) => {
+							parsePpm(projectId, content).then(setCurrentPattern);
+						}}
+					/>
 				)}
 				<GraphContainer
 					className="group relative row-span-10 h-full"
