@@ -15,15 +15,14 @@ interface PatternDslEditorProps {
 	value?: string;
 	onValueChange?: (newContent: string) => void;
 	onSubmitted?: (content: string) => void;
-	height?: string;
 }
 
 export default function PatternDslEditor({
 	value,
 	onValueChange,
 	onSubmitted,
-	height = "100px",
-}: PatternDslEditorProps) {
+	...props
+}: PatternDslEditorProps & React.HTMLAttributes<HTMLDivElement>) {
 	const monaco = useMonaco();
 	const editorRef = useRef<monaco_editor.editor.IStandaloneCodeEditor>(null);
 
@@ -72,20 +71,21 @@ export default function PatternDslEditor({
 	}
 
 	return (
-		<Editor
-			height={height}
-			theme={themeName}
-			defaultLanguage={EDITOR_LANGUAGE_ID}
-			defaultValue={value}
-			value={value}
-			onChange={onModelContentChange}
-			onMount={handleEditorDidMount}
-			options={{
-				minimap: { enabled: false },
-				fontSize: 14,
-				wordWrap: "on",
-				automaticLayout: true,
-			}}
-		/>
+		<div {...props} className={props.className}>
+			<Editor
+				theme={themeName}
+				defaultLanguage={EDITOR_LANGUAGE_ID}
+				defaultValue={value}
+				value={value}
+				onChange={onModelContentChange}
+				onMount={handleEditorDidMount}
+				options={{
+					minimap: { enabled: false },
+					fontSize: 14,
+					wordWrap: "on",
+					automaticLayout: true,
+				}}
+			/>
+		</div>
 	);
 }

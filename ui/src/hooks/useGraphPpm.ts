@@ -172,26 +172,27 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 		) {
 			return;
 		}
-		getOutputImagesForStep(projectId, hoveredNode).then((d) => {
-			if (d.length === 0) {
-				return;
-			}
-			const totalImagesWidth = 55 * d.length;
-			for (const [i, imageData] of d.entries()) {
-				graph.addNode(`cell_output_${i}`, {
-					x:
-						graph.getNodeAttribute(hoveredNode, "x") +
-						55 * i -
-						Math.round(totalImagesWidth / 4),
-					y: graph.getNodeAttribute(hoveredNode, "y") + 25,
-					size: 50,
-					type: "image",
-					label: "output",
-					image: `data:image/png;base64,${imageData}`,
-					color: "white",
-				});
-			}
-		});
+		// TODO: temporary disabled
+		// getOutputImagesForStep(projectId, hoveredNode).then((d) => {
+		// 	if (d.length === 0) {
+		// 		return;
+		// 	}
+		// 	const totalImagesWidth = 55 * d.length;
+		// 	for (const [i, imageData] of d.entries()) {
+		// 		graph.addNode(`cell_output_${i}`, {
+		// 			x:
+		// 				graph.getNodeAttribute(hoveredNode, "x") +
+		// 				55 * i -
+		// 				Math.round(totalImagesWidth / 4),
+		// 			y: graph.getNodeAttribute(hoveredNode, "y") + 25,
+		// 			size: 50,
+		// 			type: "image",
+		// 			label: "output",
+		// 			image: `data:image/png;base64,${imageData}`,
+		// 			color: "white",
+		// 		});
+		// 	}
+		// });
 	}, [graphRenderer, projectId, hoveredNode]);
 
 	useEffect(() => {

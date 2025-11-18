@@ -12,10 +12,8 @@ import {
 	postProfiles,
 } from "@/api/client";
 import GraphContainer from "@/components/graph-container";
-import ProfileExplorerPatternBar from "@/components/profile-explorer-pattern-bar";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
 import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
-import ProfilePatternEditor from "@/components/profile-pattern-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
 import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
 import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
@@ -23,7 +21,6 @@ import ProjectTaxonomyList from "@/components/project-taxonomy-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
@@ -228,13 +225,10 @@ export default function ExplorerProjectIdPage() {
 				<ProfilePatternList />
 			</div>
 			<div className="col-span-5 grid grid-rows-10 items-center">
-				{/* {import.meta.env.VITE_SHOW_FULL_INTERFACE === "full" &&
-					!currentPattern && (
-						<ProfileExplorerPatternBar className="row-span-1" />
-					)} */}
 				{currentPattern && <ProfilePatternActions />}
 				{currentPattern && projectId && (
 					<PatternDslEditor
+						className="group relative row-span-2 h-full"
 						value={code}
 						onValueChange={setCode}
 						onSubmitted={(content) => {
