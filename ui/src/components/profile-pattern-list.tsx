@@ -29,7 +29,7 @@ const ProfilePatternList: React.FunctionComponent<
 	return (
 		<div {...divProps} className={cn("space-x-1", divProps.className)}>
 			<ul className="list-none space-y-1">
-				{availablePatterns.map(({ name, groups }) => (
+				{availablePatterns.map(({ name, groups, dsl_content }) => (
 					<li key={name} className="grid grid-cols-6 space-x-1">
 						<Button
 							className="col-span-5"
@@ -38,6 +38,7 @@ const ProfilePatternList: React.FunctionComponent<
 								setCurrentPattern({
 									name,
 									groups,
+									dsl_content,
 								});
 							}}
 						>

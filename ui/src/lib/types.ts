@@ -52,6 +52,7 @@ const basePatternGroup = z.object({
 
 const basePattern = z.object({
 	name: z.string().optional(),
+	dsl_content: z.string().optional(),
 });
 
 export type PatternGroup = {
@@ -70,6 +71,7 @@ export type PatternGroup = {
 export type Pattern = {
 	name?: string;
 	groups?: PatternGroup[];
+	dsl_content?: string;
 };
 
 export const Pattern: z.ZodType<Pattern> = basePattern

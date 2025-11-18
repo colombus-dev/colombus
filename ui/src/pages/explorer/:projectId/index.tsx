@@ -28,6 +28,7 @@ import { Separator } from "@/components/ui/separator";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
+import { DEFAULT_DSL_CODE } from "@/lib/constants";
 import type { PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
 
@@ -41,7 +42,7 @@ export default function ExplorerProjectIdPage() {
 		GraphDefinition[] | undefined
 	>();
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
-	const [code, setCode] = useState<string>("# Create a new pattern below\n");
+	const [code, setCode] = useState<string>(DEFAULT_DSL_CODE);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const setAvailableProfilesWithPpmData = useColombusStore(
@@ -146,6 +147,10 @@ export default function ExplorerProjectIdPage() {
 	]);
 
 	useEffect(() => {
+		setCode(currentPattern?.dsl_content ?? DEFAULT_DSL_CODE);
+	}, [currentPattern]);
+
+	useEffect(() => {
 		if (isLoading) {
 			setFilteredWorkflowsNodes([]);
 		}
@@ -223,17 +228,20 @@ export default function ExplorerProjectIdPage() {
 				<ProfilePatternList />
 			</div>
 			<div className="col-span-5 grid grid-rows-10 items-center">
-				{import.meta.env.VITE_SHOW_FULL_INTERFACE === "full" &&
+				{/* {import.meta.env.VITE_SHOW_FULL_INTERFACE === "full" &&
 					!currentPattern && (
 						<ProfileExplorerPatternBar className="row-span-1" />
-					)}
+					)} */}
 				{currentPattern && <ProfilePatternActions />}
 				{currentPattern && projectId && (
 					<PatternDslEditor
 						value={code}
 						onValueChange={setCode}
 						onSubmitted={(content) => {
-							parsePpm(projectId, content).then(setCurrentPattern);
+							parsePpm(projectId, content).then((p) => {
+								// TODO: check sync here
+								setCurrentPattern({ ...p, dsl_content: code });
+							});
 						}}
 					/>
 				)}

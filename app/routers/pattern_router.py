@@ -1,5 +1,4 @@
 import uuid
-from typing import Sequence
 
 import canopus_dsl
 from fastapi import APIRouter
@@ -8,7 +7,7 @@ from sqlmodel import select, text
 
 from app.dependencies import DatabaseSession
 from app.exceptions import ElementNotFoundException
-from app.models.api_model import Pattern as PatternApi
+from app.models.api_model import Pattern as PatternApi, PatternWithDSLApi
 from app.models.api_model import PatternGroup, PpmResult
 from app.models.sql_model import Pattern
 from app.utils.convert_canopus_to_legacy import convert_pattern_to_legacy
@@ -17,17 +16,22 @@ from app.utils.convert_ppm_to_sql import convert_ppm_to_sql_query
 
 router = APIRouter()
 
+# TODO: support multiple (sub)-patterns
+
 
 @router.get("/api/project/{project_id}/ppm/getAll")
 async def get_all_ppm(
     project_id: str,
     session: DatabaseSession,
-) -> Sequence[PatternApi]:
-    return session.exec(
-        select(Pattern.json_pattern)
+) -> list[PatternWithDSLApi]:
+    retrieved_patterns = session.exec(
+        select(Pattern.json_pattern, Pattern.dsl_content)
         .where(Pattern.project_id == project_id)
         .order_by(Pattern.name)
     ).all()
+    return [
+        PatternWithDSLApi(dsl_content=p[1] or "", **p[0]) for p in retrieved_patterns
+    ]
 
 
 class ParsePpmParams(BaseModel):
@@ -70,11 +74,11 @@ async def execute_ppm(
 async def execute_ppm_with_name(
     project_id: uuid.UUID, name: str, session: DatabaseSession
 ) -> list[PpmResult]:
-    ppm = session.execute(
+    ppm = session.exec(
         select(Pattern.json_pattern).where(
             (Pattern.project_id == project_id) & (Pattern.name == name)
         )
-    ).scalar_one()
+    ).one()
     query = convert_ppm_to_sql_query(project_id, PatternGroup(**ppm))
     # TODO: improve this uuid conversion
     return [
@@ -93,20 +97,22 @@ async def execute_ppm_with_name(
     ]
 
 
-@router.post("/api/project/{project_id}/ppm/save/{name}")
+@router.post("/api/project/{project_id}/ppm/save")
 async def save_ppm(
     project_id: uuid.UUID,
-    name: str,
-    pattern: PatternApi,
+    pattern: PatternWithDSLApi,
     session: DatabaseSession,
 ) -> str:
     retrieved_session_pattern = session.exec(
-        select(Pattern).where(Pattern.project_id == project_id, Pattern.name == name)
+        select(Pattern).where(
+            Pattern.project_id == project_id, Pattern.name == pattern.name
+        )
     ).one_or_none()
     session_pattern = retrieved_session_pattern or Pattern(
-        project_id=project_id, name=name, json_pattern={}
+        project_id=project_id, name=pattern.name, json_pattern={}, dsl_content=""
     )
-    session_pattern.json_pattern = pattern.model_dump()
+    session_pattern.json_pattern = pattern.model_dump(exclude={"dsl_content"})
+    session_pattern.dsl_content = pattern.dsl_content
     session.add(session_pattern)
     session.commit()
     return session_pattern.name

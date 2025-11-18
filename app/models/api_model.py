@@ -69,6 +69,10 @@ class Pattern(BaseModel):
     groups: list["PatternGroup"] = Field(default=None)
 
 
+class PatternWithDSLApi(Pattern):
+    dsl_content: str
+
+
 class PatternMetaCharacters(BaseModel):
     startsWith: bool
     endsWith: bool

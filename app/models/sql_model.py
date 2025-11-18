@@ -158,20 +158,9 @@ class Pattern(SQLModel, table=True):
     project_id: uuid.UUID = ProjectIdFk
     name: str
     json_pattern: dict[str, Any] = Field(sa_type=JSON)
+    dsl_content: str
 
     project: Project = Relationship(back_populates="patterns")
-    elements: list["PatternElement"] = Relationship(back_populates="pattern")
-
-
-class PatternElement(SQLModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    name: str
-    position: int
-
-    pattern_id: uuid.UUID | None = Field(
-        default=None, foreign_key="pattern.id", ondelete="CASCADE"
-    )
-    pattern: Pattern = Relationship(back_populates="elements")
 
 
 engine = create_engine(os.getenv("POSTGRESQL_FULL_URL"), echo=False)

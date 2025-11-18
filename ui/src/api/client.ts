@@ -146,13 +146,9 @@ export async function postApplyPpmFilterByName(
 		.then(({ data }) => data);
 }
 
-export async function postSavePpm(
-	projectId: string,
-	name: string,
-	pattern: Pattern,
-) {
+export async function postSavePpm(projectId: string, pattern: Pattern) {
 	return await axiosInstance
-		.post<string>(`/project/${projectId}/ppm/save/${name}`, pattern)
+		.post<string>(`/project/${projectId}/ppm/save`, pattern)
 		.then(({ data }) => data);
 }
 
