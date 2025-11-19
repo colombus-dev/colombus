@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { supportedSteps } from "@/configuration";
 import { EDITOR_LANGUAGE_ID } from "@/lib/constants";
 import type { MonacoEditor } from "@/lib/types";
+import { useColombusStore } from "@/store";
 
 const keyCompletions: { [key: string]: () => string[] } = {
 	step: () => supportedSteps,
@@ -11,6 +12,8 @@ const keyCompletions: { [key: string]: () => string[] } = {
 // TODO: check replace instead of insert for completion
 
 export default function useCanopusCompletion(monaco: MonacoEditor | null) {
+	const allSavedPatterns = useColombusStore((state) => state.allSavedPatterns);
+
 	useEffect(() => {
 		if (!monaco) {
 			return;
@@ -39,7 +42,64 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 							endColumn: position.column,
 						},
 					},
+					{
+						label: "import",
+						kind: monaco.languages.CompletionItemKind.Keyword,
+						insertText: "import ${1:Name}",
+						insertTextRules:
+							monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+						documentation: "Import a new pattern.",
+						range: {
+							startLineNumber: position.lineNumber,
+							endLineNumber: position.lineNumber,
+							// TODO: check startColumn and endColumn
+							startColumn: 0,
+							endColumn: position.column,
+						},
+					},
 				];
+				return { suggestions };
+			},
+		});
+		// register import completion
+		monaco.languages.registerCompletionItemProvider(EDITOR_LANGUAGE_ID, {
+			triggerCharacters: [" "],
+			provideCompletionItems(
+				model,
+				position,
+			): monaco_editor.languages.CompletionList {
+				const textUntilPosition = model
+					.getValueInRange({
+						startLineNumber: position.lineNumber,
+						startColumn: 1,
+						endLineNumber: position.lineNumber,
+						endColumn: position.column,
+					})
+					.trim();
+
+				// Only trigger suggestions when typing a key
+				const isAfterImport = /import/.test(textUntilPosition);
+
+				if (!isAfterImport) return { suggestions: [] };
+
+				const suggestions: monaco_editor.languages.CompletionItem[] =
+					allSavedPatterns
+						.map((pattern) => pattern.name)
+						.filter((name) => name !== undefined)
+						.map((name) => ({
+							label: name,
+							kind: monaco.languages.CompletionItemKind.Property,
+							insertText: name,
+							detail: "Available patterns to import",
+							documentation: `Insert the pattern "${name}"`,
+							range: {
+								startLineNumber: position.lineNumber,
+								endLineNumber: position.lineNumber,
+								startColumn: position.column,
+								endColumn: position.column,
+							},
+						}));
+
 				return { suggestions };
 			},
 		});
@@ -139,5 +199,5 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 				return { suggestions };
 			},
 		});
-	}, [monaco]);
+	}, [monaco, allSavedPatterns]);
 }

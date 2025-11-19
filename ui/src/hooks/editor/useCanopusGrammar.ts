@@ -17,7 +17,7 @@ const canopusGrammarLanguage: monaco_editor.languages.IMonarchLanguage = {
 			[/"[^"\n]*"/, "string"],
 
 			// Handle keywords
-			[/\b(pattern|start|end)\b/, "keyword"],
+			[/\b(import|pattern|start|end)\b/, "keyword"],
 
 			// Handle operators
 			[/->/, "connector"],

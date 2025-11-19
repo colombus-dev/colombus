@@ -193,7 +193,7 @@ css = [
 [[package]]
 name = "canopus-dsl"
 version = "0.1.0"
-source = { git = "ssh://git@github.com/colombus-dev/canopus-dsl#8f334c9d280addc1068dcd24a248454fe59d9240" }
+source = { git = "ssh://git@github.com/colombus-dev/canopus-dsl?branch=development#ac496a58dee262135cb5ffe0b2a82f023fbbbbd2" }
 dependencies = [
     { name = "antlr4-python3-runtime" },
     { name = "antlr4-tools" },
@@ -359,7 +359,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "canopus-dsl", git = "ssh://git@github.com/colombus-dev/canopus-dsl" },
+    { name = "canopus-dsl", git = "ssh://git@github.com/colombus-dev/canopus-dsl?branch=development" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.120.2" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "matplotlib", specifier = ">=3.10.6" },
