@@ -17,25 +17,17 @@ const canopusGrammarLanguage: monaco_editor.languages.IMonarchLanguage = {
 			[/"[^"\n]*"/, "string"],
 
 			// Handle keywords
-			[/\bpattern\b/, "keyword"],
-			[/\bstart\b|\bend\b/, "keyword"],
+			[/\b(pattern|start|end)\b/, "keyword"],
 
 			// Handle operators
-			[/->/, "operator"],
+			[/->/, "connector"],
 			[/\*|\+/, "operator"],
 
 			// Handle delimiters
 			[/\(|\)|\[|\]|,/, "delimiter"],
 
 			// Handle delimiters
-			[/[A-Z][A-Za-z0-9_]*/, "identifier"],
 			[/[a-z][A-Za-z0-9_]*/, "key"],
-
-			// Default to catch everything else
-			[/.*/, "text"],
-
-			// TODO
-			// [/\s+/, ""],
 		],
 	},
 };

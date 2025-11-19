@@ -8,11 +8,10 @@ const canopusTheme: monaco_editor.editor.IStandaloneThemeData = {
 	inherit: true,
 	rules: [
 		{ token: "comment", foreground: "6b6b6b", fontStyle: "italic" }, // gray
-		{ token: "keyword", foreground: "005aa7", fontStyle: "bold" }, // deep blue
-		{ token: "operator", foreground: "000000", fontStyle: "bold" }, // black
-		{ token: "variable", foreground: "660000", fontStyle: "bold" }, // dark red
 		{ token: "string", foreground: "7f6000" }, // brown-gold
-		{ token: "number", foreground: "2b6d36" }, // dark green
+		{ token: "keyword", foreground: "005aa7", fontStyle: "bold" }, // deep blue
+		{ token: "connector", foreground: "000000", fontStyle: "bold" }, // black
+		{ token: "key", foreground: "000000" }, // black
 	],
 	colors: {
 		"editor.background": "#ffffff",
