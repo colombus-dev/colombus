@@ -10,7 +10,7 @@ WORKDIR /colombus-builder
 # Install git
 RUN apk update && \
     apk upgrade && \
-    apk add --no-cache git openssh-client
+    apk add --no-cache git build-base openssh-client
 
 COPY pyproject.toml uv.lock ./
 
