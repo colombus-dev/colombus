@@ -1,4 +1,4 @@
-from canopus_dsl import Pattern as CanopusPattern, ElementExpr, Expr
+from canopus_dsl import Pattern as CanopusPattern, AlternativeExpr, ElementExpr, Expr
 from app.models.api_model import (
     Pattern,
     PatternGroup,
@@ -63,12 +63,20 @@ def convert_pattern_to_legacy(
             conditions_dict = (
                 {c.key: c.value for c in group.conditions} if is_element_expr else {}
             )
+            steps = []
+            if is_element_expr:
+                steps = [c.value for c in group.conditions if c.key == "step"]
+            if isinstance(group, AlternativeExpr):
+                steps = [
+                    c.value
+                    for a in group.alternatives
+                    for c in a.conditions
+                    if c.key == "step"
+                ]
             colombus_pattern.groups.append(
                 PatternGroup(
                     name=f"group_{i}",
-                    steps=[c.value for c in group.conditions if c.key == "step"]
-                    if is_element_expr
-                    else [],
+                    steps=steps,
                     multiplicity=group.multiplicity if isinstance(group, Expr) else "1",
                     metaInstructions=[
                         PatternMetaInstruction(
@@ -81,8 +89,11 @@ def convert_pattern_to_legacy(
                     metaCharacters=PatternMetaCharacters(
                         startsWith=strict_start and i == 1,
                         endsWith="name" in dir(group) and group.name == "#end",
-                        negate=False,  # TODO
+                        negate=group.conditions[0].op == "!="
+                        if is_element_expr
+                        else False,
                     ),
                 )
             )
+    print("\n\n", colombus_pattern)
     return colombus_pattern

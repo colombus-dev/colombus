@@ -28,12 +28,15 @@ def save_notebook_as_sql(
     all_profile_metainstructions: list[MetaInstruction] = []
     all_profile_codes: list[Code] = []
     previous_step = None
+    total_mi_i = 0
+    total_c_i = 0
     for se_i, se in enumerate(json_profile.source):
         all_metainstructions = []
-        for mi_i, mi in enumerate(se["tasks"]):
+        for mi in se["tasks"]:
             all_codes = []
-            for c_i, c in enumerate(mi["tasks"]):
-                all_codes.append(Code(content=c["name"], position=c_i))
+            for c in mi["tasks"]:
+                all_codes.append(Code(content=c["name"], position=total_c_i))
+                total_c_i += 1
             if isinstance(mi["algoFamily"], list):
                 mi["algoFamily"] = ", ".join(mi["algoFamily"])
             if isinstance(mi["algoName"], list):
@@ -48,12 +51,13 @@ def save_notebook_as_sql(
                     algoName=mi["algoName"],
                     library=mi["library"],
                     function=mi["function"],
-                    position=mi_i,
+                    position=total_mi_i,
                     codes=all_codes,
                     number_children=len(mi["tasks"]),
                 )
             )
             all_profile_codes.extend(all_codes)
+            total_mi_i += 1
 
         cell_outputs = [
             CellOutput(image=json_profile.outputs[output_id])
