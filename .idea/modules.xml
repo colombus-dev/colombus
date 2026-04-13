@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../canopus-dsl/.idea/canopus-dsl.iml" filepath="$PROJECT_DIR$/../canopus-dsl/.idea/canopus-dsl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/colombus.iml" filepath="$PROJECT_DIR$/.idea/colombus.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../colombus-worskspace/.idea/colombus-worskspace.iml" filepath="$PROJECT_DIR$/../colombus-worskspace/.idea/colombus-worskspace.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../emse-slm_reverse_engineering_ml_pipelines/.idea/emse-slm_reverse_engineering_ml_pipelines.iml" filepath="$PROJECT_DIR$/../emse-slm_reverse_engineering_ml_pipelines/.idea/emse-slm_reverse_engineering_ml_pipelines.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../mlprofiler/.idea/mlprofiler.iml" filepath="$PROJECT_DIR$/../mlprofiler/.idea/mlprofiler.iml" />
+    </modules>
+  </component>
+</project>
