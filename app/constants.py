@@ -12,6 +12,10 @@ SECURITY_API_KEY_VALUE = "COL-0659-PROF"
 
 notebooks_storage_path = Path("./data/notebooks")
 
+PROFILE_FILE_EXTENSION = '.json'
+NOTEBOOK_FILE_EXTENSION = '.ipynb'
+
+
 __TMP_ENCODING_MAPPING = {
     "Data Acquisition": "a",
     "Data Preparation": "b",
