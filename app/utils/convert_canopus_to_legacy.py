@@ -51,13 +51,14 @@ def convert_pattern_to_legacy(
                 if not referenced_patterns:
                     raise Exception(f"Unknown pattern {group.name}")
                 ref_pattern_index, ref_pattern = referenced_patterns[-1]
-                colombus_pattern.groups.extend(
-                    convert_pattern_to_legacy(
-                        preceding_patterns[:ref_pattern_index],
-                        ref_pattern,
-                        imported_patterns,
-                    ).groups
-                )
+                nested_groups = convert_pattern_to_legacy(
+                    preceding_patterns[:ref_pattern_index],
+                    ref_pattern,
+                    imported_patterns,
+                ).groups
+                if strict_start:
+                    nested_groups[0].metaCharacters.startsWith = True
+                colombus_pattern.groups.extend(nested_groups)
         else:
             is_element_expr = isinstance(group, ElementExpr)
             conditions_dict = (
