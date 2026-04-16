@@ -1,6 +1,7 @@
 import uuid
 from typing import Sequence
 
+import httpx
 from fastapi import APIRouter, File, Query, UploadFile
 from sqlmodel import col, select
 
@@ -13,6 +14,7 @@ from app.exceptions import (
 from app.models.api_model import Profile as JsonProfile
 from app.models.api_model import ProfileNodes
 from app.models.sql_model import Profile
+from app.service.notebook import convert_to_profiles
 from app.utils.file_helper import get_file_contents
 from app.utils.save_notebook_sql import (
     is_steps_taxonomy_supported,
@@ -77,11 +79,8 @@ async def import_multiple_profile(
     profile_files: list[UploadFile] = File([]),
     notebook_files: list[UploadFile] = File([]),
 ):
-    notebook_file_contents = await get_file_contents(notebook_files, expected_file_extension=NOTEBOOK_FILE_EXTENSION)
-    print(f'Skipping notebook_file_contents length: {len(notebook_file_contents)}')
+    all_profiles_to_import = await convert_to_profiles(notebook_files)
     profile_file_contents = await get_file_contents(profile_files, expected_file_extension=PROFILE_FILE_EXTENSION)
-
-    all_profiles_to_import = []
     for profile_file_content in profile_file_contents:
         profile = JsonProfile.model_validate_json(profile_file_content)
         if not is_steps_taxonomy_supported(profile):
