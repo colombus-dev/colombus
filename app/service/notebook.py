@@ -1,10 +1,11 @@
+import os
 from enum import Enum
 
 import httpx
 
 from fastapi import UploadFile, File
 
-ML_PROFILER_API_URL_PREFIX = "http://localhost:8081"  # TODO ymu: move this to service envs
+ML_PROFILER_API_URL_PREFIX = os.environ["ML_PROFILER_API_URL_PREFIX"]
 ML_PROFILER_API_TIMEOUT = 5
 
 
@@ -28,18 +29,17 @@ async def convert_to_profiles(
     if not notebook_files:
         return []
     async with httpx.AsyncClient() as client:
-        multipart = [
-            ("notebook_files", (nf.filename, await nf.read(), nf.content_type))
-            for nf in notebook_files
-        ]
-        multipart += [
-            ("profiler", profiler),
-            ("taxonomy", taxonomy)
-        ]
         response = await client.post(
             f'{ML_PROFILER_API_URL_PREFIX}/v2/profile',
-            files=multipart,
+            files=[
+                ("notebook_files", (nf.filename, await nf.read(), nf.content_type))
+                for nf in notebook_files
+            ],
+            params={
+                "profiler": profiler.value,
+                "taxonomy": taxonomy.value
+            },
             timeout=ML_PROFILER_API_TIMEOUT,
         )
         response.raise_for_status()
-        return response
+        return response.json()
