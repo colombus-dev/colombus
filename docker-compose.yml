@@ -3,6 +3,8 @@ services:
       build: ./ui
       ports:
         - "5173:5173"
+      networks:
+        - colombus-dev_network
       volumes:
       - ./ui/:/app:rw
       depends_on:
@@ -11,10 +13,13 @@ services:
     build: .
     ports:
       - "8180:8180"
+    networks:
+      - colombus-dev_network
     volumes:
       - ./app:/colombus-builder/app:rw
     environment:
       POSTGRESQL_FULL_URL: postgresql+psycopg://christopher:pinta@colombus_postgresql:5432/colombusdb
+      ML_PROFILER_API_URL_PREFIX: "http://ml_profiler_api:8081"
     healthcheck:
       test: curl -f http://localhost:8180/health || exit 1
       interval: 5m
@@ -34,6 +39,8 @@ services:
       POSTGRES_DB: colombusdb
     ports:
       - 5433:5432
+    networks:
+      - colombus-dev_network
     volumes:
       - ./postgres_data:/var/lib/postgresql/data/
     healthcheck:
@@ -44,6 +51,8 @@ services:
     image: 'dpage/pgadmin4:latest'
     ports:
       - "5051:80"
+    networks:
+      - colombus-dev_network
     environment:
       PGADMIN_DEFAULT_EMAIL: user@domain.com
       PGADMIN_DEFAULT_PASSWORD: pgpassword
@@ -58,3 +67,7 @@ services:
       start_period: 20s
     profiles:
       - pgadmin
+
+networks:
+  colombus-dev_network:
+    external: true
