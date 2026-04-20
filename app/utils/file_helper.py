@@ -1,6 +1,13 @@
 from app.exceptions import UnsupportedFilesException
 
 
+def check_files(files, expected_file_extension):
+    for file in files:
+        if not file.filename.lower().endswith(expected_file_extension.lower()):
+            raise UnsupportedFilesException(expected_file_extension=expected_file_extension)
+    return files
+
+
 async def get_file_contents(files, expected_file_extension):
     file_contents = []
     for file in files:
