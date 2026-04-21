@@ -5,8 +5,10 @@ import httpx
 
 from fastapi import UploadFile, File
 
+from app.models.api_model import Profile
+
 ML_PROFILER_API_URL_PREFIX = os.environ["ML_PROFILER_API_URL_PREFIX"]
-ML_PROFILER_API_TIMEOUT = 5
+ML_PROFILER_API_TIMEOUT = 60
 
 
 class TaxonomyFunction(str, Enum):
@@ -42,4 +44,5 @@ async def convert_to_profiles(
             timeout=ML_PROFILER_API_TIMEOUT,
         )
         response.raise_for_status()
-        return response.json()
+        profiles = response.json()
+        return [Profile.model_validate(p) for p in profiles]
