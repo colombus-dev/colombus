@@ -7,6 +7,7 @@ origins = [
     "http://erebe-vm9.i3s.unice.fr",
 ]
 
+# TODO ymu: Replace with Pydantic config
 SECURITY_API_KEY_HEADER = "x-api-key"
 SECURITY_API_KEY_VALUE = "COL-0659-PROF"
 

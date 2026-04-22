@@ -1,18 +1,17 @@
 from app.exceptions import UnsupportedFilesException
 
 
-def check_files(files, expected_file_extension):
+def _check_files(files, expected_file_extension):
     for file in files:
         if not file.filename.lower().endswith(expected_file_extension.lower()):
+            # TODO: replace with dependency (magic lib shall do the job)
             raise UnsupportedFilesException(expected_file_extension=expected_file_extension)
-    return files
+        yield file
+
+
+def check_files(files, expected_file_extension):
+    return [file for file in _check_files(files, expected_file_extension)]
 
 
 async def get_file_contents(files, expected_file_extension):
-    file_contents = []
-    for file in files:
-        if not file.filename.lower().endswith(expected_file_extension.lower()):
-            raise UnsupportedFilesException(expected_file_extension=expected_file_extension)
-        file_content = await file.read()
-        file_contents.append(file_content)
-    return file_contents
+    return [await file.read() for file in _check_files(files, expected_file_extension)]
