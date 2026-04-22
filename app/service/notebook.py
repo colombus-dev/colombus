@@ -1,9 +1,8 @@
 import os
 from enum import Enum
+from typing import BinaryIO
 
 import httpx
-
-from fastapi import UploadFile, File
 
 from app.models.api_model import Profile
 
@@ -24,15 +23,16 @@ class ProfilerFunction(str, Enum):
 
 
 async def convert_to_profiles(
-        notebook_files: list[UploadFile],
+        notebook_files: list[BinaryIO],
         taxonomy: TaxonomyFunction = TaxonomyFunction.DSPIPELINES,
         profiler: ProfilerFunction = ProfilerFunction.LLM
     ):
     if not notebook_files:
         return []
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(base_url=ML_PROFILER_API_URL_PREFIX) as client:
+        # TODO ymu: maybe create a shared client once at startup using fast API's lifespan for ex
         response = await client.post(
-            f'{ML_PROFILER_API_URL_PREFIX}/v2/profile',
+            '/v2/profile',
             files=[
                 ("notebook_files", (nf.filename, await nf.read(), nf.content_type))
                 for nf in notebook_files

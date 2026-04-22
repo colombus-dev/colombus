@@ -19,7 +19,7 @@ services:
       - ./app:/colombus-builder/app:rw
     environment:
       POSTGRESQL_FULL_URL: postgresql+psycopg://christopher:pinta@colombus_postgresql:5432/colombusdb
-      ML_PROFILER_API_URL_PREFIX: "http://ml_profiler_api:8081"
+      ML_PROFILER_API_URL_PREFIX: "http://mlprofiler_api:8081"
     healthcheck:
       test: curl -f http://localhost:8180/health || exit 1
       interval: 5m
