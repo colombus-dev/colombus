@@ -5,12 +5,10 @@ from fastapi import APIRouter, UploadFile
 from pydantic import BaseModel
 from sqlmodel import select
 
-from app.constants import notebooks_storage_path
+from app.constants import notebooks_storage_path, NOTEBOOK_FILE_EXTENSION
 from app.dependencies import DatabaseSession
-from app.exceptions import (
-    ElementNotFoundException,
-    UnsupportedFilesException,
-)
+from app.exceptions import ElementNotFoundException
+from app.utils.file_helper import get_file_contents
 from app.models.sql_model import Project
 
 
@@ -54,11 +52,8 @@ async def post_notebooks(
     project_id: uuid.UUID,
     payload: PostNotebooksPayload,
 ) -> str:
-    if not all(Path(p).suffix == ".ipynb" for p in payload.notebook_files):
-        # TODO: replace with dependency
-        raise UnsupportedFilesException()
-
-    for file in payload.notebook_files:
+    notebook_files = check_files(payload.notebook_files, NOTEBOOK_FILE_EXTENSION)
+    for file in notebook_files:
         path_file = Path(file)
         with open(notebooks_storage_path / path_file.name, "w") as f:
             file_content = await file.read()

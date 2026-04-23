@@ -210,3 +210,4 @@ __marimo__/
 out/
 data/
 postgres_data/
+.idea/
