@@ -29,13 +29,13 @@ __TMP_ENCODING_MAPPING = {
     "Interpretation": "i",
     "Communication": "j",
     "Deployment": "k",
-    "Others": "l",
+    "Other": "l",
 }
 
 # __TMP_ENCODING_MAPPING = {
 #     "Library Loading": "a",
 #     "Visualization": "b",
-#     "Others": "c",
+#     "Other": "c",
 #     "Data Preparation": "d",
 #     "Data Profiling and Exploratory Data Analysis": "e",
 #     "Data Preparation and Exploration": "f",
@@ -65,5 +65,5 @@ __TMP_ENCODING_MAPPING = {
 #     "Communication": "j",
 #     "Deployment": "k",
 #     "Library Loading": "l",
-#     "Others": "m",
+#     "Other": "m",
 # }
