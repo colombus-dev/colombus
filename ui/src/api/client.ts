@@ -32,6 +32,8 @@ export type GraphDefinition = {
 	meta_instructions: MetaInstructionNode[];
 	codes: CodeNode[];
 };
+export const ProfileFileExtension = '.json';
+export const NotebookFileExtension = '.ipynb';
 
 const apiPath = import.meta.env.VITE_API_HOST ?? "http://localhost";
 const apiPort = import.meta.env.VITE_API_PORT ?? 8180;
@@ -99,11 +101,12 @@ export async function getAllProfiles(projectId: string) {
 		.then(({ data }) => data);
 }
 
-export async function postProfiles(projectId: string, files: File[]) {
+export async function postNotebookOrProfiles(projectId: string, files: File[]) {
 	const formData = new FormData();
-	for (const file of files) {
-		formData.append("profile_files", file);
-	}
+	for (const file of files)
+		file.name.endsWith(ProfileFileExtension) ? formData.append("profile_files", file)
+			: file.name.endsWith(NotebookFileExtension) ? formData.append("notebook_files", file)
+			: console.assert('Failed to upload unknown file type {file.name}');
 	return await axiosInstance
 		.post<string[]>(`/project/${projectId}/profile/import/multiple`, formData, {
 			headers: {

@@ -19,10 +19,10 @@ class ElementNotFoundException(HTTPException):
 
 
 class UnsupportedFilesException(HTTPException):
-    def __init__(self) -> None:
+    def __init__(self, expected_file_extension) -> None:
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unsupported files. Expected files extension is .ipynb",
+            detail=f"Unsupported files. Expected file extension is {expected_file_extension}.",
         )
 
 
