@@ -8,8 +8,8 @@ from sqlmodel import select
 from app.constants import notebooks_storage_path, NOTEBOOK_FILE_EXTENSION
 from app.dependencies import DatabaseSession
 from app.exceptions import ElementNotFoundException
-from app.utils.file_helper import get_file_contents
 from app.models.sql_model import Project
+from app.utils.file_helper import check_files
 
 
 router = APIRouter()

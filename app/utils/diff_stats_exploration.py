@@ -1,5 +1,7 @@
 from difflib import Match, SequenceMatcher
 from itertools import groupby
+from uuid import UUID
+from typing import Sequence
 
 import pandas as pd
 from pydantic import BaseModel
@@ -21,7 +23,7 @@ class Result(BaseModel):
 
 
 def get_frequent_patterns_matrix(
-    profiles_content: list[tuple[str]],
+    profiles_content: Sequence[tuple[str, UUID, str]],
 ) -> pd.DataFrame:
     def get_grouped_profiles_content():
         return groupby(profiles_content, lambda e: e[0])
