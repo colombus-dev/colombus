@@ -1,10 +1,10 @@
 import { useCallback } from "react";
-import { checkApiKey } from "./api/client";
-import { useColombusStore } from "./store";
 import { toast } from "sonner";
-import { Label } from "./components/ui/label";
-import { Input } from "./components/ui/input";
-import { Button } from "./components/ui/button";
+import { checkApiKey } from "@/api/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useColombusStore } from "@/store";
 
 export default function RequireApiKey({ children }: React.PropsWithChildren) {
 	const apiKey = useColombusStore((state) => state.apiKey);
@@ -29,7 +29,7 @@ export default function RequireApiKey({ children }: React.PropsWithChildren) {
 	);
 
 	return apiKey ? (
-		<>{children}</>
+		children
 	) : (
 		<section className="grid grid-cols-3 grid-rows-5 space-x-4 h-full">
 			<div className="col-start-2 col-span-1 row-start-2 row-span-1">

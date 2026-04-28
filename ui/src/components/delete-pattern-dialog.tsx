@@ -1,3 +1,4 @@
+import { useParams } from "react-router";
 import { deletePpm } from "@/api/client";
 import {
 	AlertDialog,
@@ -11,7 +12,6 @@ import {
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useColombusStore } from "@/store";
-import { useParams } from "react-router";
 
 interface DeletePatternDialogProps {
 	patternName?: string;

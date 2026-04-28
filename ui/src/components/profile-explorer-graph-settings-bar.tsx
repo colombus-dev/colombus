@@ -37,7 +37,7 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 			<div className="space-y-2">
 				<p className="font-bold">Displayed levels:</p>
 				<Select
-					onValueChange={(v) => setDisplayedLevel(Number.parseInt(v))}
+					onValueChange={(v) => setDisplayedLevel(Number.parseInt(v, 10))}
 					defaultValue="2"
 				>
 					<SelectTrigger>

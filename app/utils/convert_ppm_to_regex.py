@@ -5,7 +5,7 @@ from app.utils import format_template
 def flatten_pattern(pattern: list[PatternGroup]) -> list[PatternGroup]:
     flattened_pattern = []
     for group in pattern:
-        if group.subpattern:
+        if group.subpattern and group.subpattern.groups:
             flattened_pattern.extend(flatten_pattern(group.subpattern.groups))
         else:
             flattened_pattern.append(group)
@@ -14,8 +14,7 @@ def flatten_pattern(pattern: list[PatternGroup]) -> list[PatternGroup]:
 
 def convert_pattern_to_regex(pattern: list[PatternGroup]) -> str:
     flat_pattern = flatten_pattern(pattern)
-    count_groups = len([g for g in flat_pattern if g.steps])
-    converted_regex = ""
+    converted_regex = r""
 
     def __reduce_meta_instructions(_mi_list: list[PatternMetaInstruction]):
         return list(
@@ -26,15 +25,15 @@ def convert_pattern_to_regex(pattern: list[PatternGroup]) -> str:
             }.values()
         )
 
-    value_placeholder = '[^"]*'
+    value_placeholder = r'[^"]*'
 
     for group in flat_pattern:
         if group.metaCharacters.startsWith:
-            converted_regex += "^"
+            converted_regex += r"^"
         if not group.steps:
-            converted_regex += ".*?"
+            converted_regex += r".*?"
         else:
-            converted_regex += "("
+            converted_regex += r"("
             if group.metaCharacters.negate:
                 # TODO: currently not supporting negate
                 # converted_regex += "^"
@@ -81,8 +80,8 @@ def convert_pattern_to_regex(pattern: list[PatternGroup]) -> str:
                 # TODO: currently not supporting multiplicity
                 # converted_regex += group.multiplicity
                 ...
-            converted_regex += ")"
+            converted_regex += r")"
         if group.metaCharacters.endsWith:
-            converted_regex += "$"
+            converted_regex += r"$"
 
     return converted_regex

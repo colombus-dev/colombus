@@ -3,6 +3,8 @@ services:
       build: ./ui
       ports:
         - "5173:5173"
+      networks:
+        - colombus-dev_network
       volumes:
       - ./ui/:/app:rw
       depends_on:
@@ -11,10 +13,19 @@ services:
     build: .
     ports:
       - "8180:8180"
+    networks:
+      - colombus-dev_network
     volumes:
-      - ./app:/code/app:rw
+      - ./app:/colombus-builder/app:rw
     environment:
       POSTGRESQL_FULL_URL: postgresql+psycopg://christopher:pinta@colombus_postgresql:5432/colombusdb
+      ML_PROFILER_API_URL_PREFIX: "http://mlprofiler_api:8081"
+    healthcheck:
+      test: curl -f http://localhost:8180/health || exit 1
+      interval: 5m
+      timeout: 3s
+      retries: 3
+      start_period: 20s
     depends_on:
       colombus_postgresql:
         condition: service_healthy
@@ -28,62 +39,35 @@ services:
       POSTGRES_DB: colombusdb
     ports:
       - 5433:5432
+    networks:
+      - colombus-dev_network
     volumes:
       - ./postgres_data:/var/lib/postgresql/data/
     healthcheck:
       test: ["CMD-SHELL", "pg_isready", "-U", "christopher", "-d", "colombusdb"]
       timeout: 10s
       retries: 10
-  # colombus_pgadmin:
-  #   image: 'dpage/pgadmin4:latest'
-  #   ports:
-  #     - "5051:80"
-  #   environment:
-  #     PGADMIN_DEFAULT_EMAIL: user@domain.com
-  #     PGADMIN_DEFAULT_PASSWORD: pgpassword
-  #   depends_on:
-  #     colombus_postgresql:
-  #       condition: service_healthy
-  # colombus_vllm:
-  #   image: vllm/vllm-openai:v0.9.1
-  #   ports:
-  #     - "8000:8000"
-  #   command: [
-  #     "--model", "qwen/qwen2.5-coder-7b-instruct",
-  #     "--api-key", "colombus-vllm-api-key"
-  #   ]
-  #   volumes:
-  #     - ./huggingface_cache:/root/.cache/huggingface/hub
-  #   ipc: "host"
-  #   deploy:
-  #     resources:
-  #       reservations:
-  #         devices:
-  #           - driver: nvidia
-  #             capabilities: ["gpu"]
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
-  #     interval: 20s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 20s
-  # colombus_ollama:
-  #   image: docker.io/ollama/ollama:latest
-  #   volumes:
-  #     - ./ollama/ollama:/root/.ollama
-  #   pull_policy: always
-  #   tty: true
-  #   ports:
-  #     - 8000:11434
-  #   # entrypoint: [
-  #   #   "ollama run hf.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_0"
-  #   # ]
-  #   environment:
-  #     - OLLAMA_KEEP_ALIVE=24h
-  #   deploy:
-  #     resources:
-  #       reservations:
-  #         devices:
-  #           - driver: nvidia
-  #             count: all 
-  #             capabilities: [gpu]
+  colombus_pgadmin:
+    image: 'dpage/pgadmin4:latest'
+    ports:
+      - "5051:80"
+    networks:
+      - colombus-dev_network
+    environment:
+      PGADMIN_DEFAULT_EMAIL: user@domain.com
+      PGADMIN_DEFAULT_PASSWORD: pgpassword
+    depends_on:
+      colombus_postgresql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    profiles:
+      - pgadmin
+
+networks:
+  colombus-dev_network:
+    external: true

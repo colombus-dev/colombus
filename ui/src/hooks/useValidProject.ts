@@ -1,7 +1,7 @@
-import { postRetrieveProjectName } from "@/api/client";
-import { useColombusStore } from "@/store";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
+import { postRetrieveProjectName } from "@/api/client";
+import { useColombusStore } from "@/store";
 
 export default function useValidProject() {
 	const [projectValidity, setProjectValidity] = useState<
@@ -10,9 +10,7 @@ export default function useValidProject() {
 
 	const { projectId } = useParams<{ projectId: string }>();
 	const apiKey = useColombusStore((state) => state.apiKey);
-	const setProjectName = useColombusStore(
-		(state) => state.setProjectName,
-	);
+	const setProjectName = useColombusStore((state) => state.setProjectName);
 
 	useEffect(() => {
 		if (!apiKey) {

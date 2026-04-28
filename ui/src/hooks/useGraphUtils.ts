@@ -1,3 +1,5 @@
+import type Graph from "graphology";
+import { useCallback } from "react";
 import type { GraphDefinition, StepNode } from "@/api/client";
 import {
 	algoNodeSuffix,
@@ -7,8 +9,6 @@ import {
 } from "@/configuration";
 import type { Pattern, PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
-import type Graph from "graphology";
-import { useCallback } from "react";
 
 function pairwise<T>(arr: T[], func: (e1: T, e2: T, i: number) => void) {
 	for (let i = 0; i < arr.length - 1; i++) {
@@ -205,19 +205,13 @@ export default function useGraphUtils(graph: Graph) {
 					const stepsPositions = getNodesPositionsSimulation(steps, addedX);
 					// displaying matched ppm groups
 					for (const grpNodes of groupsNodes) {
-						let grpX = x;
-						let prevNodeId: string | undefined = undefined;
+						let prevNodeId: string | undefined;
 						for (const node of grpNodes) {
 							const startStepX = steps.findIndex(
 								(s) => s.id === node.childrenIds[0],
 							);
 							const endStepX = steps.findIndex(
 								(s) => s.id === node.childrenIds[node.childrenIds.length - 1],
-							);
-							grpX += Math.round(
-								(stepsPositions.nodesPositions[endStepX] +
-									stepsPositions.nodesPositions[startStepX]) /
-									2,
 							);
 							addNode(
 								node.id,
