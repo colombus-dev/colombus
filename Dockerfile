@@ -7,10 +7,9 @@ LABEL description="This is the image used to build the Colombus API."
 
 WORKDIR /colombus-builder
 
-# Install git
 RUN apk update && \
     apk upgrade && \
-    apk add --no-cache git=2.47.2-r0 build-base=0.5-r3 openssh-client=9.9_p2-r0
+    apk add --no-cache git build-base openssh-client
 
 COPY pyproject.toml uv.lock ./
 
