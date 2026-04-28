@@ -7,14 +7,14 @@ LABEL description="This is the image used to build the Colombus API."
 
 WORKDIR /colombus-builder
 
-# Install git
 RUN apk update && \
     apk upgrade && \
     apk add --no-cache git build-base openssh-client
 
 COPY pyproject.toml uv.lock ./
 
-RUN mkdir -p -m 0700 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+RUN mkdir -p ~/.ssh && chmod 0700 ~/.ssh
+RUN ssh-keyscan github.com >> ~/.ssh/known_hosts
 
 # Install dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \

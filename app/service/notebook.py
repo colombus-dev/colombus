@@ -1,7 +1,6 @@
 import os
 from enum import Enum
-from typing import BinaryIO
-
+from typing import Any
 import httpx
 
 from app.models.api_model import Profile
@@ -23,7 +22,7 @@ class ProfilerFunction(str, Enum):
 
 
 async def convert_to_profiles(
-        notebook_files: list[BinaryIO],
+        notebook_files: list[Any],
         taxonomy: TaxonomyFunction = TaxonomyFunction.DSPIPELINES,
         profiler: ProfilerFunction = ProfilerFunction.LLM
     ):
