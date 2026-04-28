@@ -1,14 +1,19 @@
 import uuid
-
 from datetime import datetime
 from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field, field_serializer
 
-from app.models.sql_model import ProfileBase, StepBase, MetaInstructionBase, CodeBase
+from app.models.sql_model import (
+    CodeBase,
+    MetaInstructionBase,
+    ProfileBase,
+    StepBase,
+)
 
 
 # Profile Graph
+
 
 class StepNode(StepBase):
     id: uuid.UUID
@@ -39,18 +44,20 @@ class ProfileMetadata(BaseModel):
     version: str
     generation_date: datetime
 
-    @field_serializer('generation_date', when_used='json')
+    @field_serializer("generation_date", when_used="json")
     def serialize_generation_date_as_str(self, generation_date: datetime):
         return str(generation_date)
 
 
 class Profile(ProfileBase):
-    metadata: ProfileMetadata
+    name: str
+    profile_metadata: ProfileMetadata = Field(alias="metadata") # use alias to avoid confusion with aql_model inherited metadata
     source: list[Any]
     outputs: dict[str, str]
 
 
 # Pattern/PPM
+
 
 class PpmResult(BaseModel):
     profile_name: str
@@ -59,7 +66,11 @@ class PpmResult(BaseModel):
 
 class Pattern(BaseModel):
     name: str
-    groups: list["PatternGroup"] = Field(default=None)
+    groups: list["PatternGroup"] | None = Field(default=None)
+
+
+class PatternWithDSLApi(Pattern):
+    dsl_content: str
 
 
 class PatternMetaCharacters(BaseModel):
@@ -91,7 +102,9 @@ class RegexCompatibleProfileElement(BaseModel):
     library: str
     function: str
 
+
 # Diff
+
 
 class DiffResult(PpmResult):
     ratio: float

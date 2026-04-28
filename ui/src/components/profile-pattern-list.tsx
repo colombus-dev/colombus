@@ -1,10 +1,10 @@
+import { Trash } from "lucide-react";
+import { useEffect } from "react";
+import { useParams } from "react-router";
 import { getAllPatterns } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
-import { Trash } from "lucide-react";
-import { useEffect } from "react";
-import { useParams } from "react-router";
 import DeletePatternDialog from "./delete-pattern-dialog";
 
 const ProfilePatternList: React.FunctionComponent<
@@ -29,7 +29,7 @@ const ProfilePatternList: React.FunctionComponent<
 	return (
 		<div {...divProps} className={cn("space-x-1", divProps.className)}>
 			<ul className="list-none space-y-1">
-				{availablePatterns.map(({ name, groups }) => (
+				{availablePatterns.map(({ name, groups, dsl_content }) => (
 					<li key={name} className="grid grid-cols-6 space-x-1">
 						<Button
 							className="col-span-5"
@@ -38,6 +38,7 @@ const ProfilePatternList: React.FunctionComponent<
 								setCurrentPattern({
 									name,
 									groups,
+									dsl_content,
 								});
 							}}
 						>

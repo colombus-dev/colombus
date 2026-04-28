@@ -1,33 +1,34 @@
-import {
-	getAllProfiles,
-	getGraphNodes,
-	postApplyPpmFilter,
-	postApplyPpmFilterByName,
-	postProfiles,
-} from "@/api/client";
-import type { GraphDefinition } from "@/api/client";
-import type { PpmResult } from "@/lib/types";
-import ProfileExplorerPatternBar from "@/components/profile-explorer-pattern-bar";
-import ProfilePatternActions from "@/components/profile-pattern-actions";
-import ProfilePatternEditor from "@/components/profile-pattern-editor";
-import ProfilePatternList from "@/components/profile-pattern-list";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import useGraph from "@/hooks/useGraph";
-import useGraphPpm from "@/hooks/useGraphPpm";
-import useValidProject from "@/hooks/useValidProject";
-import { useColombusStore } from "@/store";
 import { CirclePlus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import type { GraphDefinition } from "@/api/client";
+import {
+	getAllProfiles,
+	getGraphNodes,
+	parsePpm,
+	postApplyPpmFilter,
+	postApplyPpmFilterByName,
+	postNotebookOrProfiles,
+	NotebookFileExtension,
+	ProfileFileExtension,
+} from "@/api/client";
 import GraphContainer from "@/components/graph-container";
+import ProfilePatternActions from "@/components/profile-pattern-actions";
+import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
+import ProfilePatternList from "@/components/profile-pattern-list";
 import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
-import ProjectTaxonomyList from "@/components/project-taxonomy-list";
 import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
+import ProjectTaxonomyList from "@/components/project-taxonomy-list";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import useGraph from "@/hooks/useGraph";
+import useGraphPpm from "@/hooks/useGraphPpm";
+import useValidProject from "@/hooks/useValidProject";
+import type { PpmResult } from "@/lib/types";
+import { useColombusStore } from "@/store";
 
 const GRAPH_CONTAINER_ID = "graph-container";
 
@@ -70,6 +71,8 @@ export default function ExplorerProjectIdPage() {
 		}
 	}, [projectValidity, navigate]);
 
+	// TODO
+	// biome-ignore lint/correctness/useExhaustiveDependencies: we should refactor this file
 	useEffect(() => {
 		if (!projectId || projectValidity !== "valid") {
 			return;
@@ -146,18 +149,39 @@ export default function ExplorerProjectIdPage() {
 		}
 	}, [isLoading]);
 
-	const handleProfileFormSubmit = useCallback(
+	const handleNotebookOrProfileFormSubmit = useCallback(
 		async (formData: FormData) => {
-			const files = (formData.getAll("profile-form") as File[]) || null;
+			const files = (formData.getAll("notebook-or-profile-form") as File[]) || null;
 			if (!files || !projectId) {
 				return;
 			}
-			await postProfiles(projectId, files).then((r) => {
-				toast.success("Profile(s) successfuly imported.");
-				setPostedProfiles(r);
+			toast.promise(postNotebookOrProfiles(projectId, files), {
+				loading: "Loading...",
+				success: (r) => {
+					setPostedProfiles(r);
+					return "Profiles successfully imported.";
+				},
+				error: ({
+					response: {
+						data: { detail },
+					},
+				}) => `Failed to import profile(s). ${detail}`,
 			});
 		},
 		[projectId],
+	);
+
+	const handleExecuteCodeSubmit = useCallback(
+		(content: string) => {
+			if (!projectId) {
+				return;
+			}
+			parsePpm(projectId, content).then((p) => {
+				// TODO: check sync here
+				setCurrentPattern({ ...p, dsl_content: content });
+			});
+		},
+		[projectId, setCurrentPattern],
 	);
 
 	useEffect(() => {
@@ -174,24 +198,27 @@ export default function ExplorerProjectIdPage() {
 		<section className="grid grid-cols-7 space-x-2 h-full">
 			<div className="col-span-1 space-y-4 p-2">
 				{import.meta.env.VITE_INTERFACE_MODE === "full" && (
-					<div className="row-span-1">
-						<form action={handleProfileFormSubmit}>
-							<div className="grid w-full max-w-sm items-center gap-1.5">
-								<Label htmlFor="profile-form">
-									Import a new profile (JSON)
-								</Label>
-								<Input
-									id="profile-form"
-									name="profile-form"
-									type="file"
-									accept=".json"
-									multiple
-									required
-								/>
-								<Button type="submit">Submit Profile</Button>
-							</div>
-						</form>
-					</div>
+					<>
+						<p className="font-bold">Upload</p>
+						<div className="row-span-1">
+							<form action={handleNotebookOrProfileFormSubmit}>
+								<div className="grid w-full max-w-sm items-center gap-1.5">
+									<Label htmlFor="notebook-or-profile-form">
+										Notebooks or profiles
+									</Label>
+									<Input
+										id="notebook-or-profile-form"
+										name="notebook-or-profile-form"
+										type="file"
+										accept={NotebookFileExtension + ',' + ProfileFileExtension}
+										multiple
+										required
+									/>
+									<Button type="submit">Submit Profile</Button>
+								</div>
+							</form>
+						</div>
+					</>
 				)}
 				<p className="font-bold">Patterns Statistics</p>
 				<ProfilePatternStatsFreqMatrix />
@@ -210,16 +237,12 @@ export default function ExplorerProjectIdPage() {
 				<ProfilePatternList />
 			</div>
 			<div className="col-span-5 grid grid-rows-10 items-center">
-				{import.meta.env.VITE_SHOW_FULL_INTERFACE === "full" &&
-					!currentPattern && (
-						<ProfileExplorerPatternBar className="row-span-1" />
-					)}
-				{currentPattern && (
-					<ScrollArea className="row-span-2 h-full mr-8">
-						{currentPattern && <ProfilePatternActions />}
-						<ProfilePatternEditor className="overflow-x-auto" />
-						<ScrollBar orientation="horizontal" />
-					</ScrollArea>
+				{currentPattern && <ProfilePatternActions />}
+				{currentPattern && projectId && (
+					<PatternDslEditor
+						className="group relative row-span-2 h-full"
+						onSubmitted={handleExecuteCodeSubmit}
+					/>
 				)}
 				<GraphContainer
 					className="group relative row-span-10 h-full"

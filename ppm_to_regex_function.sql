@@ -12,7 +12,7 @@ CREATE FUNCTION ppm_to_regex(regex_txt text, profile_txt text)
   RETURNS SETOF regex_match_group
 AS $$
   import re
-  
+
   return [
     (m_i, grpNum, m.start(grpNum), m.end(grpNum))
     for m_i, m in enumerate(re.finditer(regex_txt, profile_txt))
