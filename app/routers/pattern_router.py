@@ -85,7 +85,7 @@ async def execute_ppm(
             profile_name=r[0],
             results=[[e for e in f if e is not None] for f in r[1:] if f is not None],
         )
-        for r in session.exec(text(query)).all()
+        for r in session.execute(text(query)).all()
     ]
 
 
@@ -98,7 +98,7 @@ async def execute_ppm_with_name(
             (Pattern.project_id == project_id) & (Pattern.name == name)
         )
     ).one()
-    query = convert_ppm_to_sql_query(project_id, PatternGroup(**ppm))
+    query = convert_ppm_to_sql_query(project_id, [PatternGroup(**ppm)])
     # TODO: improve this uuid conversion
     return [
         PpmResult(
@@ -112,7 +112,7 @@ async def execute_ppm_with_name(
                 if f is not None
             ],
         )
-        for r in session.exec(text(query)).all()
+        for r in session.execute(text(query)).all()
     ]
 
 

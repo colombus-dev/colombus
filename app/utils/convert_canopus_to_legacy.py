@@ -15,6 +15,8 @@ def convert_pattern_to_legacy(
     # TODO: replace with visitor
     imported_patterns_dict = {pattern.name: pattern for pattern in imported_patterns}
     colombus_pattern = Pattern(name=last_pattern.name, groups=[])
+    if colombus_pattern.groups is None:
+        colombus_pattern.groups = []
     strict_start = False
     for i, group in enumerate(last_pattern.sequence):
         if "name" in dir(group):
@@ -40,7 +42,7 @@ def convert_pattern_to_legacy(
             else:
                 retrieved_pattern = imported_patterns_dict.get(group.name)
                 if retrieved_pattern:
-                    colombus_pattern.groups.extend(retrieved_pattern.groups)
+                    colombus_pattern.groups.extend(retrieved_pattern.groups or [])
                     continue
                 referenced_patterns = [
                     (i, p)
@@ -55,7 +57,7 @@ def convert_pattern_to_legacy(
                     preceding_patterns[:ref_pattern_index],
                     ref_pattern,
                     imported_patterns,
-                ).groups
+                ).groups or []
                 if strict_start:
                     nested_groups[0].metaCharacters.startsWith = True
                 colombus_pattern.groups.extend(nested_groups)

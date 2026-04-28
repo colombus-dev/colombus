@@ -51,7 +51,7 @@ class ProfileMetadata(BaseModel):
 
 class Profile(ProfileBase):
     name: str
-    metadata: ProfileMetadata
+    profile_metadata: ProfileMetadata = Field(alias="metadata") # use alias to avoid confusion with aql_model inherited metadata
     source: list[Any]
     outputs: dict[str, str]
 
@@ -66,7 +66,7 @@ class PpmResult(BaseModel):
 
 class Pattern(BaseModel):
     name: str
-    groups: list["PatternGroup"] = Field(default=None)
+    groups: list["PatternGroup"] | None = Field(default=None)
 
 
 class PatternWithDSLApi(Pattern):

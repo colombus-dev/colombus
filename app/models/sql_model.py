@@ -163,7 +163,7 @@ class Pattern(SQLModel, table=True):
     project: Project = Relationship(back_populates="patterns")
 
 
-engine = create_engine(os.getenv("POSTGRESQL_FULL_URL"), echo=False)
+engine = create_engine(os.environ["POSTGRESQL_FULL_URL"], echo=False)
 
 
 def create_db_and_tables():

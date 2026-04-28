@@ -1,7 +1,6 @@
 import uuid
 from typing import Sequence
 
-import httpx
 from fastapi import APIRouter, File, Query, UploadFile
 from sqlmodel import col, select
 
