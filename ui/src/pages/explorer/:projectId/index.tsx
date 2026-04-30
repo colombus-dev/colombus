@@ -29,10 +29,12 @@ import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
 import type { PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
+import { Sidebar } from "@/components/Sidebar";
 
 const GRAPH_CONTAINER_ID = "graph-container";
 
 export default function ExplorerProjectIdPage() {
+	const [isMenuOpen, setIsMenuOpen] = useState(true);
 	const [graphContainerId, setGraphContainerId] = useState<
 		string | undefined
 	>();
@@ -149,23 +151,18 @@ export default function ExplorerProjectIdPage() {
 		}
 	}, [isLoading]);
 
-	const handleNotebookOrProfileFormSubmit = useCallback(
-		async (formData: FormData) => {
-			const files = (formData.getAll("notebook-or-profile-form") as File[]) || null;
-			if (!files || !projectId) {
+	const handleProfileImport = useCallback(
+		async (file: File) => {
+			if (!file || !projectId) {
 				return;
 			}
-			toast.promise(postNotebookOrProfiles(projectId, files), {
-				loading: "Loading...",
+			toast.promise(postNotebookOrProfiles(projectId, [file]), {
+				loading: "Importing profile...",
 				success: (r) => {
 					setPostedProfiles(r);
-					return "Profiles successfully imported.";
+					return "Profile successfully imported.";
 				},
-				error: ({
-					response: {
-						data: { detail },
-					},
-				}) => `Failed to import profile(s). ${detail}`,
+				error: (err) => `Failed to import profile: ${err.message}`,
 			});
 		},
 		[projectId],
@@ -191,71 +188,66 @@ export default function ExplorerProjectIdPage() {
 	}, [projectValidity]);
 
 	if (projectValidity === "pending") {
-		return <section className="grid grid-cols-7 space-x-2 h-full" />;
+		return <section className="h-full bg-slate-50" />;
 	}
 
 	return projectValidity === "valid" ? (
-		<section className="grid grid-cols-7 space-x-2 h-full">
-			<div className="col-span-1 space-y-4 p-2">
-				{import.meta.env.VITE_INTERFACE_MODE === "full" && (
-					<>
-						<p className="font-bold">Upload</p>
-						<div className="row-span-1">
-							<form action={handleNotebookOrProfileFormSubmit}>
-								<div className="grid w-full max-w-sm items-center gap-1.5">
-									<Label htmlFor="notebook-or-profile-form">
-										Notebooks or profiles
-									</Label>
-									<Input
-										id="notebook-or-profile-form"
-										name="notebook-or-profile-form"
-										type="file"
-										accept={NotebookFileExtension + ',' + ProfileFileExtension}
-										multiple
-										required
-									/>
-									<Button type="submit">Submit Profile</Button>
-								</div>
-							</form>
+		<section className="flex h-full min-h-0 bg-slate-50 overflow-hidden">
+			<Sidebar
+				isMenuOpen={isMenuOpen}
+				onToggleMenu={() => setIsMenuOpen(!isMenuOpen)}
+				onProfileImport={handleProfileImport}
+			/>
+			
+			<div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+				<div className="p-4 space-y-4 flex flex-col h-full overflow-hidden">
+					<div className="grid grid-cols-5 gap-4 flex-1 min-h-0 overflow-hidden">
+						<div className="col-span-4 flex flex-col min-h-0 overflow-hidden">
+							{currentPattern && <ProfilePatternActions />}
+							{currentPattern && projectId && (
+								<PatternDslEditor
+									className="group relative h-40 shrink-0"
+									onSubmitted={handleExecuteCodeSubmit}
+								/>
+							)}
+							<div className="flex-1 min-h-0 mt-4">
+								<GraphContainer
+									className="group relative h-full w-full"
+									containerId={GRAPH_CONTAINER_ID}
+									isLoading={isLoading}
+									graphRenderer={renderer.current}
+								/>
+							</div>
 						</div>
-					</>
-				)}
-				<p className="font-bold">Patterns Statistics</p>
-				<ProfilePatternStatsFreqMatrix />
-				<ProfileStepsFrequencyChart />
-				<p className="font-bold">Saved patterns</p>
-				<div className="col-span-2">
-					<Button
-						className="w-full"
-						onClick={() => setCurrentPattern({ groups: [] })}
-					>
-						<CirclePlus />
-						Create new pattern
-					</Button>
+						<div className="col-span-1 overflow-y-auto pr-1">
+							<div className="space-y-6">
+								<section>
+									<p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 px-1">
+										Taxonomy
+									</p>
+									<ProjectTaxonomyList className="space-y-4" />
+								</section>
+								
+								<Separator />
+								
+								<section>
+									<p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 px-1">
+										Statistics
+									</p>
+									<ProfilePatternStatsFreqMatrix />
+									<div className="mt-4">
+										<ProfileStepsFrequencyChart />
+									</div>
+								</section>
+							</div>
+						</div>
+					</div>
 				</div>
-				<Separator />
-				<ProfilePatternList />
-			</div>
-			<div className="col-span-5 grid grid-rows-10 items-center">
-				{currentPattern && <ProfilePatternActions />}
-				{currentPattern && projectId && (
-					<PatternDslEditor
-						className="group relative row-span-2 h-full"
-						onSubmitted={handleExecuteCodeSubmit}
-					/>
-				)}
-				<GraphContainer
-					className="group relative row-span-10 h-full"
-					containerId={GRAPH_CONTAINER_ID}
-					isLoading={isLoading}
-					graphRenderer={renderer.current}
-				/>
-			</div>
-			<div className="col-span-1">
-				<ProjectTaxonomyList className="space-y-4" />
 			</div>
 		</section>
 	) : (
-		<section>404</section>
+		<section className="flex h-full items-center justify-center bg-slate-50 text-slate-400">
+			404 - Project not found
+		</section>
 	);
 }
