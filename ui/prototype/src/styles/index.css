@@ -1,0 +1,36 @@
+@import './fonts.css';
+@import './tailwind.css';
+@import './theme.css';
+
+/* ─── Glassmorphism utilities ─── */
+.glass {
+  background: rgba(255,255,255,0.80);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+.glass-sm {
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+/* ─── Animated flow line ─── */
+@keyframes dash-flow {
+  to { stroke-dashoffset: -20; }
+}
+.flow-line {
+  stroke-dasharray: 6 4;
+  animation: dash-flow 1.5s linear infinite;
+}
+
+/* ─── Dot pulse (API status) ─── */
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(20,184,166,0.5); }
+  50%       { opacity: 0.8; box-shadow: 0 0 0 5px rgba(20,184,166,0); }
+}
+.dot-pulse {
+  animation: dot-pulse 2s ease-in-out infinite;
+}
