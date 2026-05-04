@@ -6,7 +6,7 @@ services:
       networks:
         - colombus-dev_network
       volumes:
-      - ./ui/:/app:rw
+        - ./ui/:/app:rw
       depends_on:
         - colombus_app
   colombus_app:
@@ -42,7 +42,7 @@ services:
     networks:
       - colombus-dev_network
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data/
+      - postgres_data:/var/lib/postgresql/data/
     healthcheck:
       test: ["CMD-SHELL", "pg_isready", "-U", "christopher", "-d", "colombusdb"]
       timeout: 10s
@@ -71,3 +71,6 @@ services:
 networks:
   colombus-dev_network:
     external: true
+
+volumes:
+  postgres_data:
