@@ -5,15 +5,14 @@ from typing import Any, Optional
 from sqlalchemy.dialects import mysql
 from sqlalchemy.orm import relationship
 from sqlmodel import (
-    Column,
-    create_engine,
-    Field,
     JSON,
+    Column,
+    Field,
     Relationship,
     SQLModel,
     String,
+    create_engine,
 )
-
 
 ProjectIdFk = Field(default=None, foreign_key="project.id", ondelete="CASCADE")
 ProfileIdFk = Field(

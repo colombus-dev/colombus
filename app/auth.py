@@ -4,7 +4,6 @@ from fastapi.security import APIKeyHeader
 from app.constants import SECURITY_API_KEY_HEADER, SECURITY_API_KEY_VALUE
 from app.exceptions import InvalidApiKeyException
 
-
 api_key_header = APIKeyHeader(name=SECURITY_API_KEY_HEADER)
 
 
