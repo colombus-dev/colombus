@@ -12,7 +12,6 @@ from app.dependencies import DatabaseSession
 from app.models.sql_model import Profile, Step
 from app.utils.diff_stats_exploration import get_frequent_patterns_matrix
 
-
 router = APIRouter()
 
 

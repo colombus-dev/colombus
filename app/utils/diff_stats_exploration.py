@@ -1,7 +1,7 @@
 from difflib import Match, SequenceMatcher
 from itertools import groupby
-from uuid import UUID
 from typing import Sequence
+from uuid import UUID
 
 import pandas as pd
 from pydantic import BaseModel

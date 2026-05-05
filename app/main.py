@@ -4,9 +4,9 @@ from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.constants import (
+    SECURITY_API_KEY_HEADER,
     notebooks_storage_path,
     origins,
-    SECURITY_API_KEY_HEADER,
 )
 from app.dependencies import APIKeyDeps
 from app.models.sql_model import create_db_and_tables

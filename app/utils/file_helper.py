@@ -5,7 +5,9 @@ def _check_files(files, expected_file_extension):
     for file in files:
         if not file.filename.lower().endswith(expected_file_extension.lower()):
             # TODO: replace with dependency (magic lib shall do the job)
-            raise UnsupportedFilesException(expected_file_extension=expected_file_extension)
+            raise UnsupportedFilesException(
+                expected_file_extension=expected_file_extension
+            )
         yield file
 
 
