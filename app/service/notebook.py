@@ -7,7 +7,7 @@ import httpx
 from app.models.api_model import Profile
 
 ML_PROFILER_API_URL_PREFIX = os.environ["ML_PROFILER_API_URL_PREFIX"]
-ML_PROFILER_API_TIMEOUT = 60
+ML_PROFILER_API_TIMEOUT = 5 * 60
 
 
 class TaxonomyFunction(str, Enum):
