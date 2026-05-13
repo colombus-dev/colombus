@@ -33,7 +33,10 @@ async def get_all_profile(
     session: DatabaseSession,
 ) -> Sequence[str]:
     return session.exec(
-        select(Profile.name).where(Profile.project_id == project_id)
+        select(Profile.name)
+        .where(Profile.project_id == project_id)
+        .distinct()
+        .order_by(Profile.name)
     ).all()
 
 
@@ -62,6 +65,14 @@ async def get_all_nodes(
             Profile.project_id == project_id, col(Profile.name).in_(names)
         )
     ).all()
+    unique_results: list[Profile] = []
+    seen_names: set[str] = set()
+    for profile in results:
+        if profile.name in seen_names:
+            continue
+        seen_names.add(profile.name)
+        unique_results.append(profile)
+
     return [
         ProfileNodes(
             id=profile.id,
@@ -70,7 +81,7 @@ async def get_all_nodes(
             meta_instructions=profile.meta_instructions,
             codes=profile.codes,
         )
-        for profile in results
+        for profile in unique_results
     ]
 
 
@@ -89,11 +100,22 @@ async def import_multiple_profile(
             raise UnsupportedTaxonomyException()
         all_profiles_to_import.append(profile)
 
+    existing_profile_names = set(
+        session.exec(
+            select(Profile.name).where(Profile.project_id == project_id)
+        ).all()
+    )
+
+    imported_profiles: list[str] = []
     for profile in all_profiles_to_import:
+        if profile.name in existing_profile_names:
+            continue
         # TODO ymu : SQL queries in a loop is horrible for performance, will fix this later
         save_notebook_as_sql(project_id, profile, session)
+        existing_profile_names.add(profile.name)
+        imported_profiles.append(profile.name)
     session.commit()
-    return [profile.name for profile in all_profiles_to_import]
+    return imported_profiles
 
 
 @router.delete("/api/project/{project_id}/profile/delete/{profile_id}")
