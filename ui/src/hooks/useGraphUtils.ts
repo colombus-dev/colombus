@@ -4,8 +4,8 @@ import type { GraphDefinition, StepNode } from "@/api/client";
 import {
 	algoNodeSuffix,
 	colors,
+	getStepColor,
 	libraryFunctionNodeSuffix,
-	stepsColorsMapping,
 } from "@/configuration";
 import type { Pattern, PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
@@ -73,7 +73,7 @@ export default function useGraphUtils(graph: Graph) {
 				size,
 				color:
 					layerLevel === 2
-						? (stepsColorsMapping[label] ?? colors[layerLevel])
+						? getStepColor(label)
 						: colors[layerLevel],
 				layerLevel,
 				forceLabel: layerLevel === 0, // always displaying workflow node name

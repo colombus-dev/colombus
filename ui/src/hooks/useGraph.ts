@@ -1,6 +1,6 @@
 import { createNodeImageProgram } from "@sigma/node-image";
 import Graph from "graphology";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Sigma from "sigma";
 import type { GraphDefinition } from "@/api/client";
 import { useColombusStore } from "@/store";
@@ -24,12 +24,15 @@ export default function useGraph(
 
 	const graph = useRef<Graph>(new Graph());
 	const renderer = useRef<Sigma | undefined>(undefined);
+	const [visibleStepNames, setVisibleStepNames] = useState<string[]>([]);
+	const [isRendererReady, setIsRendererReady] = useState(false);
 
 	const { addNewProfile } = useGraphUtils(graph.current);
 
 	useEffect(() => {
 		if (containerId) {
 			renderer.current?.kill();
+			setIsRendererReady(false);
 			const graphContainer = document.getElementById("graph-container");
 			if (graphContainer) {
 				renderer.current = new Sigma(graph.current, graphContainer, {
@@ -66,13 +69,15 @@ export default function useGraph(
 						);
 					},
 				});
+					setIsRendererReady(true);
 			}
 		}
 	}, [containerId]);
 
 	useEffect(() => {
 		graph.current?.clear();
-		if (!graphDefinitions || !renderer.current || !graph.current) {
+			if (!graphDefinitions || !graph.current || !isRendererReady) {
+			setVisibleStepNames([]);
 			return;
 		}
 		let addedX = 0;
@@ -94,6 +99,14 @@ export default function useGraph(
 			addedY -= 50 * (displayedLevel + 2);
 			addedX = 1;
 		}
+
+		const stepNames = new Set<string>();
+		graph.current.forEachNode((_, attributes) => {
+			if (attributes.layerLevel === 2 && typeof attributes.fullLabel === "string") {
+				stepNames.add(attributes.fullLabel);
+			}
+		});
+		setVisibleStepNames([...stepNames]);
 	}, [
 		graphDefinitions,
 		availableProfilesWithPpmData,
@@ -102,6 +115,7 @@ export default function useGraph(
 		filteredProfilesNames,
 		displayedLevel,
 		addNewProfile,
+		isRendererReady,
 	]);
 
 	useEffect(() => {
@@ -110,5 +124,5 @@ export default function useGraph(
 		};
 	}, []);
 
-	return { renderer };
+	return { renderer, visibleStepNames };
 }

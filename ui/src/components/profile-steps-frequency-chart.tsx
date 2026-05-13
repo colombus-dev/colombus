@@ -30,15 +30,16 @@ const ProfileStepsFrequencyChart: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
 > = () => {
 	const { projectId } = useParams<{ projectId: string }>();
-	const [frequentStepsData, setFrequentStepsData] =
-		useState<{ step: string; key: number }[]>();
+	const [frequentStepsData, setFrequentStepsData] = useState<
+		{ step: string; frequency: number }[]
+	>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const availableProfilesNames = useColombusStore(
 		(state) => state.availableProfilesNames,
 	);
 
 	if (!projectId) {
-		return;
+		return null;
 	}
 
 	return (
@@ -58,10 +59,9 @@ const ProfileStepsFrequencyChart: React.FunctionComponent<
 			}}
 		>
 			<DialogTrigger asChild>
-				<Button className="w-full" disabled={!availableProfilesNames.length}>
-					View Steps Frequency
-				</Button>
+				<Button variant="outline">Steps frequency</Button>
 			</DialogTrigger>
+
 			<DialogContent className="min-w-[1200px]">
 				<DialogHeader>
 					<DialogTitle>Steps Frequency</DialogTitle>
