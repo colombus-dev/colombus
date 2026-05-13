@@ -5,6 +5,13 @@ import { postDiffSort, updateHttpClientApiKey } from "@/api/client";
 import type { PpmNodesDisplayMode } from "@/configuration";
 import type { DiffResult, Pattern, PpmResult } from "@/lib/types";
 
+export interface ProjectItem {
+	id: string;
+	name: string;
+	branch: string;
+	description: string;
+}
+
 interface AuthSlice {
 	apiKey?: string;
 	setApiKey: (key: string) => void;
@@ -23,6 +30,7 @@ interface PatternSlice {
 	resetCurrentPattern: () => void;
 	allSavedPatterns: Pattern[];
 	setAllSavedPatterns: (p: Pattern[]) => void;
+	resetProjectScopedState: () => void;
 }
 
 interface GraphCustomizationSlice {
@@ -44,8 +52,12 @@ interface ProfilesSlice {
 }
 
 interface ProjectSlice {
+	projectId?: string;
 	projectName?: string;
+	projects: ProjectItem[];
+	setProjectId: (id?: string) => void;
 	setProjectName: (name?: string) => void;
+	setProjects: (projects: ProjectItem[]) => void;
 }
 
 interface ColombusStore
@@ -99,6 +111,17 @@ const createPatternSlice: StateCreator<ColombusStore, [], [], PatternSlice> = (
 	allSavedPatterns: [],
 	setAllSavedPatterns: (p) =>
 		set((state) => ({ ...state, allSavedPatterns: p })),
+	resetProjectScopedState: () =>
+		set((state) => ({
+			...state,
+			currentPattern: undefined,
+			allSavedPatterns: [],
+			referenceDiffProfile: undefined,
+			diffResults: [],
+			availableProfilesNames: [],
+			availableProfilesWithPpmData: [],
+			filteredProfilesNames: [],
+		})),
 });
 
 const createAuthSlice: StateCreator<ColombusStore, [], [], AuthSlice> = (
@@ -148,9 +171,36 @@ const createProfilesSlice: StateCreator<
 const createProjectSlice: StateCreator<ColombusStore, [], [], ProjectSlice> = (
 	set,
 ) => ({
+	projectId: undefined,
 	projectName: undefined,
+	projects: [
+		{
+			id: 'reusable-workspace',
+			name: 'Reusable workspace',
+			branch: 'main',
+			description: 'Main project workspace for data analysis.',
+		},
+		{
+			id: 'legacy-analysis',
+			name: 'Legacy Analysis',
+			branch: 'v1-archive',
+			description: 'Archived project from previous quarter.',
+		},
+		{
+			id: 'ml-experiments',
+			name: 'ML Experiments',
+			branch: 'feat/models',
+			description: 'Testing new machine learning models.',
+		},
+	],
+	setProjectId(id) {
+		set((state) => ({ ...state, projectId: id }));
+	},
 	setProjectName(name) {
 		set((state) => ({ ...state, projectName: name }));
+	},
+	setProjects(projects) {
+		set((state) => ({ ...state, projects }));
 	},
 });
 

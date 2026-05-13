@@ -1,5 +1,5 @@
 import { GitBranch, Loader2, Trash } from "lucide-react";
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import { getAllPatterns, postSavePpm, parsePpm } from "@/api/client";
@@ -82,13 +82,16 @@ const StopIcon = ({ isExecuting }: { isExecuting?: boolean }) => (
 interface CreatePatternPanelProps {
 	onSubmitted: (content: string) => void;
 	className?: string;
+	onStopExecution?: () => void;
 }
 
 export default function CreatePatternPanel({
 	onSubmitted,
 	className,
+	onStopExecution,
 }: CreatePatternPanelProps) {
 	const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+	const executionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const [pendingCaretPosition, setPendingCaretPosition] = useState<
 		number | null
 	>(null);
@@ -97,9 +100,6 @@ export default function CreatePatternPanel({
 	const [isExecuting, setIsExecuting] = useState(false);
 
 	const currentPattern = useColombusStore((state) => state.currentPattern);
-	const resetCurrentPattern = useColombusStore(
-		(state) => state.resetCurrentPattern,
-	);
 	const setAvailablePatterns = useColombusStore(
 		(state) => state.setAllSavedPatterns,
 	);
@@ -192,22 +192,40 @@ export default function CreatePatternPanel({
 	}, [pendingCaretPosition]);
 
 	const handleExecute = useCallback(() => {
+		if (executionTimeoutRef.current) {
+			clearTimeout(executionTimeoutRef.current);
+		}
 		setIsExecuting(true);
 		onSubmitted(editorValue);
-		setTimeout(() => setIsExecuting(false), 1200);
+		executionTimeoutRef.current = setTimeout(() => {
+			setIsExecuting(false);
+			executionTimeoutRef.current = null;
+		}, 1200);
 	}, [onSubmitted, editorValue]);
 
 	const handleStop = useCallback(() => {
+		if (executionTimeoutRef.current) {
+			clearTimeout(executionTimeoutRef.current);
+			executionTimeoutRef.current = null;
+		}
 		setIsExecuting(false);
-		resetCurrentPattern();
-	}, [resetCurrentPattern]);
+		onStopExecution?.();
+	}, [onStopExecution]);
+
+	useEffect(() => {
+		return () => {
+			if (executionTimeoutRef.current) {
+				clearTimeout(executionTimeoutRef.current);
+				executionTimeoutRef.current = null;
+			}
+		};
+	}, []);
 
 	const handleSave = useCallback(() => {
 		if (!projectId || !editorValue.trim()) return;
 
 		const savePromise = parsePpm(projectId, editorValue).then((parsed) => {
 			const patternToSave = { ...parsed, dsl_content: editorValue };
-			useColombusStore.getState().setCurrentPattern(patternToSave);
 			return postSavePpm(projectId, patternToSave).then(() =>
 				getAllPatterns(projectId).then(setAvailablePatterns),
 			);

@@ -1,6 +1,6 @@
 import axios from "axios";
-import type { DiffResult, PatternGroup, PpmResult } from "@/lib/types";
-import { Pattern } from "@/lib/types";
+import type { DiffResult, NotebookScore, PatternGroup, PpmResult } from "@/lib/types";
+import { NotebookScore as NotebookScoreSchema, Pattern } from "@/lib/types";
 import { useColombusStore } from "@/store";
 
 export type StepNode = {
@@ -42,12 +42,16 @@ const API_KEY_HEADER_NAME = "x-api-key";
 
 const axiosInstance = axios.create({
 	baseURL: `${apiPath}:${apiPort}/api`,
-	headers: {
-		common: {
-			[API_KEY_HEADER_NAME]: useColombusStore.getState().apiKey,
-		},
-	},
 });
+
+axiosInstance.interceptors.request.use((config) => {
+	const apiKey = useColombusStore.getState().apiKey;
+	if (apiKey) {
+		config.headers[API_KEY_HEADER_NAME] = apiKey;
+	}
+	return config;
+});
+
 
 export function updateHttpClientApiKey() {
 	axiosInstance.defaults.headers.common[API_KEY_HEADER_NAME] =
@@ -123,10 +127,16 @@ export async function getAllPatterns(projectId: string) {
 		.then(({ data }) => Pattern.array().parse(data));
 }
 
-export async function parsePpm(projectId: string, content: string) {
+export async function parsePpm(
+	projectId: string,
+	content: string,
+	signal?: AbortSignal,
+) {
 	return await axiosInstance
 		.post<Pattern>(`/project/${projectId}/ppm/parse`, {
 			pattern_dsl: content,
+		}, {
+			signal,
 		})
 		.then(({ data }) => data);
 }
@@ -212,4 +222,10 @@ export async function postFrequentStepsData(
 			profiles_names: profilesNames,
 		})
 		.then(({ data }) => data.map((d) => ({ step: d[0], frequency: d[1] })));
+}
+
+export async function getNotebookScores(projectId: string) {
+	return await axiosInstance
+		.get<NotebookScore[]>(`/project/${projectId}/stats/notebooks`)
+		.then(({ data }) => NotebookScoreSchema.array().parse(data));
 }

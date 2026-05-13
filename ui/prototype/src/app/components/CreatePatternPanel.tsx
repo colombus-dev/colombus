@@ -1,11 +1,21 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { GitBranch, PlayCircle, Loader2, TriangleAlert, CheckCircle } from 'lucide-react';
-import { STEP_LEGEND } from './stepLegend';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { GitBranch, TriangleAlert, CheckCircle } from 'lucide-react';
+import { Textarea } from './ui/textarea';
+
+const STEP_LEGEND = [
+	{ label: "Load data", color: "#ef4444" },
+	{ label: "Explore data", color: "#3b82f6" },
+	{ label: "Review", color: "#65a30d" },
+	{ label: "Prepare data", color: "#a855f7" },
+	{ label: "Profile data", color: "#06b6d4" },
+	{ label: "Transform data", color: "#f97316" },
+	{ label: "Clean data", color: "#ca8a04" },
+	{ label: "Split data", color: "#818cf8" },
+	{ label: "Inspect data", color: "#84cc16" },
+] as const;
 
 const STEP_SUGGESTIONS = Array.from(
-  new Set(
-    STEP_LEGEND.map(({ label }) => label.trim()).filter(Boolean)
-  )
+	new Set(STEP_LEGEND.map(({ label }) => label.trim()).filter(Boolean)),
 );
 
 const PlayGlossyIcon = () => (
@@ -52,10 +62,6 @@ const StopIcon = ({ isExecuting }: { isExecuting?: boolean }) => (
 // ── Canopus DSL validation ─────────────────────────────────────────────
 
 const DSL_KEYWORDS = new Set(['import', 'pattern', 'start', 'end']);
-const DSL_OPERATORS = ['->', '!=', '=', '+', '*', '|'];
-const DSL_BRACKET_PAIRS: Record<string, string> = { '(': ')', '[': ']' };
-const DSL_CLOSE_BRACKETS = new Set(Object.values(DSL_BRACKET_PAIRS));
-
 interface DslDiagnostic {
   line: number;
   column: number;
@@ -87,12 +93,15 @@ function validateDsl(code: string): DslDiagnostic[] {
     }
 
     if (inString) {
-      diagnostics.push({
-        line: lineNum,
-        column: line.lastIndexOf('"') + 1,
-        message: 'Unterminated string literal',
-        severity: 'error',
-      });
+      const isTypingStep = /\[step="[^"]*$/.test(line);
+      if (!isTypingStep) {
+        diagnostics.push({
+          line: lineNum,
+          column: line.lastIndexOf('"') + 1,
+          message: 'Unterminated string literal',
+          severity: 'error',
+        });
+      }
     }
 
     // Warn if a line uses Python-like syntax (def, class, etc at start of line)
@@ -123,18 +132,22 @@ function validateDsl(code: string): DslDiagnostic[] {
 }
 
 export interface CreatePatternPanelProps {
+  dslContent?: string;
+  onDslContentChange?: (value: string) => void;
   patternName: string;
   dslCode: string;
   onPatternNameChange?: (value: string) => void;
   onDslCodeChange: (value: string) => void;
-  onExecutePattern: () => void;
-  onSavePattern: () => void;
+  onExecutePattern: (content?: string) => void;
+  onSavePattern: (content?: string) => void;
   isExecuting?: boolean;
   hasActiveExecution?: boolean;
   onStopExecution?: () => void;
 }
 
 export function CreatePatternPanel({
+  dslContent,
+  onDslContentChange,
   patternName,
   dslCode,
   onPatternNameChange,
@@ -145,81 +158,53 @@ export function CreatePatternPanel({
   hasActiveExecution,
   onStopExecution,
 }: CreatePatternPanelProps) {
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const [pendingCaretPosition, setPendingCaretPosition] = useState<number | null>(null);
-  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
+  const latestEditorValueRef = useRef('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [caretPosition, setCaretPosition] = useState(0);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
+  const [pendingCaretPosition, setPendingCaretPosition] = useState<number | null>(null);
 
-  const editorValue = [patternName, dslCode].filter(Boolean).join('\n');
+  const editorValue = dslContent ?? [patternName, dslCode].filter(Boolean).join('\n');
+  latestEditorValueRef.current = editorValue;
 
-  const diagnostics = useMemo(() => validateDsl(editorValue), [editorValue]);
-  const hasErrors = diagnostics.some(d => d.severity === 'error');
-  const hasWarnings = diagnostics.some(d => d.severity === 'warning');
-
-  const getCurrentLine = (value: string, position: number) => {
+  const getCurrentLine = useCallback((value: string, position: number) => {
     const safePosition = Math.max(0, Math.min(position, value.length));
-    const lineStart = value.lastIndexOf('\n', safePosition - 1) + 1;
-    const lineEnd = value.indexOf('\n', safePosition);
-
+    const lineStart = value.lastIndexOf("\n", safePosition - 1) + 1;
+    const lineEnd = value.indexOf("\n", safePosition);
     return value.slice(lineStart, lineEnd === -1 ? value.length : lineEnd);
-  };
+  }, []);
 
   const suggestionMatches = useMemo(() => {
     const currentLine = getCurrentLine(editorValue, caretPosition);
-    const match = /\[step="([a-z0-9_-]*)$/i.exec(currentLine);
+    const stepMatch = /\[step="([a-z0-9_-]*)$/i.exec(currentLine);
 
-    if (!match) {
-      return [] as string[];
+    if (stepMatch) {
+      const query = stepMatch[1].toLowerCase();
+      return STEP_SUGGESTIONS.filter((step) =>
+        step.toLowerCase().startsWith(query),
+      ).map(step => ({ label: step, type: 'step' as const }));
     }
 
-    const query = match[1].toLowerCase();
-    return STEP_SUGGESTIONS.filter(step => step.toLowerCase().startsWith(query));
-  }, [caretPosition, editorValue]);
+    const keywordMatch = /^([a-z]*)$/i.exec(currentLine);
+    if (keywordMatch) {
+      const query = keywordMatch[1].toLowerCase();
+      if ("pattern".startsWith(query) && query.length > 0) {
+        return [{ label: "pattern", type: 'pattern' as const }];
+      }
+    }
+
+    return [];
+  }, [caretPosition, editorValue, getCurrentLine]);
 
   useLayoutEffect(() => {
     if (suggestionMatches.length === 0) {
       setActiveSuggestionIndex(0);
       return;
     }
-
-    setActiveSuggestionIndex(previous => Math.min(previous, suggestionMatches.length - 1));
+    setActiveSuggestionIndex((previous) =>
+      Math.min(previous, suggestionMatches.length - 1),
+    );
   }, [suggestionMatches.length]);
-
-  const commitEditorValue = (nextEditorValue: string) => {
-    const [nextPatternName = '', ...rest] = nextEditorValue.split('\n');
-    const nextDslCode = rest.join('\n');
-
-    onPatternNameChange?.(nextPatternName);
-    onDslCodeChange(nextDslCode);
-  };
-
-  const applySuggestion = (suggestion: string) => {
-    const textarea = textareaRef.current;
-
-    if (!textarea) {
-      return;
-    }
-
-    const selectionStart = textarea.selectionStart ?? caretPosition ?? editorValue.length;
-    const selectionEnd = textarea.selectionEnd ?? caretPosition ?? editorValue.length;
-    const textBeforeSelection = editorValue.slice(0, selectionStart);
-    const textAfterSelection = editorValue.slice(selectionEnd);
-    const currentLineStart = textBeforeSelection.lastIndexOf('\n') + 1;
-    const currentLine = textBeforeSelection.slice(currentLineStart);
-    const match = /(.*\[step=")([a-z0-9_-]*)$/i.exec(currentLine);
-
-    if (!match) {
-      return;
-    }
-
-    const prefix = match[1];
-    const nextCurrentLine = `${prefix}${suggestion}"`;
-    const nextEditorValue = `${textBeforeSelection.slice(0, currentLineStart)}${nextCurrentLine}${textAfterSelection}`;
-
-    commitEditorValue(nextEditorValue);
-    setPendingCaretPosition(currentLineStart + nextCurrentLine.length);
-    textarea.focus();
-  };
 
   useLayoutEffect(() => {
     if (pendingCaretPosition === null) {
@@ -227,13 +212,84 @@ export function CreatePatternPanel({
     }
 
     const textarea = textareaRef.current;
-
     if (textarea) {
       textarea.setSelectionRange(pendingCaretPosition, pendingCaretPosition);
     }
-
     setPendingCaretPosition(null);
-  }, [editorValue, pendingCaretPosition]);
+  }, [pendingCaretPosition]);
+
+  const diagnostics = useMemo(() => validateDsl(editorValue), [editorValue]);
+  const hasErrors = diagnostics.some(d => d.severity === 'error');
+  const hasWarnings = diagnostics.some(d => d.severity === 'warning');
+
+  const commitEditorValue = (nextEditorValue: string) => {
+    latestEditorValueRef.current = nextEditorValue;
+    if (onDslContentChange) {
+      onDslContentChange(nextEditorValue);
+      return;
+    }
+    const [nextPatternName = '', ...rest] = nextEditorValue.split('\n');
+    const nextDslCode = rest.join('\n');
+
+    onPatternNameChange?.(nextPatternName);
+    onDslCodeChange(nextDslCode);
+  };
+
+  const isStopAction = isExecuting || hasActiveExecution;
+  const isExecuteDisabled = !isStopAction && (hasErrors || !editorValue.trim());
+
+  const applySuggestion = (suggestion: { label: string, type: 'step' | 'pattern' }) => {
+    const textarea = textareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    const selectionStart =
+      textarea.selectionStart ?? caretPosition ?? editorValue.length;
+    const selectionEnd =
+      textarea.selectionEnd ?? caretPosition ?? editorValue.length;
+    const textBeforeSelection = editorValue.slice(0, selectionStart);
+    const textAfterSelection = editorValue.slice(selectionEnd);
+    const currentLineStart = textBeforeSelection.lastIndexOf("\n") + 1;
+    const currentLine = textBeforeSelection.slice(currentLineStart);
+
+    let nextCurrentLine = '';
+    let caretOffset = 0;
+
+    if (suggestion.type === 'step') {
+      const match = /(.*\[step=")([a-z0-9_-]*)$/i.exec(currentLine);
+      if (!match) return;
+      const prefix = match[1];
+      nextCurrentLine = `${prefix}${suggestion.label}"`;
+      caretOffset = nextCurrentLine.length;
+    } else if (suggestion.type === 'pattern') {
+      const match = /^([a-z]*)$/i.exec(currentLine);
+      if (!match) return;
+      nextCurrentLine = `pattern Name = [key="value"]`;
+      // Place cursor on 'Name' (length of 'pattern ' = 8, 'Name' is 4 chars)
+      // So cursor start = 8, end = 12
+      caretOffset = 8; // Actually we will set selection to select 'Name'
+    }
+
+    const nextEditorValue = `${textBeforeSelection.slice(0, currentLineStart)}${nextCurrentLine}${textAfterSelection}`;
+
+    commitEditorValue(nextEditorValue);
+    
+    if (suggestion.type === 'pattern') {
+      // Small timeout to allow render, then select 'Name'
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          textareaRef.current.setSelectionRange(currentLineStart + 8, currentLineStart + 12);
+          setCaretPosition(currentLineStart + 12);
+        }
+      }, 0);
+    } else {
+      setPendingCaretPosition(currentLineStart + caretOffset);
+      textarea.focus();
+    }
+  };
 
   return (
     <section className="relative z-30 overflow-visible rounded-xl border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
@@ -265,31 +321,33 @@ export function CreatePatternPanel({
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          {hasActiveExecution ? (
-            <button
-              type="button"
-              onClick={onStopExecution}
-              className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-100 transition-colors"
-            >
-              <StopIcon isExecuting={isExecuting} />
-              Stop execution
-            </button>
-          ) : null}
           <button
             type="button"
-            onClick={onExecutePattern}
-            disabled={isExecuting || hasErrors}
-            className={`inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold transition-colors ${
-              isExecuting || hasErrors ? 'text-slate-400 opacity-70 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-100'
+            onClick={() => {
+                  if (isStopAction) {
+                onStopExecution?.();
+                return;
+              }
+              onExecutePattern(latestEditorValueRef.current);
+            }}
+                disabled={isExecuteDisabled}
+            className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  isStopAction
+                ? 'border border-red-200 bg-red-50 text-red-600 hover:bg-red-100'
+                : `border border-slate-200 bg-slate-50 ${
+                      hasErrors || !editorValue.trim()
+                    ? 'text-slate-400 opacity-70 cursor-not-allowed'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`
             }`}
           >
-            {isExecuting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PlayGlossyIcon />}
-            {isExecuting ? 'Executing...' : 'Execute pattern'}
+                {isStopAction ? <StopIcon isExecuting={isExecuting} /> : <PlayGlossyIcon />}
+                {isStopAction ? 'Stop execution' : 'Execute pattern'}
           </button>
           <button
             type="button"
-            onClick={onSavePattern}
-            disabled={hasErrors}
+            onClick={() => onSavePattern(latestEditorValueRef.current)}
+            disabled={hasErrors || !editorValue.trim()}
             className={`inline-flex items-center gap-2 rounded-full border border-slate-900 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-opacity ${
               hasErrors ? 'opacity-50 cursor-not-allowed' : ''
             }`}
@@ -311,8 +369,9 @@ export function CreatePatternPanel({
             <br />
             4
           </div>
-          <textarea
+          <Textarea
             ref={textareaRef}
+            className="min-h-[118px] w-full resize-none rounded-none border-0 bg-transparent px-3 py-3 font-mono text-[13px] leading-6 shadow-none focus-visible:ring-0"
             value={editorValue}
             onChange={event => {
               commitEditorValue(event.target.value);
@@ -322,28 +381,61 @@ export function CreatePatternPanel({
             onSelect={event => setCaretPosition(event.currentTarget.selectionStart ?? event.currentTarget.value.length)}
             onKeyUp={event => setCaretPosition(event.currentTarget.selectionStart ?? event.currentTarget.value.length)}
             onKeyDown={event => {
-              if (event.key === 'ArrowRight' && suggestionMatches.length > 0) {
-                event.preventDefault();
-                setActiveSuggestionIndex(previous => (previous + 1) % suggestionMatches.length);
-                return;
+              if (suggestionMatches.length > 0) {
+                if (event.key === 'ArrowRight') {
+                  event.preventDefault();
+                  setActiveSuggestionIndex(prev => (prev + 1) % suggestionMatches.length);
+                  return;
+                }
+                if (event.key === 'ArrowLeft') {
+                  event.preventDefault();
+                  setActiveSuggestionIndex(prev => (prev - 1 + suggestionMatches.length) % suggestionMatches.length);
+                  return;
+                }
+                if (event.key === 'Tab' || event.key === 'Enter') {
+                  event.preventDefault();
+                  applySuggestion(suggestionMatches[activeSuggestionIndex] ?? suggestionMatches[0]);
+                  return;
+                }
               }
 
-              if (event.key === 'ArrowLeft' && suggestionMatches.length > 0) {
+              if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
                 event.preventDefault();
-                setActiveSuggestionIndex(previous => (previous - 1 + suggestionMatches.length) % suggestionMatches.length);
-                return;
-              }
-
-              if ((event.key === 'Tab' || event.key === 'Enter') && suggestionMatches.length > 0) {
-                event.preventDefault();
-                applySuggestion(suggestionMatches[activeSuggestionIndex] ?? suggestionMatches[0]);
+                onExecutePattern(latestEditorValueRef.current);
               }
             }}
-            spellCheck={false}
-            className="min-h-[118px] w-full resize-none bg-white px-4 py-3 text-[13px] leading-7 text-slate-900 outline-none font-mono"
           />
 
-          {diagnostics.length > 0 && suggestionMatches.length === 0 ? (
+          {suggestionMatches.length > 0 ? (
+            <div className="absolute left-12 top-[calc(100%-0.5rem)] z-50 w-[min(320px,calc(100%-3.5rem))] rounded-xl border border-slate-200 bg-white px-2 py-2 shadow-lg shadow-slate-200/80">
+              <div className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                Step suggestions
+              </div>
+              <div className="max-h-36 overflow-auto pr-1">
+                <div className="flex flex-wrap gap-1">
+                  {suggestionMatches.map((suggestion, index) => (
+                    <button
+                      key={suggestion.label}
+                      type="button"
+                      onClick={() => applySuggestion(suggestion)}
+                      onMouseEnter={() => setActiveSuggestionIndex(index)}
+                      className="rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors"
+                      style={{
+                        borderColor: activeSuggestionIndex === index ? "#0f172a" : "#e2e8f0",
+                        background: activeSuggestionIndex === index ? "#0f172a" : "#f8fafc",
+                        color: activeSuggestionIndex === index ? "#ffffff" : "#334155",
+                      }}
+                    >
+                      {suggestion.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-1 px-1 text-[13px] text-slate-600">
+                Use Left and Right to choose, then Tab or Enter to accept.
+              </div>
+            </div>
+          ) : diagnostics.length > 0 ? (
             <div className="absolute left-12 bottom-0 translate-y-full z-40 w-[min(400px,calc(100%-3.5rem))] rounded-xl border border-slate-200 bg-white px-2 py-2 shadow-lg shadow-slate-200/80 mt-1">
               <div className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                 DSL Diagnostics
@@ -362,37 +454,6 @@ export function CreatePatternPanel({
                     <span>{d.message}</span>
                   </div>
                 ))}
-              </div>
-            </div>
-          ) : null}
-
-          {suggestionMatches.length > 0 ? (
-            <div className="absolute left-12 top-[calc(100%-0.5rem)] z-50 w-[min(320px,calc(100%-3.5rem))] rounded-xl border border-slate-200 bg-white px-2 py-2 shadow-lg shadow-slate-200/80">
-              <div className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                Suggestions de step
-              </div>
-              <div className="max-h-36 overflow-auto pr-1">
-                <div className="flex flex-wrap gap-1">
-                {suggestionMatches.map((suggestion, index) => (
-                  <button
-                    key={suggestion}
-                    type="button"
-                    onClick={() => applySuggestion(suggestion)}
-                    onMouseEnter={() => setActiveSuggestionIndex(index)}
-                    className="rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors"
-                    style={{
-                      borderColor: activeSuggestionIndex === index ? '#0f172a' : '#e2e8f0',
-                      background: activeSuggestionIndex === index ? '#0f172a' : '#f8fafc',
-                      color: activeSuggestionIndex === index ? '#ffffff' : '#334155',
-                    }}
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-                </div>
-              </div>
-              <div className="mt-1 px-1 text-[13px] text-black">
-                Utilise les flèches pour choisir, puis Tab ou Entrée pour accepter et fermer le guillemet.
               </div>
             </div>
           ) : null}
