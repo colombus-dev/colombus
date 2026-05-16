@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useColombusStore } from "@/store";
 
-export default function RequireApiKey({ children }: React.PropsWithChildren) {
+export default function Auth({ children }: React.PropsWithChildren) {
 	const apiKey = useColombusStore((state) => state.apiKey);
 	const setApiKey = useColombusStore((state) => state.setApiKey);
 
