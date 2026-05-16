@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 origins = [
@@ -7,8 +8,9 @@ origins = [
 ]
 
 # TODO ymu: Replace with Pydantic config
-SECURITY_API_KEY_HEADER = "x-api-key"
-SECURITY_API_KEY_VALUE = "COL-0659-PROF"
+HEADER_FIELD_X_API_KEY = "x-api-key"
+GOOGLE_CLIENT_ID = os.environ["GOOGLE_CLIENT_ID"]
+JWT_SECRET = os.environ["JWT_SECRET"]
 
 notebooks_storage_path = Path("./data/notebooks")
 

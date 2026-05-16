@@ -4,13 +4,14 @@ from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.constants import (
-    SECURITY_API_KEY_HEADER,
+    HEADER_FIELD_X_API_KEY,
     notebooks_storage_path,
     origins,
 )
 from app.dependencies import APIKeyDeps
 from app.models.sql_model import create_db_and_tables
 from app.routers import (
+    auth_router,
     pattern_router,
     profile_router,
     project_router,
@@ -39,9 +40,10 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "DELETE"],
-    allow_headers=[SECURITY_API_KEY_HEADER],
+    allow_headers=[HEADER_FIELD_X_API_KEY],
 )
 # TODO: add security dependency
+app.include_router(auth_router.router)
 app.include_router(project_router.router, tags=["project"], dependencies=[APIKeyDeps])
 app.include_router(profile_router.router, tags=["profile"], dependencies=[APIKeyDeps])
 app.include_router(pattern_router.router, tags=["pattern"], dependencies=[APIKeyDeps])

@@ -2,6 +2,7 @@ import axios from "axios";
 import type { DiffResult, PatternGroup, PpmResult } from "@/lib/types";
 import { Pattern } from "@/lib/types";
 import { useColombusStore } from "@/store";
+import {toast} from "sonner";
 
 export type StepNode = {
 	id: string;
@@ -48,6 +49,17 @@ const axiosInstance = axios.create({
 		},
 	},
 });
+
+axiosInstance.interceptors.response.use(
+  (r) => r,
+  (error) => {
+    if (error.response?.status === 401) {
+      delete axiosInstance.defaults.headers.common[API_KEY_HEADER_NAME];
+      useColombusStore.getState().setApiKey(undefined);
+    }
+    return Promise.reject(error);
+  },
+);
 
 export function updateHttpClientApiKey() {
 	axiosInstance.defaults.headers.common[API_KEY_HEADER_NAME] =
@@ -212,4 +224,10 @@ export async function postFrequentStepsData(
 			profiles_names: profilesNames,
 		})
 		.then(({ data }) => data.map((d) => ({ step: d[0], frequency: d[1] })));
+}
+
+export async function authGoogle(credential: string) {
+  return await axiosInstance
+    .post<{ api_key: string }>("/auth/google", { credential })
+    .then(({ data }) => data);
 }

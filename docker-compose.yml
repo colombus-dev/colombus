@@ -20,6 +20,8 @@ services:
     environment:
       POSTGRESQL_FULL_URL: postgresql+psycopg://christopher:pinta@colombus_postgresql:5432/colombusdb
       ML_PROFILER_API_URL_PREFIX: "http://mlprofiler_api:8081"
+      GOOGLE_CLIENT_ID: "1030811309515-2hei2v0r6u56kp8nl59tdglncojkjrm3.apps.googleusercontent.com"
+      JWT_SECRET: "Jc70NCauIpm6bva7x53LGq5ykDQ="
     healthcheck:
       test: curl -f http://localhost:8180/health || exit 1
       interval: 5m
