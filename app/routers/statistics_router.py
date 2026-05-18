@@ -15,6 +15,50 @@ from app.utils.diff_stats_exploration import get_frequent_patterns_matrix
 router = APIRouter()
 
 
+class NotebookScoreItem(BaseModel):
+    id: str
+    name: str
+    score: float
+
+
+@router.get("/api/project/{project_id}/stats/notebooks", response_model=list[NotebookScoreItem])
+async def get_project_notebook_scores(project_id: str, session: DatabaseSession):
+    profiles = session.exec(
+        select(Profile.id, Profile.name, Profile.encoded_profile)
+        .where(Profile.project_id == project_id)
+        .order_by(Profile.name)
+    ).all()
+
+    if not profiles:
+        return []
+
+    unique_profiles = []
+    seen_names: set[str] = set()
+    for profile_id, profile_name, encoded_profile in profiles:
+        if profile_name in seen_names:
+            continue
+        seen_names.add(profile_name)
+        unique_profiles.append((profile_id, profile_name, encoded_profile))
+
+    notebook_scores: list[NotebookScoreItem] = []
+    for profile_id, profile_name, encoded_profile in unique_profiles:
+        ratios = [
+            SequenceMatcher(None, encoded_profile, other_encoded_profile, autojunk=False).ratio()
+            for other_profile_id, _, other_encoded_profile in unique_profiles
+            if other_profile_id != profile_id
+        ]
+        score = sum(ratios) / len(ratios) if ratios else 1.0
+        notebook_scores.append(
+            NotebookScoreItem(
+                id=str(profile_id),
+                name=profile_name,
+                score=score,
+            )
+        )
+
+    return sorted(notebook_scores, key=lambda notebook: (notebook.score, notebook.name))
+
+
 @router.get("/api/project/{project_id}/stats")
 async def get_project_stats(project_id: str, session: DatabaseSession):
     # TODO: seems duplicated with get_frequent_patterns_matrix

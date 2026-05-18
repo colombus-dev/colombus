@@ -14,10 +14,14 @@ import { useColombusStore } from "@/store";
 
 interface PatternDslEditorProps {
 	onSubmitted?: (content: string) => void;
+	content?: string;
+	onContentChange?: (content: string) => void;
 }
 
 export default function PatternDslEditor({
 	onSubmitted,
+	content,
+	onContentChange,
 	...props
 }: PatternDslEditorProps &
 	React.HTMLAttributes<HTMLDivElement> &
@@ -28,6 +32,7 @@ export default function PatternDslEditor({
 	const currentPatternContent = useColombusStore(
 		(state) => state.currentPattern?.dsl_content,
 	);
+	const editorContent = content ?? currentPatternContent ?? DEFAULT_DSL_CODE;
 
 	const { validateGrammarModel } = useCanopusGrammar(monaco);
 	const { themeName } = useCanopusTheme(monaco);
@@ -41,17 +46,27 @@ export default function PatternDslEditor({
 	}, []);
 
 	useEffect(() => {
-		editorRef.current?.setValue(currentPatternContent ?? DEFAULT_DSL_CODE);
-	}, [currentPatternContent]);
+		const editor = editorRef.current;
+		if (!editor) {
+			return;
+		}
+
+		if (editor.getValue() !== editorContent) {
+			editor.setValue(editorContent);
+		}
+	}, [editorContent]);
 
 	const onModelContentChange = useCallback(
 		(newContent: string | undefined) => {
+			if (newContent) {
+				onContentChange?.(newContent);
+			}
 			const model = editorRef.current?.getModel();
 			if (model && newContent) {
 				validateGrammarModel(model);
 			}
 		},
-		[validateGrammarModel],
+		[onContentChange, validateGrammarModel],
 	);
 
 	const handleEditorDidMount: OnMount = useCallback(
@@ -81,7 +96,7 @@ export default function PatternDslEditor({
 			<Editor
 				theme={themeName}
 				defaultLanguage={EDITOR_LANGUAGE_ID}
-				defaultValue={currentPatternContent ?? DEFAULT_DSL_CODE}
+				defaultValue={editorContent}
 				onChange={onModelContentChange}
 				onMount={handleEditorDidMount}
 				options={{

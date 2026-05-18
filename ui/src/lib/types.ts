@@ -101,5 +101,13 @@ export const DiffResult = PpmResult.extend({ ratio: z.number() });
 
 export type DiffResult = z.infer<typeof DiffResult>;
 
+export const NotebookScore = z.object({
+	id: z.string(),
+	name: z.string(),
+	score: z.number(),
+});
+
+export type NotebookScore = z.infer<typeof NotebookScore>;
+
 // Monaco editor (for DSL)
 export type MonacoEditor = typeof monaco_editor;

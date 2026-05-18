@@ -9,18 +9,19 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import type { PpmNodesDisplayMode } from "@/configuration";
+import ProjectTaxonomyList from "./project-taxonomy-list";
 import { useColombusStore } from "@/store";
 
 const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
-> = ({ ...divProps }) => {
+	& { stepNames?: string[] }
+> = ({ stepNames, ...divProps }) => {
+	const displayedLevel = useColombusStore((state) => state.displayedLevel);
+	const setDisplayedLevel = useColombusStore((state) => state.setDisplayedLevel);
 	const referenceDiffProfile = useColombusStore(
 		(state) => state.referenceDiffProfile,
 	);
 	const currentPattern = useColombusStore((state) => state.currentPattern);
-	const setDisplayedLevel = useColombusStore(
-		(state) => state.setDisplayedLevel,
-	);
 	const useWeightedNodes = useColombusStore((state) => state.useWeightedNodes);
 	const setUseWeightedNodes = useColombusStore(
 		(state) => state.setUseWeightedNodes,
@@ -37,8 +38,8 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 			<div className="space-y-2">
 				<p className="font-bold">Displayed levels:</p>
 				<Select
-					onValueChange={(v) => setDisplayedLevel(Number.parseInt(v, 10))}
-					defaultValue="2"
+					value={String(displayedLevel)}
+					onValueChange={(value) => setDisplayedLevel(Number(value))}
 				>
 					<SelectTrigger>
 						<SelectValue placeholder="Level to display" />
@@ -90,6 +91,10 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 						</div>
 					</RadioGroup>
 				</div>
+				<ProjectTaxonomyList
+					className="rounded-2xl border border-slate-200 bg-white p-3"
+					stepNames={stepNames}
+				/>
 			</div>
 		</div>
 	);
