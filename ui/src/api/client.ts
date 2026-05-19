@@ -2,7 +2,6 @@ import axios from "axios";
 import type { DiffResult, PatternGroup, PpmResult } from "@/lib/types";
 import { Pattern } from "@/lib/types";
 import { useColombusStore } from "@/store";
-import {toast} from "sonner";
 
 export type StepNode = {
 	id: string;
@@ -64,14 +63,6 @@ axiosInstance.interceptors.response.use(
 export function updateHttpClientApiKey() {
 	axiosInstance.defaults.headers.common[API_KEY_HEADER_NAME] =
 		useColombusStore.getState().apiKey;
-}
-
-export async function checkApiKey(apiKey: string) {
-	return await axiosInstance
-		.post<string>("/key", undefined, {
-			headers: { [API_KEY_HEADER_NAME]: apiKey },
-		})
-		.then(({ data }) => data);
 }
 
 export async function createNewProject(name: string) {

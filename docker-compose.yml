@@ -23,7 +23,11 @@ services:
     volumes:
       - ./app:/colombus-builder/app:rw
     environment:
-      POSTGRESQL_FULL_URL: postgresql+psycopg://christopher:pinta@colombus_postgresql:5432/colombusdb
+      APP_HOST: "http://localhost"
+      APP_PORT: 8180
+      UI_HOST: "http://localhost"
+      UI_PORT: 5173
+      DATABASE_URL: postgresql+psycopg://christopher:pinta@colombus_postgresql:5432/colombusdb
       ML_PROFILER_API_URL_PREFIX: "http://mlprofiler_api:8081"
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       JWT_SECRET: ${JWT_SECRET}

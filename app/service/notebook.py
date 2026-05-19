@@ -1,13 +1,13 @@
-import os
 from enum import Enum
 from typing import Any
 
 import httpx
 
 from app.models.api_model import Profile
+from app.settings import get_settings
 
-ML_PROFILER_API_URL_PREFIX = os.environ["ML_PROFILER_API_URL_PREFIX"]
 ML_PROFILER_API_TIMEOUT = 5 * 60
+settings = get_settings()
 
 
 class TaxonomyFunction(str, Enum):
@@ -29,7 +29,9 @@ async def convert_to_profiles(
 ):
     if not notebook_files:
         return []
-    async with httpx.AsyncClient(base_url=ML_PROFILER_API_URL_PREFIX) as client:
+    async with httpx.AsyncClient(
+        base_url=settings.ml_profiler_api_url_prefix
+    ) as client:
         # TODO ymu: maybe create a shared client once at startup using fast API's lifespan for ex
         response = await client.post(
             "/v2/profile",

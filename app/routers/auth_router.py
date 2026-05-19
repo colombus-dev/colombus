@@ -7,15 +7,11 @@ from google.oauth2 import id_token
 from jose import JWTError, jwt
 from pydantic import BaseModel
 
-from app.constants import GOOGLE_CLIENT_ID, HEADER_FIELD_X_API_KEY, JWT_SECRET
 from app.exceptions import InvalidTokenException
-
-JWT_ALGORITHM = "HS256"
-JWT_EXPIRE_HOURS = 1
+from app.settings import get_settings
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
-
-api_key_header = APIKeyHeader(name=HEADER_FIELD_X_API_KEY)
+settings = get_settings()
 
 
 class GoogleAuthRequest(BaseModel):
@@ -28,7 +24,7 @@ def auth_google(body: GoogleAuthRequest):
         info = id_token.verify_oauth2_token(
             body.credential,
             google_requests.Request(),
-            GOOGLE_CLIENT_ID,
+            settings.google_client_id,
         )
     except ValueError:
         raise InvalidTokenException(name="Google")
@@ -38,18 +34,24 @@ def auth_google(body: GoogleAuthRequest):
             "sub": info["email"],
             "email": info["email"],
             "name": info.get("name", ""),
-            "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRE_HOURS),
+            "exp": datetime.now(timezone.utc)
+            + timedelta(hours=settings.jwt_expire_hours),
         },
-        JWT_SECRET,
-        algorithm=JWT_ALGORITHM,
+        settings.jwt_secret,
+        algorithm=settings.jwt_algorithm,
     )
     return {"api_key": token}
+
+
+api_key_header = APIKeyHeader(name=settings.jwt_header_field)
 
 
 def check_api_key(api_key_header_value: str = Security(api_key_header)) -> dict:
     try:
         payload = jwt.decode(
-            api_key_header_value, JWT_SECRET, algorithms=[JWT_ALGORITHM]
+            api_key_header_value,
+            settings.jwt_secret,
+            algorithms=[settings.jwt_algorithm],
         )
         return payload
     except JWTError:

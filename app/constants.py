@@ -1,16 +1,4 @@
-import os
 from pathlib import Path
-
-origins = [
-    "http://localhost",
-    "http://localhost:5173",
-    "http://erebe-vm9.i3s.unice.fr",
-]
-
-# TODO ymu: Replace with Pydantic config
-HEADER_FIELD_X_API_KEY = "x-api-key"
-GOOGLE_CLIENT_ID = os.environ["GOOGLE_CLIENT_ID"]
-JWT_SECRET = os.environ["JWT_SECRET"]
 
 notebooks_storage_path = Path("./data/notebooks")
 
