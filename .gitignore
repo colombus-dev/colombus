@@ -211,3 +211,5 @@ out/
 data/
 postgres_data/
 .idea/
+node_modules/
+ui/node_modules

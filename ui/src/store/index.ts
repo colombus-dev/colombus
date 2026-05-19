@@ -7,7 +7,7 @@ import type { DiffResult, Pattern, PpmResult } from "@/lib/types";
 
 interface AuthSlice {
 	apiKey?: string;
-	setApiKey: (key: string) => void;
+	setApiKey: (key: string | undefined) => void;
 }
 
 interface DiffSlice {

@@ -29,6 +29,7 @@ import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
 import type { PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
+import {PATH} from "@/lib/constants";
 
 const GRAPH_CONTAINER_ID = "graph-container";
 
@@ -67,7 +68,7 @@ export default function ExplorerProjectIdPage() {
 	useEffect(() => {
 		if (projectValidity === "invalid") {
 			toast.error("Project not found.");
-			navigate("/explorer");
+			navigate(PATH.EXPLORER);
 		}
 	}, [projectValidity, navigate]);
 
