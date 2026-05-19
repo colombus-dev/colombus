@@ -6,30 +6,25 @@
 * Docker Compose (tested on version v2.40.0)
 * A GitHub deploy key (for development)
 
-## Deployment
+## Starting the app
 
-The following docker compose commands deploy the Colombus exploration platform (in development mode):
-
+Prepare the env files
 ```bash
-$ docker compose build --ssh default=$HOME/.ssh/[YOUR_GITHUB_SSH_DEPLOY_KEY]
-$ docker compose up
+cp .env.sample .env && sed -i "s|JWT_SECRET=.*|JWT_SECRET=$(openssl rand -base64 20 | sed -E 's/(.)\1+/\1/g')|" .env
+cp ui/.env.sample ui/.env
+```
+> [!IMPORTANT]
+> Make sure your edit '.env' to update the variables so that they fit your needs.
+
+Then use the following command to launch the app:
+```bash
+docker compose --env-file .env build --ssh default=$HOME/.ssh/[YOUR_GITHUB_SSH_DEPLOY_KEY]
+docker compose --env-file .env up
 ```
 
 ## Development
 
-### Pre-commit
-
-We use pre-commit to ensure code quality.
-
+We use pre-commit to ensure code quality. Install pre-commit hooks locally:
 ```bash
-$ uv tool install pre-commit --with pre-commit-uv
-$ pre-commit install
+uv run --with pre-commit pre-commit install
 ```
-
-To test the installation, run the following command:
-
-```bash
-$ pre-commit run --all-files
-```
-
-For more information, see https://adamj.eu/tech/2025/05/07/pre-commit-install-uv/.

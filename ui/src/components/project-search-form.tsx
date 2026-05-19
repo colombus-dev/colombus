@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
+import {PATH} from "@/lib/constants.ts";
 
 const ProjectSearchForm: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
@@ -18,7 +19,7 @@ const ProjectSearchForm: React.FunctionComponent<
 			if (!apiKey || !projectId) {
 				return;
 			}
-			navigate(`/explorer/${projectId}`);
+			navigate(`${PATH.EXPLORER}/${projectId}`);
 		},
 		[apiKey, navigate],
 	);

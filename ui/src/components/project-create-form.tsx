@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
+import {PATH} from "@/lib/constants";
 
 const ProjectCreateForm: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
@@ -23,7 +24,7 @@ const ProjectCreateForm: React.FunctionComponent<
 			await createNewProject(newProjectName, apiKey)
 				.then((projectId) => {
 					toast.success("Project successfuly created.");
-					navigate(`/explorer/${projectId}`);
+					navigate(`${PATH.EXPLORER}/${projectId}`);
 				})
 				.catch((r) => {
 					toast.error(r.response.data.detail);
