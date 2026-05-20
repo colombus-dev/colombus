@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import type { GraphDefinition } from "@/api/client";
 import {
 	getAllProfiles,
+	getProfilesScores,
 	getGraphNodes,
 	parsePpm,
 	postApplyPpmFilter,
@@ -20,6 +21,7 @@ import ProfilePatternList from "@/components/profile-pattern-list";
 import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
 import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
 import ProjectTaxonomyList from "@/components/project-taxonomy-list";
+import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,6 +52,9 @@ export default function ExplorerProjectIdPage() {
 	);
 	const setFilteredProfilesNames = useColombusStore(
 		(state) => state.setFilteredProfilesNames,
+	);
+	const setProfilesScores = useColombusStore(
+		(state) => state.setProfilesScores,
 	);
 
 	const setCurrentPattern = useColombusStore(
@@ -104,6 +109,11 @@ export default function ExplorerProjectIdPage() {
 			});
 		};
 		setIsLoading(true);
+
+		getProfilesScores(projectId).then((scores) => {
+			setProfilesScores(scores);
+		});
+
 		if (currentPattern?.groups?.length) {
 			postApplyPpmFilter(projectId, currentPattern.groups).then(
 				(workflowsWithData) =>
@@ -141,6 +151,7 @@ export default function ExplorerProjectIdPage() {
 		setFilteredProfilesNames,
 		setAvailableProfilesNames,
 		setAvailableProfilesWithPpmData,
+		setProfilesScores,
 	]);
 
 	useEffect(() => {
@@ -236,7 +247,8 @@ export default function ExplorerProjectIdPage() {
 				<Separator />
 				<ProfilePatternList />
 			</div>
-			<div className="col-span-5 grid grid-rows-10 items-center">
+			<ProfileExplorerPpmResultsBar className="col-span-1" />
+			<div className="col-span-4 grid grid-rows-10 items-center">
 				{currentPattern && <ProfilePatternActions />}
 				{currentPattern && projectId && (
 					<PatternDslEditor
