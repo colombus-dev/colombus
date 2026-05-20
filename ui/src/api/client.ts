@@ -101,6 +101,12 @@ export async function getAllProfiles(projectId: string) {
 		.then(({ data }) => data);
 }
 
+export async function getProfilesScores(projectId: string) {
+	return await axiosInstance
+		.get<Record<string, number>>(`/project/${projectId}/profile/scores`)
+		.then(({ data }) => data);
+}
+
 export async function postNotebookOrProfiles(projectId: string, files: File[]) {
 	const formData = new FormData();
 	for (const file of files)

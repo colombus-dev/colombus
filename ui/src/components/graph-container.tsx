@@ -2,7 +2,6 @@ import BounceLoader from "react-spinners/BounceLoader";
 import type { Sigma } from "sigma";
 import GraphControls from "./graph-controls";
 import ProfileExplorerGraphSettingsBar from "./profile-explorer-graph-settings-bar";
-import ProfileExplorerPpmResultsBar from "./profile-explorer-ppm-results-bar";
 
 interface GraphContainerProps {
 	containerId: string;
@@ -31,7 +30,6 @@ export default function GraphContainer({
 			/>
 			{!isLoading && (
 				<>
-					<ProfileExplorerPpmResultsBar className="absolute top-0 m-3 bg-white bg-opacity-80 p-2" />
 					<ProfileExplorerGraphSettingsBar className="absolute top-0 right-6 m-3 bg-white bg-opacity-80 p-2" />
 					<GraphControls
 						graphRenderer={graphRenderer}

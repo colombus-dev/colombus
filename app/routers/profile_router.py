@@ -37,6 +37,30 @@ async def get_all_profile(
     ).all()
 
 
+@router.get("/api/project/{project_id}/profile/scores")
+async def get_profiles_scores(
+    project_id: uuid.UUID,
+    session: DatabaseSession,
+) -> dict[str, float]:
+    results = session.exec(
+        select(Profile.name, Profile.json_profile).where(Profile.project_id == project_id)
+    ).all()
+    scores = {}
+    for name, json_profile in results:
+        score_val = 0.0
+        if isinstance(json_profile, dict):
+            score_val = json_profile.get("score", 0.0)
+        elif isinstance(json_profile, str):
+            import json
+            try:
+                parsed = json.loads(json_profile)
+                score_val = parsed.get("score", 0.0)
+            except Exception:
+                pass
+        scores[name] = score_val
+    return scores
+
+
 @router.get("/api/project/{project_id}/profile/getJson")
 async def get_json_profile(
     project_id: uuid.UUID, profile_name: str, session: DatabaseSession

@@ -54,6 +54,7 @@ class Profile(ProfileBase):
     profile_metadata: ProfileMetadata = Field(alias="metadata") # use alias to avoid confusion with aql_model inherited metadata
     source: list[Any]
     outputs: dict[str, str]
+    score: Optional[float] = Field(default=0.0)
 
 
 # Pattern/PPM
