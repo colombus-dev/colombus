@@ -11,7 +11,6 @@
 Prepare the env files
 ```bash
 cp .env.sample .env && sed -i "s|JWT_SECRET=.*|JWT_SECRET=$(openssl rand -base64 20 | sed -E 's/(.)\1+/\1/g')|" .env
-cp ui/.env.sample ui/.env
 ```
 > [!IMPORTANT]
 > Make sure your edit '.env' to update the variables so that they fit your needs.
