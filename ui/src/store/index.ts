@@ -41,8 +41,10 @@ interface ProfilesSlice {
 	setAvailableProfilesWithPpmData: (data: PpmResult[]) => void;
 	filteredProfilesNames: string[];
 	setFilteredProfilesNames: (profiles: string[]) => void;
-	profilesScores: Record<string, number>;
-	setProfilesScores: (scores: Record<string, number>) => void;
+	profilesScores: Record<string, number | null | undefined>;
+	setProfilesScores: (
+		scores: Record<string, number | null | undefined>,
+	) => void;
 }
 
 interface ProjectSlice {
