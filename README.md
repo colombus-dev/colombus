@@ -17,8 +17,7 @@ cp .env.sample .env && sed -i "s|JWT_SECRET=.*|JWT_SECRET=$(openssl rand -base64
 
 Then use the following command to launch the app:
 ```bash
-docker compose --env-file .env build --ssh default=$HOME/.ssh/[YOUR_GITHUB_SSH_DEPLOY_KEY]
-docker compose --env-file .env up
+docker compose --env-file .env up --build
 ```
 
 ## Development
