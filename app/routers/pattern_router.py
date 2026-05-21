@@ -7,12 +7,11 @@ from sqlmodel import col, select, text
 
 from app.dependencies import DatabaseSession
 from app.exceptions import ElementNotFoundException, InvalidPatternDefinitionException
-from app.models.api_model import Pattern as PatternApi, PatternWithDSLApi
-from app.models.api_model import PatternGroup, PpmResult
+from app.models.api_model import Pattern as PatternApi
+from app.models.api_model import PatternGroup, PatternWithDSLApi, PpmResult
 from app.models.sql_model import Pattern
 from app.utils.convert_canopus_to_legacy import convert_pattern_to_legacy
 from app.utils.convert_ppm_to_sql import convert_ppm_to_sql_query
-
 
 router = APIRouter()
 

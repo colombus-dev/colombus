@@ -6,7 +6,12 @@ services:
       networks:
         - colombus-dev_network
       volumes:
-      - ./ui/:/app:rw
+        - ./ui/:/app:rw
+      environment:
+        VITE_API_HOST: "http://localhost"
+        VITE_API_PORT: 8180
+        VITE_INTERFACE_MODE: "full"
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       depends_on:
         - colombus_app
   colombus_app:
@@ -18,8 +23,14 @@ services:
     volumes:
       - ./app:/colombus-builder/app:rw
     environment:
-      POSTGRESQL_FULL_URL: postgresql+psycopg://christopher:pinta@colombus_postgresql:5432/colombusdb
+      APP_HOST: "http://localhost"
+      APP_PORT: 8180
+      UI_HOST: "http://localhost"
+      UI_PORT: 5173
+      DATABASE_URL: postgresql+psycopg://${DB_USERNAME}:${DB_PASSWORD}@colombus_postgresql:5432/${DB_NAME}
       ML_PROFILER_API_URL_PREFIX: "http://mlprofiler_api:8081"
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      JWT_SECRET: ${JWT_SECRET}
     healthcheck:
       test: curl -f http://localhost:8180/health || exit 1
       interval: 5m
@@ -34,15 +45,15 @@ services:
       context: .
       dockerfile: Dockerfile.postgres
     environment:
-      POSTGRES_USER: christopher
-      POSTGRES_PASSWORD: pinta
-      POSTGRES_DB: colombusdb
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - 5433:5432
     networks:
       - colombus-dev_network
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data/
+      - postgres_data:/var/lib/postgresql/data/
     healthcheck:
       test: ["CMD-SHELL", "pg_isready", "-U", "christopher", "-d", "colombusdb"]
       timeout: 10s
@@ -71,3 +82,6 @@ services:
 networks:
   colombus-dev_network:
     external: true
+
+volumes:
+  postgres_data:

@@ -18,8 +18,6 @@ COPY *.ts .
 
 RUN yarn install
 
-COPY .env.production .
-
 RUN yarn build
 
 CMD ["yarn", "preview", "--host"]

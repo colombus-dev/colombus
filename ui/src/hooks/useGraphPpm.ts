@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import type Sigma from "sigma";
-import { getOutputImagesForStep } from "@/api/client";
 import {
 	algoNodeSuffix,
 	libraryFunctionNodeSuffix,

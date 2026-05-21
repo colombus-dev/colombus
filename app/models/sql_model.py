@@ -1,19 +1,21 @@
-import os
 import uuid
 from typing import Any, Optional
 
 from sqlalchemy.dialects import mysql
 from sqlalchemy.orm import relationship
 from sqlmodel import (
-    Column,
-    create_engine,
-    Field,
     JSON,
+    Column,
+    Field,
     Relationship,
     SQLModel,
     String,
+    create_engine,
 )
 
+from app.settings import get_settings
+
+settings = get_settings()
 
 ProjectIdFk = Field(default=None, foreign_key="project.id", ondelete="CASCADE")
 ProfileIdFk = Field(
@@ -163,7 +165,7 @@ class Pattern(SQLModel, table=True):
     project: Project = Relationship(back_populates="patterns")
 
 
-engine = create_engine(os.environ["POSTGRESQL_FULL_URL"], echo=False)
+engine = create_engine(settings.database_url, echo=False)
 
 
 def create_db_and_tables():
