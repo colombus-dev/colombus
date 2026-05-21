@@ -31,7 +31,7 @@ const ProfileStepsFrequencyChart: React.FunctionComponent<
 > = () => {
 	const { projectId } = useParams<{ projectId: string }>();
 	const [frequentStepsData, setFrequentStepsData] =
-		useState<{ step: string; key: number }[]>();
+		useState<{ step: string; frequency: number }[]>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const availableProfilesNames = useColombusStore(
 		(state) => state.availableProfilesNames,
