@@ -9,12 +9,9 @@ WORKDIR /colombus-builder
 
 RUN apk update && \
     apk upgrade && \
-    apk add --no-cache git build-base openssh-client
+    apk add --no-cache git
 
 COPY pyproject.toml uv.lock ./
-
-RUN mkdir -p ~/.ssh && chmod 0700 ~/.ssh
-RUN ssh-keyscan github.com >> ~/.ssh/known_hosts
 
 # Install dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
