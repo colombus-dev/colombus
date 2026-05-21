@@ -3,22 +3,22 @@ name: CI
 on:
   push:
     branches: ["**"]
+    tags: ["v*"]
   pull_request:
     branches: ["**"]
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}
+
 jobs:
-  lint-and-type-check:
+  check:
     name: Pre-commit hooks (lint, sort, type-check, docker)
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Load SSH deploy key
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.CANOPUS_DSL_DEPLOY_KEY }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -34,23 +34,96 @@ jobs:
       - name: Run pre-commit on all files
         uses: pre-commit/action@v3.0.1
         with:
-          extra_args: --all-files # TODO ymu : maybe run only on changed files
+          extra_args: --all-files
 
-  test:
-    name: Tests
+  build:
+    name: Build images
     runs-on: ubuntu-latest
-    needs: lint-and-type-check
-
+    needs: check
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build colombus-app
+        uses: docker/build-push-action@v5
         with:
-          python-version: "3.12"
+          context: .
+          file: Dockerfile.prod
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+      - name: Build colombus-ui
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ui
+          file: ./ui/Dockerfile.prod
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Install dependencies
-        run: uv sync --all-extras
+  push:
+    name: Push images
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate tags (app)
+        id: meta-app
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/colombus-app
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=,format=short
+            type=semver,pattern={{version}}
+
+      - name: Generate tags (ui)
+        id: meta-ui
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/colombus-ui
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=,format=short
+            type=semver,pattern={{version}}
+
+      - name: Push colombus-app
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.prod
+          push: true
+          tags: ${{ steps.meta-app.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Push colombus-ui
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ui
+          file: ./ui/Dockerfile.prod
+          push: true
+          tags: ${{ steps.meta-ui.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

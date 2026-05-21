@@ -20,7 +20,7 @@ export default function useValidProject() {
 			setProjectValidity("invalid");
 			return;
 		}
-		postRetrieveProjectName(projectId, apiKey)
+		postRetrieveProjectName(projectId)
 			.then((name) => {
 				setProjectName(name);
 				setProjectValidity("valid");

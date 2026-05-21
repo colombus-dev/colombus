@@ -15,13 +15,13 @@ export type PpmNodesDisplayMode = "show-all" | "show-fixed" | "show-variable";
 //     "Communication",
 //     "Deployment",
 //     "Library Loading",
-//     "Others",
+//     "Other",
 // ];
 
 export const supportedSteps = [
 	"Library Loading",
 	"Visualization",
-	"Others",
+	"Other",
 	"Data Preparation",
 	"Data Profiling and Exploratory Data Analysis",
 	"Data Preparation and Exploration",
@@ -72,13 +72,13 @@ export const libraryFunctionNodeSuffix = "-libfunc";
 //     "Communication": "#8dd3c7",
 //     "Deployment": "#ff7f00",
 //     "Library Loading": "#ff0029",
-//     "Others": "#66a61e",
+//     "Other": "#66a61e",
 // };
 
 // export const stepsColorsMapping: { [stepName: string]: string } = {
 // 	"Library Loading": "#ff0029",
 // 	Visualization: "#377eb8",
-// 	Others: "#66a61e",
+// 	Other: "#66a61e",
 // 	"Data Preparation": "#984ea3",
 // 	"Data Profiling and Exploratory Data Analysis": "#00d2d5",
 // 	"Data Preparation and Exploration": "#ff7f00",
@@ -107,5 +107,5 @@ export const stepsColorsMapping: { [stepName: string]: string } = {
 	Interpretation: "#bebada",
 	Communication: "#8dd3c7",
 	Deployment: "#fdb462",
-	Others: "#66a61e",
+	Other: "#66a61e",
 };

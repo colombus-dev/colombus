@@ -5,12 +5,11 @@ from fastapi import APIRouter, UploadFile
 from pydantic import BaseModel
 from sqlmodel import select
 
-from app.constants import notebooks_storage_path, NOTEBOOK_FILE_EXTENSION
+from app.constants import NOTEBOOK_FILE_EXTENSION, notebooks_storage_path
 from app.dependencies import DatabaseSession
 from app.exceptions import ElementNotFoundException
 from app.models.sql_model import Project
 from app.utils.file_helper import check_files
-
 
 router = APIRouter()
 

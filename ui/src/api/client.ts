@@ -49,17 +49,20 @@ const axiosInstance = axios.create({
 	},
 });
 
+axiosInstance.interceptors.response.use(
+  (r) => r,
+  (error) => {
+    if (error.response?.status === 401) {
+      delete axiosInstance.defaults.headers.common[API_KEY_HEADER_NAME];
+      useColombusStore.getState().setApiKey(undefined);
+    }
+    return Promise.reject(error);
+  },
+);
+
 export function updateHttpClientApiKey() {
 	axiosInstance.defaults.headers.common[API_KEY_HEADER_NAME] =
 		useColombusStore.getState().apiKey;
-}
-
-export async function checkApiKey(apiKey: string) {
-	return await axiosInstance
-		.post<string>("/key", undefined, {
-			headers: { [API_KEY_HEADER_NAME]: apiKey },
-		})
-		.then(({ data }) => data);
 }
 
 export async function createNewProject(name: string) {
@@ -221,4 +224,10 @@ export async function postFrequentStepsData(
 			profiles_names: profilesNames,
 		})
 		.then(({ data }) => data.map((d) => ({ step: d[0], frequency: d[1] })));
+}
+
+export async function authGoogle(credential: string) {
+  return await axiosInstance
+    .post<{ api_key: string }>("/auth/google", { credential })
+    .then(({ data }) => data);
 }
