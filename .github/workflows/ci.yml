@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: ["**"]
+    tags: ["v*"]
   pull_request:
     branches: ["**"]
 
@@ -94,6 +95,7 @@ jobs:
           tags: |
             type=raw,value=latest
             type=sha,prefix=,format=short
+            type=semver,pattern={{version}}
 
       - name: Generate tags (ui)
         id: meta-ui
@@ -103,6 +105,7 @@ jobs:
           tags: |
             type=raw,value=latest
             type=sha,prefix=,format=short
+            type=semver,pattern={{version}}
 
       - name: Push colombus-app
         uses: docker/build-push-action@v5
