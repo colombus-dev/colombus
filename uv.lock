@@ -194,7 +194,7 @@ css = [
 [[package]]
 name = "canopus-dsl"
 version = "0.1.0"
-source = { git = "ssh://git@github.com/colombus-dev/canopus-dsl?branch=development#ac496a58dee262135cb5ffe0b2a82f023fbbbbd2" }
+source = { git = "https://github.com/colombus-dev/canopus-dsl?tag=v0.1.0#d7f8547e138bb3ba64c11db27d2c2747dfdf9ec3" }
 dependencies = [
     { name = "antlr4-python3-runtime" },
     { name = "antlr4-tools" },
@@ -377,7 +377,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "canopus-dsl", git = "ssh://git@github.com/colombus-dev/canopus-dsl?branch=development" },
+    { name = "canopus-dsl", git = "https://github.com/colombus-dev/canopus-dsl?tag=v0.1.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.120.2" },
     { name = "google-api-python-client", specifier = ">=2.196.0" },
     { name = "google-auth", specifier = ">=2.53.0" },

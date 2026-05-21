@@ -21,7 +21,7 @@ const ProjectCreateForm: React.FunctionComponent<
 			if (!apiKey || !newProjectName) {
 				return;
 			}
-			await createNewProject(newProjectName, apiKey)
+			await createNewProject(newProjectName)
 				.then((projectId) => {
 					toast.success("Project successfuly created.");
 					navigate(`${PATH.EXPLORER}/${projectId}`);
