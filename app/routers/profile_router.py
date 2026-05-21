@@ -43,9 +43,11 @@ async def get_profiles_scores(
     session: DatabaseSession,
 ) -> dict[str, float | None]:
     results = session.exec(
-        select(Profile.name, Profile.json_profile).where(Profile.project_id == project_id)
+        select(Profile.name, Profile.json_profile).where(
+            Profile.project_id == project_id
+        )
     ).all()
-    #TODO : We delete profiles with the same name
+    # TODO : We delete profiles with the same name
     return {name: json_profile.get("score") for name, json_profile in results}
 
 
@@ -100,7 +102,6 @@ async def import_multiple_profile(
         if not is_steps_taxonomy_supported(profile):
             raise UnsupportedTaxonomyException()
         all_profiles_to_import.append(profile)
-
 
     for profile in all_profiles_to_import:
         # TODO ymu : SQL queries in a loop is horrible for performance, will fix this later
