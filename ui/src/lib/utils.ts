@@ -51,19 +51,3 @@ export function scoreToBandColor(score: number | null | undefined) {
 	if (score <= 0.8) return "#a7f3d0";
 	return "#22c55e";
 }
-
-/**
- * Strips the unique suffix (e.g. _1, _2) added during duplicate naming,
- * but only if the base name exists in the list of all profile names.
- */
-export function getDisplayProfileName(name: string, allNames: string[]) {
-	const match = name.match(/_(\d+)$/);
-	if (match) {
-		const suffix = match[0];
-		const baseName = name.slice(0, -suffix.length);
-		if (allNames.includes(baseName)) {
-			return baseName;
-		}
-	}
-	return name;
-}

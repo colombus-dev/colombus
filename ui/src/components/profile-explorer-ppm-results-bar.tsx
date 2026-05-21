@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { cn, scoreToBandColor, getDisplayProfileName } from "@/lib/utils";
+import { cn, scoreToBandColor } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 
 const ProfileExplorerPpmResultsBar: React.FunctionComponent<
@@ -32,7 +32,7 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 
 			return {
 				key: name,
-				name: getDisplayProfileName(name, availableProfilesNames),
+				name,
 				resultCount,
 				score,
 			};
