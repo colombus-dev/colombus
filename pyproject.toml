@@ -37,7 +37,7 @@ dev = [
 default-groups = []
 
 [tool.uv.sources]
-canopus-dsl = { git = "ssh://git@github.com/colombus-dev/canopus-dsl", branch = "development" }
+canopus-dsl = { git = "https://github.com/colombus-dev/canopus-dsl", tag = "v0.1.0"  }
 
 [tool.vulture]
 make_whitelist = true
