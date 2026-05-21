@@ -11,7 +11,6 @@ from app.models.sql_model import (
     StepBase,
 )
 
-
 # Profile Graph
 
 
@@ -51,7 +50,9 @@ class ProfileMetadata(BaseModel):
 
 class Profile(ProfileBase):
     name: str
-    profile_metadata: ProfileMetadata = Field(alias="metadata") # use alias to avoid confusion with aql_model inherited metadata
+    profile_metadata: ProfileMetadata = Field(
+        alias="metadata"
+    )  # use alias to avoid confusion with aql_model inherited metadata
     source: list[Any]
     outputs: dict[str, str]
 

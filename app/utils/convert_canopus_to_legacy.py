@@ -1,4 +1,6 @@
-from canopus_dsl import Pattern as CanopusPattern, AlternativeExpr, ElementExpr, Expr
+from canopus_dsl import AlternativeExpr, ElementExpr, Expr
+from canopus_dsl import Pattern as CanopusPattern
+
 from app.models.api_model import (
     Pattern,
     PatternGroup,
@@ -53,11 +55,14 @@ def convert_pattern_to_legacy(
                 if not referenced_patterns:
                     raise Exception(f"Unknown pattern {group.name}")
                 ref_pattern_index, ref_pattern = referenced_patterns[-1]
-                nested_groups = convert_pattern_to_legacy(
-                    preceding_patterns[:ref_pattern_index],
-                    ref_pattern,
-                    imported_patterns,
-                ).groups or []
+                nested_groups = (
+                    convert_pattern_to_legacy(
+                        preceding_patterns[:ref_pattern_index],
+                        ref_pattern,
+                        imported_patterns,
+                    ).groups
+                    or []
+                )
                 if strict_start:
                     nested_groups[0].metaCharacters.startsWith = True
                 colombus_pattern.groups.extend(nested_groups)

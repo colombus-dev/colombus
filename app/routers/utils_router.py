@@ -11,14 +11,11 @@ from app.dependencies import DatabaseSession
 from app.models.api_model import (
     DiffResult,
     PatternGroup,
-)
-from app.models.api_model import Profile as JsonProfile
-from app.models.api_model import (
     RegexCompatibleProfileElement,
 )
+from app.models.api_model import Profile as JsonProfile
 from app.models.sql_model import CellOutput, Profile, Step
 from app.utils.convert_ppm_to_regex import convert_pattern_to_regex
-
 
 router = APIRouter()
 

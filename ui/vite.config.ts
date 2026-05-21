@@ -9,6 +9,7 @@ export default defineConfig({
 		alias: {
 			"@": path.resolve(__dirname, "./src"),
 		},
+		dedupe: ["react", "react-dom"],
 	},
 	server: {
 		allowedHosts: ["erebe-vm9.i3s.unice.fr"],

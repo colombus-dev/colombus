@@ -1,12 +1,10 @@
 from fastapi import HTTPException, status
 
 
-class InvalidApiKeyException(HTTPException):
-    def __init__(self) -> None:
+class InvalidTokenException(HTTPException):
+    def __init__(self, name) -> None:
         super().__init__(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid API KEY. Please contact project members.",
-            headers={"WWW-Authenticate": "ApiKeyAuth"},
+            status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid {name} token."
         )
 
 
