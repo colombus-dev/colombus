@@ -6,12 +6,12 @@ import type { GraphDefinition } from "@/api/client";
 import {
 	getAllProfiles,
 	getGraphNodes,
+	NotebookFileExtension,
+	ProfileFileExtension,
 	parsePpm,
 	postApplyPpmFilter,
 	postApplyPpmFilterByName,
 	postNotebookOrProfiles,
-	NotebookFileExtension,
-	ProfileFileExtension,
 } from "@/api/client";
 import GraphContainer from "@/components/graph-container";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
@@ -19,7 +19,6 @@ import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
 import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
 import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
-import ProjectTaxonomyList from "@/components/project-taxonomy-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +27,7 @@ import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
 import type { PpmResult } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 
 const GRAPH_CONTAINER_ID = "graph-container";
@@ -41,6 +41,9 @@ export default function ExplorerProjectIdPage() {
 	>();
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [activeTab, setActiveTab] = useState<"explorer" | "statistics">(
+		"explorer",
+	);
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const setAvailableProfilesWithPpmData = useColombusStore(
 		(state) => state.setAvailableProfilesWithPpmData,
@@ -151,7 +154,8 @@ export default function ExplorerProjectIdPage() {
 
 	const handleNotebookOrProfileFormSubmit = useCallback(
 		async (formData: FormData) => {
-			const files = (formData.getAll("notebook-or-profile-form") as File[]) || null;
+			const files =
+				(formData.getAll("notebook-or-profile-form") as File[]) || null;
 			if (!files || !projectId) {
 				return;
 			}
@@ -191,11 +195,11 @@ export default function ExplorerProjectIdPage() {
 	}, [projectValidity]);
 
 	if (projectValidity === "pending") {
-		return <section className="grid grid-cols-7 space-x-2 h-full" />;
+		return <section className="grid grid-cols-6 space-x-2 h-full" />;
 	}
 
 	return projectValidity === "valid" ? (
-		<section className="grid grid-cols-7 space-x-2 h-full">
+		<section className="grid grid-cols-6 space-x-2 h-full">
 			<div className="col-span-1 space-y-4 p-2">
 				{import.meta.env.VITE_INTERFACE_MODE === "full" && (
 					<>
@@ -210,7 +214,7 @@ export default function ExplorerProjectIdPage() {
 										id="notebook-or-profile-form"
 										name="notebook-or-profile-form"
 										type="file"
-										accept={NotebookFileExtension + ',' + ProfileFileExtension}
+										accept={NotebookFileExtension + "," + ProfileFileExtension}
 										multiple
 										required
 									/>
@@ -244,15 +248,71 @@ export default function ExplorerProjectIdPage() {
 						onSubmitted={handleExecuteCodeSubmit}
 					/>
 				)}
-				<GraphContainer
-					className="group relative row-span-10 h-full"
-					containerId={GRAPH_CONTAINER_ID}
-					isLoading={isLoading}
-					graphRenderer={renderer.current}
-				/>
-			</div>
-			<div className="col-span-1">
-				<ProjectTaxonomyList className="space-y-4" />
+				<div className="row-span-10 h-full flex flex-col space-y-3 mt-4">
+					<div className="inline-flex items-center bg-slate-100/80 p-1 rounded-full w-fit">
+						<button
+							type="button"
+							onClick={() => setActiveTab("explorer")}
+							className={cn(
+								"px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200",
+								activeTab === "explorer"
+									? "bg-slate-950 text-white shadow-sm"
+									: "text-slate-500 hover:text-slate-900",
+							)}
+						>
+							Explorer
+						</button>
+						<button
+							type="button"
+							onClick={() => setActiveTab("statistics")}
+							className={cn(
+								"px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200",
+								activeTab === "statistics"
+									? "bg-slate-950 text-white shadow-sm"
+									: "text-slate-500 hover:text-slate-900",
+							)}
+						>
+							Statistics
+						</button>
+					</div>
+
+					<div className="flex-1 min-h-0 relative">
+						{activeTab === "explorer" ? (
+							<GraphContainer
+								className="group relative h-full"
+								containerId={GRAPH_CONTAINER_ID}
+								isLoading={isLoading}
+								graphRenderer={renderer.current}
+							/>
+						) : (
+							<div className="h-full border border-slate-200 rounded-lg bg-slate-50/50 flex flex-col items-center justify-center text-slate-500 space-y-2">
+								<svg
+									className="w-8 h-8 text-slate-400 animate-pulse"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+									xmlns="http://www.w3.org/2000/svg"
+									role="img"
+									aria-label="statistics-icon"
+								>
+									<title>Statistics Icon</title>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+									/>
+								</svg>
+								<span className="text-sm font-semibold text-slate-800">
+									Statistics View
+								</span>
+								<span className="text-xs text-slate-500">
+									Content will be populated in the next phase
+								</span>
+							</div>
+						)}
+					</div>
+				</div>
 			</div>
 		</section>
 	) : (

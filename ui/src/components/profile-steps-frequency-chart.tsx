@@ -48,7 +48,13 @@ const ProfileStepsFrequencyChart: React.FunctionComponent<
 					setIsLoading(true);
 					postFrequentStepsData(projectId, availableProfilesNames).then(
 						(res) => {
-							setFrequentStepsData(res);
+							setFrequentStepsData(
+								res.map((d) => ({
+									step: d.step,
+									key: d.frequency,
+									frequency: d.frequency,
+								})),
+							);
 							setIsLoading(false);
 						},
 					);
