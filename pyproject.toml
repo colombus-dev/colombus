@@ -28,7 +28,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "jupyterlab>=4.4.7",
+    "jupyterlab>=4.5.7",
     "pre-commit>=3.7",
     "types-ujson>=5.10.0.20250822",
 ]
