@@ -35,3 +35,35 @@ export function formatPatternGroup(pe: PatternGroup) {
 	}
 	return preprocessedName;
 }
+
+/**
+ * Convert a score to a band color hex code.
+ * Returns a grey color when the score is undefined.
+ *
+ * @param score the score value (0 to 1) or undefined
+ * @returns the hex color string
+ */
+export function scoreToBandColor(score: number | null | undefined) {
+	if (score === undefined || score === null) return "#94a3b8";
+	if (score <= 0.2) return "#ef4444";
+	if (score <= 0.4) return "#f59e0b";
+	if (score <= 0.6) return "#facc15";
+	if (score <= 0.8) return "#a7f3d0";
+	return "#22c55e";
+}
+
+/**
+ * Strips the unique suffix (e.g. _1, _2) added during duplicate naming,
+ * but only if the base name exists in the list of all profile names.
+ */
+export function getDisplayProfileName(name: string, allNames: string[]) {
+	const match = name.match(/_(\d+)$/);
+	if (match) {
+		const suffix = match[0];
+		const baseName = name.slice(0, -suffix.length);
+		if (allNames.includes(baseName)) {
+			return baseName;
+		}
+	}
+	return name;
+}

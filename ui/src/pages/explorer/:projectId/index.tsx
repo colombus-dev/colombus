@@ -5,23 +5,23 @@ import { toast } from "sonner";
 import type { GraphDefinition } from "@/api/client";
 import {
 	getAllProfiles,
-	getProfilesScores,
 	getGraphNodes,
+	getProfilesScores,
+	NotebookFileExtension,
+	ProfileFileExtension,
 	parsePpm,
 	postApplyPpmFilter,
 	postApplyPpmFilterByName,
 	postNotebookOrProfiles,
-	NotebookFileExtension,
-	ProfileFileExtension,
 } from "@/api/client";
 import GraphContainer from "@/components/graph-container";
+import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
 import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
 import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
 import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
 import ProjectTaxonomyList from "@/components/project-taxonomy-list";
-import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -162,7 +162,8 @@ export default function ExplorerProjectIdPage() {
 
 	const handleNotebookOrProfileFormSubmit = useCallback(
 		async (formData: FormData) => {
-			const files = (formData.getAll("notebook-or-profile-form") as File[]) || null;
+			const files =
+				(formData.getAll("notebook-or-profile-form") as File[]) || null;
 			if (!files || !projectId) {
 				return;
 			}
@@ -221,7 +222,7 @@ export default function ExplorerProjectIdPage() {
 										id="notebook-or-profile-form"
 										name="notebook-or-profile-form"
 										type="file"
-										accept={NotebookFileExtension + ',' + ProfileFileExtension}
+										accept={NotebookFileExtension + "," + ProfileFileExtension}
 										multiple
 										required
 									/>

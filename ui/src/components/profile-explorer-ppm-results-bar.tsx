@@ -2,16 +2,8 @@ import { useMemo, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+import { cn, scoreToBandColor, getDisplayProfileName } from "@/lib/utils";
 import { useColombusStore } from "@/store";
-
-function scoreToBandColor(score: number) {
-	if (score <= 0.2) return "#ef4444";
-	if (score <= 0.4) return "#f59e0b";
-	if (score <= 0.6) return "#facc15";
-	if (score <= 0.8) return "#a7f3d0";
-	return "#22c55e";
-}
 
 const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
@@ -29,59 +21,52 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 	const setFilteredProfilesNames = useColombusStore(
 		(state) => state.setFilteredProfilesNames,
 	);
-	const profilesScores = useColombusStore(
-		(state) => state.profilesScores,
-	);
-
+	const profilesScores = useColombusStore((state) => state.profilesScores);
 	const profiles = useMemo(() => {
 		return availableProfilesNames.map((name) => {
 			const profileData = availableProfilesWithPpmData.find(
 				(profile) => profile.profile_name === name,
 			);
 			const resultCount = profileData?.results.length ?? 0;
-			const score = profilesScores[name] ?? 0;
+			const score = profilesScores[name];
 
 			return {
-				name,
+				key: name,
+				name: getDisplayProfileName(name, availableProfilesNames),
 				resultCount,
 				score,
 			};
 		});
 	}, [availableProfilesNames, availableProfilesWithPpmData, profilesScores]);
 
-	const uniqueProfiles = useMemo(() => {
-		const seen = new Set<string>();
-		return profiles.filter((p) => {
-			if (seen.has(p.name)) return false;
-			seen.add(p.name);
-			return true;
-		});
-	}, [profiles]);
-
 	const filteredProfiles = useMemo(() => {
-		return uniqueProfiles.filter((profile) =>
+		return profiles.filter((profile) =>
 			profile.name.toLowerCase().includes(resultSearchFilter.toLowerCase()),
 		);
-	}, [uniqueProfiles, resultSearchFilter]);
+	}, [profiles, resultSearchFilter]);
 
 	const selectedProfiles = useMemo(() => {
 		return filteredProfilesNames.filter((name) =>
-			uniqueProfiles.some((p) => p.name === name),
+			profiles.some((p) => p.key === name),
 		);
-	}, [filteredProfilesNames, uniqueProfiles]);
+	}, [filteredProfilesNames, profiles]);
+
+	const selectedCount = useMemo(() => {
+		return profiles.filter((p) => selectedProfiles.includes(p.key)).length;
+	}, [profiles, selectedProfiles]);
 
 	const allProfilesSelected = useMemo(() => {
 		return (
 			filteredProfiles.length > 0 &&
-			filteredProfiles.every((p) => selectedProfiles.includes(p.name))
+			filteredProfiles.every((p) => selectedProfiles.includes(p.key))
 		);
 	}, [filteredProfiles, selectedProfiles]);
 
-	const toggleProfile = (name: string) => {
-		if (selectedProfiles.includes(name)) {
-			setFilteredProfilesNames(selectedProfiles.filter((n) => n !== name));
+	const toggleProfile = (key: string) => {
+		if (selectedProfiles.includes(key)) {
+			setFilteredProfilesNames(selectedProfiles.filter((n) => n !== key));
 		} else {
-			setFilteredProfilesNames([...selectedProfiles, name]);
+			setFilteredProfilesNames([...selectedProfiles, key]);
 		}
 	};
 
@@ -89,7 +74,7 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 		if (allProfilesSelected) {
 			setFilteredProfilesNames([]);
 		} else {
-			setFilteredProfilesNames(filteredProfiles.map((p) => p.name));
+			setFilteredProfilesNames(filteredProfiles.map((p) => p.key));
 		}
 	};
 
@@ -102,7 +87,7 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 			)}
 		>
 			<h3 className="mb-2 text-sm font-semibold text-slate-900">
-				Results ({selectedProfiles.length}/{uniqueProfiles.length})
+				Results ({selectedCount}/{profiles.length})
 			</h3>
 
 			<Input
@@ -127,40 +112,44 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 			</button>
 
 			<div className="min-h-0 flex-1 overflow-auto pr-1">
-				{uniqueProfiles.length === 0 ? (
+				{profiles.length === 0 ? (
 					<div className="px-1 py-2 text-xs text-slate-400">
 						No profiles found
 					</div>
 				) : (
 					<ScrollArea className="h-full pr-1">
 						<div className="space-y-1">
-							{filteredProfiles.map((profile) => {
-								const isSelected = selectedProfiles.includes(profile.name);
+							{filteredProfiles.map((profile, index) => {
+								const isSelected = selectedProfiles.includes(profile.key);
 
 								return (
 									<div
-										key={profile.name}
+										key={`${profile.key}-${index}`}
 										className="flex w-full items-center gap-2 rounded-md px-1 py-1 text-left transition-colors hover:bg-slate-50"
 									>
 										<Checkbox
-											id={`cb_${profile.name}`}
+											id={`cb_${profile.key}-${index}`}
 											checked={isSelected}
-											onCheckedChange={() => toggleProfile(profile.name)}
+											onCheckedChange={() => toggleProfile(profile.key)}
 											className="border-slate-300 data-[state=checked]:bg-slate-900 data-[state=checked]:text-white"
 										/>
 										<div
 											className="h-3 w-3 shrink-0 rounded-full"
-											style={{ backgroundColor: scoreToBandColor(profile.score) }}
+											style={{
+												backgroundColor: scoreToBandColor(profile.score),
+											}}
 										/>
 										<label
-											htmlFor={`cb_${profile.name}`}
+											htmlFor={`cb_${profile.key}-${index}`}
 											className="min-w-0 flex-1 truncate text-[11px] font-medium text-slate-700 cursor-pointer"
 											style={{ fontFamily: "JetBrains Mono, monospace" }}
 										>
 											{profile.name}
 										</label>
 										<span className="shrink-0 text-[10px] font-bold text-slate-900">
-											{profile.score.toFixed(2)}
+											{profile.score !== undefined && profile.score !== null
+												? profile.score.toFixed(2)
+												: "-"}
 										</span>
 									</div>
 								);

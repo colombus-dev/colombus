@@ -4,7 +4,7 @@ from typing import Sequence
 from fastapi import APIRouter, File, Query, UploadFile
 from sqlmodel import col, select
 
-from app.constants import NOTEBOOK_FILE_EXTENSION, PROFILE_FILE_EXTENSION
+from app.constants import NOTEBOOK_FILE_EXTENSION, PROFILE_FILE_EXTENSION, __TMP_ENCODING_MAPPING
 from app.dependencies import DatabaseSession
 from app.exceptions import (
     ElementNotFoundException,
@@ -41,24 +41,11 @@ async def get_all_profile(
 async def get_profiles_scores(
     project_id: uuid.UUID,
     session: DatabaseSession,
-) -> dict[str, float]:
+) -> dict[str, float | None]:
     results = session.exec(
         select(Profile.name, Profile.json_profile).where(Profile.project_id == project_id)
     ).all()
-    scores = {}
-    for name, json_profile in results:
-        score_val = 0.0
-        if isinstance(json_profile, dict):
-            score_val = json_profile.get("score", 0.0)
-        elif isinstance(json_profile, str):
-            import json
-            try:
-                parsed = json.loads(json_profile)
-                score_val = parsed.get("score", 0.0)
-            except Exception:
-                pass
-        scores[name] = score_val
-    return scores
+    return {name: json_profile.get("score") for name, json_profile in results}
 
 
 @router.get("/api/project/{project_id}/profile/getJson")
@@ -110,8 +97,27 @@ async def import_multiple_profile(
     for profile_file_content in profile_file_contents:
         profile = JsonProfile.model_validate_json(profile_file_content)
         if not is_steps_taxonomy_supported(profile):
+            print("TAXONOMY NOT SUPPORTED for profile:", profile.name)
+            for step in profile.source:
+                print(f"  Step name: '{step['name']}' in mapping: {step['name'] in __TMP_ENCODING_MAPPING}")
             raise UnsupportedTaxonomyException()
         all_profiles_to_import.append(profile)
+
+    existing_names = set(
+        session.exec(
+            select(Profile.name).where(Profile.project_id == project_id)
+        ).all()
+    )
+
+    for profile in all_profiles_to_import:
+        base_name = profile.name
+        unique_name = base_name
+        counter = 1
+        while unique_name in existing_names:
+            unique_name = f"{base_name}_{counter}"
+            counter += 1
+        profile.name = unique_name
+        existing_names.add(unique_name)
 
     for profile in all_profiles_to_import:
         # TODO ymu : SQL queries in a loop is horrible for performance, will fix this later

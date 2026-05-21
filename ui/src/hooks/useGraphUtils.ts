@@ -9,6 +9,7 @@ import {
 } from "@/configuration";
 import type { Pattern, PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
+import { getDisplayProfileName } from "@/lib/utils";
 
 function pairwise<T>(arr: T[], func: (e1: T, e2: T, i: number) => void) {
 	for (let i = 0; i < arr.length - 1; i++) {
@@ -56,6 +57,7 @@ const getGroupsIds = (
 export default function useGraphUtils(graph: Graph) {
 	const displayedLevel = useColombusStore((state) => state.displayedLevel);
 	const useWeightedNodes = useColombusStore((state) => state.useWeightedNodes);
+	const availableProfilesNames = useColombusStore((state) => state.availableProfilesNames);
 
 	const addNode = useCallback(
 		(
@@ -194,7 +196,8 @@ export default function useGraphUtils(graph: Graph) {
 		) => {
 			let addedX = x;
 			if (displayedLevel >= 1) {
-				addNode(id, name, 0, 5, addedX + Math.round((5 * codes.length) / 2), y);
+				const displayName = getDisplayProfileName(name, availableProfilesNames);
+				addNode(id, displayName, 0, 5, addedX + Math.round((5 * codes.length) / 2), y);
 			}
 			if (displayedLevel >= 2) {
 				const hasPpmGroups = ppmResults; // && currentPattern;
@@ -219,11 +222,11 @@ export default function useGraphUtils(graph: Graph) {
 								1,
 								useWeightedNodes ? 5 + (node.number_children ?? 0) : 5,
 								x +
-									Math.round(
-										(stepsPositions.nodesPositions[endStepX] +
-											stepsPositions.nodesPositions[startStepX]) /
-											2,
-									),
+								Math.round(
+									(stepsPositions.nodesPositions[endStepX] +
+										stepsPositions.nodesPositions[startStepX]) /
+									2,
+								),
 								y - 50,
 							);
 							addEdge(id, node.id);
@@ -246,7 +249,7 @@ export default function useGraphUtils(graph: Graph) {
 						(s) =>
 							hasPpmGroups
 								? (flatGroupsNodes.find((g) => g.childrenIds.includes(s.id))
-										?.id ?? id)
+									?.id ?? id)
 								: id,
 					),
 				);
