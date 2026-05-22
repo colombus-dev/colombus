@@ -98,10 +98,12 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 				className="mb-2"
 			/>
 
-			<button
-				type="button"
+			<div
+				role="button"
+				tabIndex={0}
 				onClick={toggleAll}
-				className="mb-2 mt-1 flex w-full items-center gap-2 rounded-md border-b border-slate-100 pb-2 text-left"
+				onKeyDown={(e) => e.key === "Enter" || e.key === " " ? toggleAll() : undefined}
+				className="mb-2 mt-1 flex w-full cursor-pointer items-center gap-2 rounded-md border-b border-slate-100 pb-2 text-left"
 			>
 				<Checkbox
 					checked={allProfilesSelected}
@@ -109,7 +111,7 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 					className="pointer-events-none border-slate-300 data-[state=checked]:bg-slate-900 data-[state=checked]:text-white"
 				/>
 				<span className="text-sm font-semibold text-slate-900">Select all</span>
-			</button>
+			</div>
 
 			<div className="min-h-0 flex-1 overflow-auto pr-1">
 				{profiles.length === 0 ? (

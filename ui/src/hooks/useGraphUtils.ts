@@ -192,6 +192,11 @@ export default function useGraphUtils(graph: Graph) {
 			x: number,
 			y: number,
 		) => {
+			// Prefix all child node IDs with the profile UUID to avoid graphology conflicts
+			// when multiple profiles share the same step/meta_instruction/code UUIDs
+			// (e.g. the same notebook imported twice)
+			const prefixId = (nodeId: string) => `${id}::${nodeId}`;
+
 			let addedX = x;
 			if (displayedLevel >= 1) {
 				addNode(id, name, 0, 5, addedX + Math.round((5 * codes.length) / 2), y);
@@ -235,18 +240,22 @@ export default function useGraphUtils(graph: Graph) {
 					}
 				}
 				const flatGroupsNodes = groupsNodes.flat();
+				// Keep a reverse map: prefixed step id → original step id,
+				// so PPM childrenIds lookups (which use original UUIDs) still work
+				const stepOriginalIds = new Map(steps.map((s) => [prefixId(s.id), s.id]));
 				addedX = Math.max(
 					addedX,
 					addNodes(
-						steps,
+						steps.map((s) => ({ ...s, id: prefixId(s.id) })),
 						2,
 						x,
 						y,
 						(s) => s.name,
 						(s) =>
 							hasPpmGroups
-								? (flatGroupsNodes.find((g) => g.childrenIds.includes(s.id))
-										?.id ?? id)
+								? (flatGroupsNodes.find((g) =>
+										g.childrenIds.includes(stepOriginalIds.get(s.id) ?? s.id),
+									)?.id ?? id)
 								: id,
 					),
 				);
@@ -257,13 +266,14 @@ export default function useGraphUtils(graph: Graph) {
 					addNodes(
 						meta_instructions.map((m) => ({
 							...m,
-							id: `${m.id}${algoNodeSuffix}`,
+							id: `${prefixId(m.id)}${algoNodeSuffix}`,
 						})),
 						3,
 						x,
 						y,
 						(m) => `${m.algoFamily} | ${m.algoName}`,
-						(m) => m.step_id,
+						// parent = prefixed step node
+						(m) => prefixId(m.step_id),
 					),
 				);
 			}
@@ -273,12 +283,14 @@ export default function useGraphUtils(graph: Graph) {
 					addNodes(
 						meta_instructions.map((m) => ({
 							...m,
-							id: `${m.id}${libraryFunctionNodeSuffix}`,
+							id: `${prefixId(m.id)}${libraryFunctionNodeSuffix}`,
 						})),
 						4,
 						x,
 						y,
 						(m) => `${m.library} | ${m.function}`,
+						// m.id here is already `${prefixId(origId)}${libfuncSuffix}`;
+						// strip the suffix and add algoSuffix to get the parent algo node id
 						(m) =>
 							`${m.id.replace(libraryFunctionNodeSuffix, "")}${algoNodeSuffix}`,
 					),
@@ -288,12 +300,14 @@ export default function useGraphUtils(graph: Graph) {
 				addedX = Math.max(
 					addedX,
 					addNodes(
-						codes,
+						codes.map((c) => ({ ...c, id: prefixId(c.id) })),
 						5,
 						x,
 						y,
 						(c) => c.content,
-						(c) => `${c.meta_instruction_id}-libfunc`,
+						// parent = prefixed libfunc node for this meta_instruction
+						(c) =>
+							`${prefixId(c.meta_instruction_id)}${libraryFunctionNodeSuffix}`,
 					),
 				);
 			}
