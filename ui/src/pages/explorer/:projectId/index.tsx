@@ -20,6 +20,7 @@ import ProfilePatternActions from "@/components/profile-pattern-actions";
 import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
 import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
+import ProfileScoreDistributionChart from "@/components/profile-score-distribution-chart";
 import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -266,7 +267,7 @@ export default function ExplorerProjectIdPage() {
 				<ProfilePatternList />
 			</div>
 			<ProfileExplorerPpmResultsBar className="col-span-1" />
-			<div className="col-span-5 flex flex-col h-full space-y-4">
+			<div className="col-span-5 flex flex-col h-full space-y-4 relative">
 				<div className="flex items-center justify-start py-2 border-b border-slate-100 dark:border-slate-800">
 					<div className="flex items-center space-x-2">
 						<button
@@ -295,9 +296,11 @@ export default function ExplorerProjectIdPage() {
 				</div>
 
 				<div
-					className={`flex-1 grid grid-rows-10 items-center gap-4 min-h-0 ${
-						activeTab === "explorer" ? "" : "hidden"
-					}`}
+					className={
+						activeTab === "explorer"
+							? "flex-1 grid grid-rows-10 items-center gap-4 min-h-0"
+							: "absolute left-[-9999px] top-[-9999px] invisible pointer-events-none w-full h-full grid grid-rows-10 items-center gap-4 min-h-0"
+					}
 				>
 					{currentPattern && <ProfilePatternActions />}
 					{currentPattern && projectId && (
@@ -315,11 +318,13 @@ export default function ExplorerProjectIdPage() {
 				</div>
 
 				<div
-					className={`flex-1 min-h-0 py-2 ${
-						activeTab === "statistics" ? "" : "hidden"
-					}`}
+					className={
+						activeTab === "statistics"
+							? "flex-1 min-h-0 py-2"
+							: "absolute left-[-9999px] top-[-9999px] invisible pointer-events-none w-full h-full py-2"
+					}
 				>
-					{/* Statistics content */}
+					<ProfileScoreDistributionChart />
 				</div>
 			</div>
 		</section>
