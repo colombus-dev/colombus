@@ -21,7 +21,6 @@ import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
 import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
 import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
-import ProjectTaxonomyList from "@/components/project-taxonomy-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,7 +30,7 @@ import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
 import type { PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
-import {PATH} from "@/lib/constants";
+import { PATH } from "@/lib/constants";
 
 const GRAPH_CONTAINER_ID = "graph-container";
 
@@ -258,7 +257,7 @@ export default function ExplorerProjectIdPage() {
 				<ProfilePatternList />
 			</div>
 			<ProfileExplorerPpmResultsBar className="col-span-1" />
-			<div className="col-span-4 grid grid-rows-10 items-center">
+			<div className="col-span-5 grid grid-rows-10 items-center">
 				{currentPattern && <ProfilePatternActions />}
 				{currentPattern && projectId && (
 					<PatternDslEditor
@@ -272,9 +271,6 @@ export default function ExplorerProjectIdPage() {
 					isLoading={isLoading}
 					graphRenderer={renderer.current}
 				/>
-			</div>
-			<div className="col-span-1">
-				<ProjectTaxonomyList className="space-y-4" />
 			</div>
 		</section>
 	) : (
