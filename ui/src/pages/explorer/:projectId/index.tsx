@@ -28,9 +28,9 @@ import { Separator } from "@/components/ui/separator";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
+import { PATH } from "@/lib/constants";
 import type { PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
-import { PATH } from "@/lib/constants";
 
 const GRAPH_CONTAINER_ID = "graph-container";
 
@@ -95,23 +95,23 @@ export default function ExplorerProjectIdPage() {
 			setAvailableProfilesWithPpmData(workflowsPpmData ?? []);
 			// Detect which profiles need to be fetched by comparing how many copies of each name exist
 			// in workflowsNames vs how many are already loaded in filteredWorkflowsNodes.
-			const countInWorkflows = (name: string) => workflowsNames.filter((n) => n === name).length;
-			const countInNodes = (name: string) => filteredWorkflowsNodes?.filter((n) => n.name === name).length ?? 0;
+			const countInWorkflows = (name: string) =>
+				workflowsNames.filter((n) => n === name).length;
+			const countInNodes = (name: string) =>
+				filteredWorkflowsNodes?.filter((n) => n.name === name).length ?? 0;
 
 			const namesToFetch = [...new Set(workflowsNames)].filter(
-				(name) => countInWorkflows(name) > countInNodes(name)
+				(name) => countInWorkflows(name) > countInNodes(name),
 			);
 
 			// Keep existing nodes that are still in the workflows list AND not being re-fetched.
 			const graphNodesToKeep =
-				filteredWorkflowsNodes?.filter(({ name }) =>
-					workflowsNames.includes(name) && !namesToFetch.includes(name)
+				filteredWorkflowsNodes?.filter(
+					({ name }) =>
+						workflowsNames.includes(name) && !namesToFetch.includes(name),
 				) ?? [];
 
-			await getGraphNodes(
-				projectId,
-				namesToFetch,
-			).then((r) => {
+			await getGraphNodes(projectId, namesToFetch).then((r) => {
 				setFilteredWorkflowsNodes([...graphNodesToKeep, ...r]);
 				setIsLoading(false);
 			});
@@ -215,7 +215,7 @@ export default function ExplorerProjectIdPage() {
 	}
 
 	return projectValidity === "valid" ? (
-		<section className="grid grid-cols-7 space-x-2 h-full">
+		<section className="grid grid-cols-7 gap-4 px-4 h-full">
 			<div className="col-span-1 space-y-4 p-2">
 				{import.meta.env.VITE_INTERFACE_MODE === "full" && (
 					<>
