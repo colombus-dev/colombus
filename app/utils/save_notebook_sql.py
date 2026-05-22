@@ -81,7 +81,7 @@ def save_notebook_as_sql(
         encoded_profile=encode_profile([step.name for step in all_steps]),
         meta_instructions=all_profile_metainstructions,
         codes=all_profile_codes,
-        json_profile=json_profile.model_dump_json(),
+        json_profile=json_profile.model_dump(mode="json"),
     )
     session.add(profile)
     if commit:
