@@ -6,14 +6,16 @@ import type { GraphDefinition } from "@/api/client";
 import {
 	getAllProfiles,
 	getGraphNodes,
+	getProfilesScores,
+	NotebookFileExtension,
+	ProfileFileExtension,
 	parsePpm,
 	postApplyPpmFilter,
 	postApplyPpmFilterByName,
 	postNotebookOrProfiles,
-	NotebookFileExtension,
-	ProfileFileExtension,
 } from "@/api/client";
 import GraphContainer from "@/components/graph-container";
+import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
 import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
@@ -52,6 +54,9 @@ export default function ExplorerProjectIdPage() {
 	const setFilteredProfilesNames = useColombusStore(
 		(state) => state.setFilteredProfilesNames,
 	);
+	const setProfilesScores = useColombusStore(
+		(state) => state.setProfilesScores,
+	);
 
 	const setCurrentPattern = useColombusStore(
 		(state) => state.setCurrentPattern,
@@ -89,22 +94,35 @@ export default function ExplorerProjectIdPage() {
 			).union(new Set(workflowsNames));
 			setFilteredProfilesNames([...reducedWorkflows]);
 			setAvailableProfilesWithPpmData(workflowsPpmData ?? []);
-			// TODO: to improve
+			// Detect which profiles need to be fetched by comparing how many copies of each name exist
+			// in workflowsNames vs how many are already loaded in filteredWorkflowsNodes.
+			const countInWorkflows = (name: string) => workflowsNames.filter((n) => n === name).length;
+			const countInNodes = (name: string) => filteredWorkflowsNodes?.filter((n) => n.name === name).length ?? 0;
+
+			const namesToFetch = [...new Set(workflowsNames)].filter(
+				(name) => countInWorkflows(name) > countInNodes(name)
+			);
+
+			// Keep existing nodes that are still in the workflows list AND not being re-fetched.
 			const graphNodesToKeep =
 				filteredWorkflowsNodes?.filter(({ name }) =>
-					workflowsNames.includes(name),
+					workflowsNames.includes(name) && !namesToFetch.includes(name)
 				) ?? [];
+
 			await getGraphNodes(
 				projectId,
-				workflowsNames.filter(
-					(n) => !filteredWorkflowsNodes?.find(({ name }) => name === n),
-				),
+				namesToFetch,
 			).then((r) => {
 				setFilteredWorkflowsNodes([...graphNodesToKeep, ...r]);
 				setIsLoading(false);
 			});
 		};
 		setIsLoading(true);
+
+		getProfilesScores(projectId).then((scores) => {
+			setProfilesScores(scores);
+		});
+
 		if (currentPattern?.groups?.length) {
 			postApplyPpmFilter(projectId, currentPattern.groups).then(
 				(workflowsWithData) =>
@@ -142,6 +160,7 @@ export default function ExplorerProjectIdPage() {
 		setFilteredProfilesNames,
 		setAvailableProfilesNames,
 		setAvailableProfilesWithPpmData,
+		setProfilesScores,
 	]);
 
 	useEffect(() => {
@@ -152,7 +171,8 @@ export default function ExplorerProjectIdPage() {
 
 	const handleNotebookOrProfileFormSubmit = useCallback(
 		async (formData: FormData) => {
-			const files = (formData.getAll("notebook-or-profile-form") as File[]) || null;
+			const files =
+				(formData.getAll("notebook-or-profile-form") as File[]) || null;
 			if (!files || !projectId) {
 				return;
 			}
@@ -211,7 +231,7 @@ export default function ExplorerProjectIdPage() {
 										id="notebook-or-profile-form"
 										name="notebook-or-profile-form"
 										type="file"
-										accept={NotebookFileExtension + ',' + ProfileFileExtension}
+										accept={NotebookFileExtension + "," + ProfileFileExtension}
 										multiple
 										required
 									/>
@@ -237,7 +257,8 @@ export default function ExplorerProjectIdPage() {
 				<Separator />
 				<ProfilePatternList />
 			</div>
-			<div className="col-span-5 grid grid-rows-10 items-center">
+			<ProfileExplorerPpmResultsBar className="col-span-1" />
+			<div className="col-span-4 grid grid-rows-10 items-center">
 				{currentPattern && <ProfilePatternActions />}
 				{currentPattern && projectId && (
 					<PatternDslEditor
