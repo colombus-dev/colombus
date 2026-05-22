@@ -35,8 +35,10 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def set_allowed_origins(self) -> "Settings":
-        if not self.allowed_origins:
+        if self.is_production:
             self.allowed_origins = [f"{self.ui_host}", f"{self.ui_host}:{self.ui_port}"]
+        else:
+            self.allowed_origins = ["*"]
         return self
 
 
