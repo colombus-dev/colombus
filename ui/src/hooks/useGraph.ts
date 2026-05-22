@@ -1,6 +1,6 @@
 import { createNodeImageProgram } from "@sigma/node-image";
 import Graph from "graphology";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Sigma from "sigma";
 import type { GraphDefinition } from "@/api/client";
 import { useColombusStore } from "@/store";
@@ -23,16 +23,15 @@ export default function useGraph(
 	);
 
 	const graph = useRef<Graph>(new Graph());
-	const renderer = useRef<Sigma | undefined>(undefined);
+	const [renderer, setRenderer] = useState<Sigma | undefined>(undefined);
 
 	const { addNewProfile } = useGraphUtils(graph.current);
 
 	useEffect(() => {
 		if (containerId) {
-			renderer.current?.kill();
 			const graphContainer = document.getElementById("graph-container");
 			if (graphContainer) {
-				renderer.current = new Sigma(graph.current, graphContainer, {
+				const sig = new Sigma(graph.current, graphContainer, {
 					nodeProgramClasses: {
 						image: createNodeImageProgram({
 							keepWithinCircle: false,
@@ -66,13 +65,19 @@ export default function useGraph(
 						);
 					},
 				});
+				setRenderer(sig);
 			}
+		} else {
+			setRenderer((prev: Sigma | undefined) => {
+				prev?.kill();
+				return undefined;
+			});
 		}
 	}, [containerId]);
 
 	useEffect(() => {
 		graph.current?.clear();
-		if (!graphDefinitions || !renderer.current || !graph.current) {
+		if (!graphDefinitions || !renderer || !graph.current) {
 			return;
 		}
 		let addedX = 0;
@@ -102,11 +107,15 @@ export default function useGraph(
 		filteredProfilesNames,
 		displayedLevel,
 		addNewProfile,
+		renderer,
 	]);
 
 	useEffect(() => {
 		return () => {
-			renderer.current?.kill();
+			setRenderer((prev: Sigma | undefined) => {
+				prev?.kill();
+				return undefined;
+			});
 		};
 	}, []);
 

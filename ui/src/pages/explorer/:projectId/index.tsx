@@ -35,6 +35,9 @@ import { useColombusStore } from "@/store";
 const GRAPH_CONTAINER_ID = "graph-container";
 
 export default function ExplorerProjectIdPage() {
+	const [activeTab, setActiveTab] = useState<"explorer" | "statistics">(
+		"explorer",
+	);
 	const [graphContainerId, setGraphContainerId] = useState<
 		string | undefined
 	>();
@@ -65,7 +68,13 @@ export default function ExplorerProjectIdPage() {
 
 	const { renderer } = useGraph(graphContainerId, filteredWorkflowsNodes);
 
-	useGraphPpm(renderer.current);
+	useGraphPpm(renderer);
+
+	useEffect(() => {
+		if (activeTab === "explorer" && renderer) {
+			renderer.refresh();
+		}
+	}, [activeTab, renderer]);
 
 	const navigate = useNavigate();
 
@@ -257,20 +266,61 @@ export default function ExplorerProjectIdPage() {
 				<ProfilePatternList />
 			</div>
 			<ProfileExplorerPpmResultsBar className="col-span-1" />
-			<div className="col-span-5 grid grid-rows-10 items-center">
-				{currentPattern && <ProfilePatternActions />}
-				{currentPattern && projectId && (
-					<PatternDslEditor
-						className="group relative row-span-2 h-full"
-						onSubmitted={handleExecuteCodeSubmit}
+			<div className="col-span-5 flex flex-col h-full space-y-4">
+				<div className="flex items-center justify-start py-2 border-b border-slate-100 dark:border-slate-800">
+					<div className="flex items-center space-x-2">
+						<button
+							type="button"
+							onClick={() => setActiveTab("explorer")}
+							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${
+								activeTab === "explorer"
+									? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
+									: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+							}`}
+						>
+							Explorer
+						</button>
+						<button
+							type="button"
+							onClick={() => setActiveTab("statistics")}
+							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${
+								activeTab === "statistics"
+									? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
+									: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+							}`}
+						>
+							Statistics
+						</button>
+					</div>
+				</div>
+
+				<div
+					className={`flex-1 grid grid-rows-10 items-center gap-4 min-h-0 ${
+						activeTab === "explorer" ? "" : "hidden"
+					}`}
+				>
+					{currentPattern && <ProfilePatternActions />}
+					{currentPattern && projectId && (
+						<PatternDslEditor
+							className="group relative row-span-2 h-full"
+							onSubmitted={handleExecuteCodeSubmit}
+						/>
+					)}
+					<GraphContainer
+						className="group relative row-span-10 h-full"
+						containerId={GRAPH_CONTAINER_ID}
+						isLoading={isLoading}
+						graphRenderer={renderer}
 					/>
-				)}
-				<GraphContainer
-					className="group relative row-span-10 h-full"
-					containerId={GRAPH_CONTAINER_ID}
-					isLoading={isLoading}
-					graphRenderer={renderer.current}
-				/>
+				</div>
+
+				<div
+					className={`flex-1 min-h-0 py-2 ${
+						activeTab === "statistics" ? "" : "hidden"
+					}`}
+				>
+					{/* Statistics content */}
+				</div>
 			</div>
 		</section>
 	) : (
