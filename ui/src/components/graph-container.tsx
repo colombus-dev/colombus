@@ -30,10 +30,10 @@ export default function GraphContainer({
 			/>
 			{!isLoading && (
 				<>
-					<ProfileExplorerGraphSettingsBar className="absolute top-0 right-6 m-3 bg-white bg-opacity-80 p-2" />
+					<ProfileExplorerGraphSettingsBar className="absolute top-4 right-12 w-72 bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-[20px] p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] z-10" />
 					<GraphControls
 						graphRenderer={graphRenderer}
-						className="absolute bottom-3 right-6 bg-white bg-opacity-80"
+						className="absolute bottom-3 right-12 bg-white bg-opacity-80"
 					/>
 				</>
 			)}
