@@ -94,16 +94,24 @@ export default function ExplorerProjectIdPage() {
 			).union(new Set(workflowsNames));
 			setFilteredProfilesNames([...reducedWorkflows]);
 			setAvailableProfilesWithPpmData(workflowsPpmData ?? []);
-			// TODO: to improve
+			// Detect which profiles need to be fetched by comparing how many copies of each name exist
+			// in workflowsNames vs how many are already loaded in filteredWorkflowsNodes.
+			const countInWorkflows = (name: string) => workflowsNames.filter((n) => n === name).length;
+			const countInNodes = (name: string) => filteredWorkflowsNodes?.filter((n) => n.name === name).length ?? 0;
+
+			const namesToFetch = [...new Set(workflowsNames)].filter(
+				(name) => countInWorkflows(name) > countInNodes(name)
+			);
+
+			// Keep existing nodes that are still in the workflows list AND not being re-fetched.
 			const graphNodesToKeep =
 				filteredWorkflowsNodes?.filter(({ name }) =>
-					workflowsNames.includes(name),
+					workflowsNames.includes(name) && !namesToFetch.includes(name)
 				) ?? [];
+
 			await getGraphNodes(
 				projectId,
-				workflowsNames.filter(
-					(n) => !filteredWorkflowsNodes?.find(({ name }) => name === n),
-				),
+				namesToFetch,
 			).then((r) => {
 				setFilteredWorkflowsNodes([...graphNodesToKeep, ...r]);
 				setIsLoading(false);
