@@ -1,4 +1,4 @@
-import { CircleX, Save, Trash } from "lucide-react";
+import { Save, Trash } from "lucide-react";
 import { useParams } from "react-router";
 import { getAllPatterns, postSavePpm } from "@/api/client";
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,6 @@ const ProfilePatternActions: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
 > = ({ ...divProps }) => {
 	const currentPattern = useColombusStore((state) => state.currentPattern);
-	const resetCurrentPattern = useColombusStore(
-		(state) => state.resetCurrentPattern,
-	);
 	const setAvailablePatterns = useColombusStore(
 		(state) => state.setAllSavedPatterns,
 	);
@@ -21,14 +18,6 @@ const ProfilePatternActions: React.FunctionComponent<
 
 	return (
 		<div {...divProps} className={cn("flex", divProps.className)}>
-			<Button
-				variant="ghost"
-				onClick={() => {
-					resetCurrentPattern();
-				}}
-			>
-				<CircleX /> Close pattern
-			</Button>
 			<DeletePatternDialog patternName={currentPattern?.name}>
 				<Button variant="ghost" disabled={currentPattern?.name === undefined}>
 					<Trash /> Delete pattern

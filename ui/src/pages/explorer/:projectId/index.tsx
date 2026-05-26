@@ -1,5 +1,4 @@
-import { CirclePlus } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import type { GraphDefinition } from "@/api/client";
@@ -23,9 +22,7 @@ import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-fr
 import ProfileScoreDistributionChart from "@/components/profile-score-distribution-chart";
 import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
@@ -47,6 +44,8 @@ export default function ExplorerProjectIdPage() {
 	>();
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+	const fileInputRef = useRef<HTMLInputElement>(null);
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const setAvailableProfilesWithPpmData = useColombusStore(
 		(state) => state.setAvailableProfilesWithPpmData,
@@ -236,14 +235,34 @@ export default function ExplorerProjectIdPage() {
 									<Label htmlFor="notebook-or-profile-form">
 										Notebooks or profiles
 									</Label>
-									<Input
+									<input
 										id="notebook-or-profile-form"
 										name="notebook-or-profile-form"
 										type="file"
 										accept={NotebookFileExtension + "," + ProfileFileExtension}
 										multiple
 										required
+										className="hidden"
+										onChange={(e) => setSelectedFiles(e.target.files)}
+										ref={fileInputRef}
 									/>
+									<div className="flex items-center gap-2 border border-input rounded-md px-3 py-1 text-sm bg-transparent shadow-sm">
+										<Button
+											type="button"
+											variant="secondary"
+											className="h-7 px-2.5 text-xs shrink-0"
+											onClick={() => fileInputRef.current?.click()}
+										>
+											Choose files
+										</Button>
+										<span className="text-muted-foreground text-xs truncate flex-1 text-left">
+											{!selectedFiles || selectedFiles.length === 0
+												? "No file chosen"
+												: selectedFiles.length === 1
+													? "1 file selected"
+													: `${selectedFiles.length} files selected`}
+										</span>
+									</div>
 									<Button type="submit">Submit Profile</Button>
 								</div>
 							</form>
@@ -254,20 +273,18 @@ export default function ExplorerProjectIdPage() {
 				<ProfilePatternStatsFreqMatrix />
 				<ProfileStepsFrequencyChart />
 				<p className="font-bold">Saved patterns</p>
-				<div className="col-span-2">
-					<Button
-						className="w-full"
-						onClick={() => setCurrentPattern({ groups: [] })}
-					>
-						<CirclePlus />
-						Create new pattern
-					</Button>
-				</div>
-				<Separator />
 				<ProfilePatternList />
 			</div>
 			<ProfileExplorerPpmResultsBar className="col-span-1" />
 			<div className="col-span-5 flex flex-col h-full space-y-4 relative">
+				<ProfilePatternActions />
+				{projectId && (
+					<PatternDslEditor
+						className="group relative h-48 w-full"
+						onSubmitted={handleExecuteCodeSubmit}
+					/>
+				)}
+
 				<div className="flex items-center justify-start py-2 border-b border-slate-100 dark:border-slate-800">
 					<div className="flex items-center space-x-2">
 						<button
@@ -302,13 +319,6 @@ export default function ExplorerProjectIdPage() {
 							: "absolute left-[-9999px] top-[-9999px] invisible pointer-events-none w-full h-full grid grid-rows-10 items-center gap-4 min-h-0"
 					}
 				>
-					{currentPattern && <ProfilePatternActions />}
-					{currentPattern && projectId && (
-						<PatternDslEditor
-							className="group relative row-span-2 h-full"
-							onSubmitted={handleExecuteCodeSubmit}
-						/>
-					)}
 					<GraphContainer
 						className="group relative row-span-10 h-full"
 						containerId={GRAPH_CONTAINER_ID}
