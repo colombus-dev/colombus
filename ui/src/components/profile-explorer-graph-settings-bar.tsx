@@ -37,9 +37,9 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 	return (
 		<div
 			{...divProps}
-			className={`flex flex-col space-y-4 ${divProps.className ?? ""}`}
+			className={`flex flex-col h-full space-y-4 ${divProps.className ?? ""}`}
 		>
-			<div className="space-y-4">
+			<div className="space-y-4 shrink-0">
 				<div className="space-y-2">
 					<p className="font-bold">Displayed levels:</p>
 					<Select
@@ -117,7 +117,7 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 					</div>
 				</div>
 			</div>
-			<ProjectTaxonomyList className="mt-1" />
+			<ProjectTaxonomyList className="flex-1 min-h-0 mt-1" />
 		</div>
 	);
 };
