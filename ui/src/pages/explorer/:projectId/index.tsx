@@ -290,22 +290,20 @@ export default function ExplorerProjectIdPage() {
 						<button
 							type="button"
 							onClick={() => setActiveTab("explorer")}
-							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${
-								activeTab === "explorer"
-									? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
-									: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-							}`}
+							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${activeTab === "explorer"
+								? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
+								: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+								}`}
 						>
 							Explorer
 						</button>
 						<button
 							type="button"
 							onClick={() => setActiveTab("statistics")}
-							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${
-								activeTab === "statistics"
-									? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
-									: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-							}`}
+							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${activeTab === "statistics"
+								? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
+								: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+								}`}
 						>
 							Statistics
 						</button>
@@ -320,7 +318,7 @@ export default function ExplorerProjectIdPage() {
 					}
 				>
 					<GraphContainer
-						className="group relative row-span-10 h-full"
+						className="group relative row-span-10 h-[692px]"
 						containerId={GRAPH_CONTAINER_ID}
 						isLoading={isLoading}
 						graphRenderer={renderer}
@@ -334,7 +332,11 @@ export default function ExplorerProjectIdPage() {
 							: "absolute left-[-9999px] top-[-9999px] invisible pointer-events-none w-full h-full py-2"
 					}
 				>
-					<ProfileScoreDistributionChart />
+					<div className="group relative row-span-10 h-[692px]">
+						<div className="w-full h-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] p-6 overflow-y-auto">
+							<ProfileScoreDistributionChart />
+						</div>
+					</div>
 				</div>
 			</div>
 		</section>

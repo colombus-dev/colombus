@@ -13,14 +13,12 @@ const ProjectTaxonomyList: React.FunctionComponent<
 			{...divProps}
 			className={`border border-[#e2e8f0] rounded-[20px] p-3 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col ${divProps.className ?? ""}`}
 		>
-			<p className="font-bold">
-				Legend
-			</p>
-			<ul className="flex flex-col gap-1 list-none">
+			<p className="font-bold">Legend</p>
+			<ul className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-1 list-none pr-1">
 				{Object.entries(stepsColorsMapping).map(([n, c]) => (
 					<li
 						key={`legend_color_${c}`}
-						className="flex items-center gap-2 px-1 py-1 text-xs font-medium text-[#475569] transition-all w-full"
+						className="flex items-center gap-2 px-1 py-1 text-xs font-medium text-[#475569] transition-all w-full shrink-0"
 					>
 						<div
 							className={`${colorSize} rounded-full shrink-0`}
