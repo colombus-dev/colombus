@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import type { GraphDefinition } from "@/api/client";
@@ -22,6 +22,7 @@ import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-fr
 import ProfileScoreDistributionChart from "@/components/profile-score-distribution-chart";
 import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
@@ -44,8 +45,7 @@ export default function ExplorerProjectIdPage() {
 	>();
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-	const fileInputRef = useRef<HTMLInputElement>(null);
+
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const setAvailableProfilesWithPpmData = useColombusStore(
 		(state) => state.setAvailableProfilesWithPpmData,
@@ -235,34 +235,14 @@ export default function ExplorerProjectIdPage() {
 									<Label htmlFor="notebook-or-profile-form">
 										Notebooks or profiles
 									</Label>
-									<input
+									<Input
 										id="notebook-or-profile-form"
 										name="notebook-or-profile-form"
 										type="file"
 										accept={NotebookFileExtension + "," + ProfileFileExtension}
 										multiple
 										required
-										className="hidden"
-										onChange={(e) => setSelectedFiles(e.target.files)}
-										ref={fileInputRef}
 									/>
-									<div className="flex items-center gap-2 border border-input rounded-md px-3 py-1 text-sm bg-transparent shadow-sm">
-										<Button
-											type="button"
-											variant="secondary"
-											className="h-7 px-2.5 text-xs shrink-0"
-											onClick={() => fileInputRef.current?.click()}
-										>
-											Choose files
-										</Button>
-										<span className="text-muted-foreground text-xs truncate flex-1 text-left">
-											{!selectedFiles || selectedFiles.length === 0
-												? "No file chosen"
-												: selectedFiles.length === 1
-													? "1 file selected"
-													: `${selectedFiles.length} files selected`}
-										</span>
-									</div>
 									<Button type="submit">Submit Profile</Button>
 								</div>
 							</form>
