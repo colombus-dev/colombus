@@ -37,7 +37,7 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 	return (
 		<div
 			{...divProps}
-			className={`flex flex-col h-full space-y-4 ${divProps.className ?? ""}`}
+			className={`flex flex-col h-full overflow-hidden space-y-4 ${divProps.className ?? ""}`}
 		>
 			<div className="space-y-4 shrink-0">
 				<div className="space-y-2">

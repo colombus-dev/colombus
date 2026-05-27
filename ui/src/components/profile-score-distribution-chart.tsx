@@ -13,15 +13,15 @@ interface ScoreBand {
 
 export default function ProfileScoreDistributionChart() {
 	const profilesScores = useColombusStore((state) => state.profilesScores);
-	const availableProfilesNames = useColombusStore(
-		(state) => state.availableProfilesNames,
+	const filteredProfilesNames = useColombusStore(
+		(state) => state.filteredProfilesNames,
 	);
 
 	const { average, bands, hasData, chartData } = useMemo(() => {
 		const scores: number[] = [];
 		let noScoreCount = 0;
 
-		for (const name of availableProfilesNames) {
+		for (const name of filteredProfilesNames) {
 			const score = profilesScores[name];
 			if (typeof score === "number" && score !== null && !Number.isNaN(score)) {
 				scores.push(score);
@@ -99,10 +99,10 @@ export default function ProfileScoreDistributionChart() {
 
 		const donutData = hasActiveData
 			? activeBands.map((b) => ({
-					name: b.label,
-					value: b.count,
-					color: b.color,
-				}))
+				name: b.label,
+				value: b.count,
+				color: b.color,
+			}))
 			: [{ name: "No data", value: 1, color: "#e2e8f0" }];
 
 		return {
@@ -111,7 +111,7 @@ export default function ProfileScoreDistributionChart() {
 			hasData: hasActiveData,
 			chartData: donutData,
 		};
-	}, [availableProfilesNames, profilesScores]);
+	}, [filteredProfilesNames, profilesScores]);
 
 	return (
 		<div className="space-y-6">
@@ -163,11 +163,10 @@ export default function ProfileScoreDistributionChart() {
 						{bands.map((band) => (
 							<div
 								key={band.label}
-								className={`border border-slate-100 dark:border-slate-800/60 rounded-2xl p-4 flex flex-col space-y-1.5 transition-all duration-150 ${
-									band.count > 0
+								className={`border border-slate-100 dark:border-slate-800/60 rounded-2xl p-4 flex flex-col space-y-1.5 transition-all duration-150 ${band.count > 0
 										? "bg-slate-50/50 dark:bg-slate-900/50 shadow-sm"
 										: "bg-transparent opacity-60"
-								}`}
+									}`}
 							>
 								<span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
 									{band.label}

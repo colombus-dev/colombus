@@ -1,15 +1,17 @@
-import { Save, Trash } from "lucide-react";
+import { Save, RotateCcw } from "lucide-react";
 import { useParams } from "react-router";
 import { getAllPatterns, postSavePpm } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
-import DeletePatternDialog from "./delete-pattern-dialog";
 
 const ProfilePatternActions: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
 > = ({ ...divProps }) => {
 	const currentPattern = useColombusStore((state) => state.currentPattern);
+	const resetCurrentPattern = useColombusStore(
+		(state) => state.resetCurrentPattern,
+	);
 	const setAvailablePatterns = useColombusStore(
 		(state) => state.setAllSavedPatterns,
 	);
@@ -18,11 +20,13 @@ const ProfilePatternActions: React.FunctionComponent<
 
 	return (
 		<div {...divProps} className={cn("flex", divProps.className)}>
-			<DeletePatternDialog patternName={currentPattern?.name}>
-				<Button variant="ghost" disabled={currentPattern?.name === undefined}>
-					<Trash /> Delete pattern
-				</Button>
-			</DeletePatternDialog>
+			<Button
+				variant="ghost"
+				onClick={resetCurrentPattern}
+				disabled={currentPattern === undefined}
+			>
+				<RotateCcw /> Reset pattern
+			</Button>
 			<Button
 				variant="ghost"
 				onClick={() => {
