@@ -1,6 +1,6 @@
 import { createNodeImageProgram } from "@sigma/node-image";
 import Graph from "graphology";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Sigma from "sigma";
 import type { GraphDefinition } from "@/api/client";
 import { useColombusStore } from "@/store";
@@ -23,7 +23,7 @@ export default function useGraph(
 	);
 
 	const graph = useRef<Graph>(new Graph());
-	const [renderer, setRenderer] = useState<Sigma | undefined>(undefined);
+	const renderer = useRef<Sigma | undefined>(undefined);
 
 	const { addNewProfile } = useGraphUtils(graph.current);
 
@@ -31,7 +31,7 @@ export default function useGraph(
 		if (containerId) {
 			const graphContainer = document.getElementById("graph-container");
 			if (graphContainer) {
-				const sig = new Sigma(graph.current, graphContainer, {
+				renderer.current = new Sigma(graph.current, graphContainer, {
 					nodeProgramClasses: {
 						image: createNodeImageProgram({
 							keepWithinCircle: false,
@@ -65,26 +65,20 @@ export default function useGraph(
 						);
 					},
 				});
-				setRenderer(sig);
 			}
-		} else {
-			setRenderer((prev: Sigma | undefined) => {
-				prev?.kill();
-				return undefined;
-			});
 		}
 	}, [containerId]);
 
 	useEffect(() => {
 		graph.current?.clear();
-		if (!graphDefinitions || !renderer || !graph.current) {
+		if (!graphDefinitions || !renderer.current || !graph.current) {
 			return;
 		}
 		let addedX = 0;
 		let addedY = 0;
 		const sortedGraphDefinition = graphDefinitions.toSorted((a, b) =>
 			availableProfilesNames.indexOf(a.name) >
-			availableProfilesNames.indexOf(b.name)
+				availableProfilesNames.indexOf(b.name)
 				? 1
 				: -1,
 		);
@@ -107,17 +101,8 @@ export default function useGraph(
 		filteredProfilesNames,
 		displayedLevel,
 		addNewProfile,
-		renderer,
 	]);
 
-	useEffect(() => {
-		return () => {
-			setRenderer((prev: Sigma | undefined) => {
-				prev?.kill();
-				return undefined;
-			});
-		};
-	}, []);
 
 	return { renderer };
 }

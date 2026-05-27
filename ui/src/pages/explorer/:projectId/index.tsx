@@ -68,13 +68,13 @@ export default function ExplorerProjectIdPage() {
 
 	const { renderer } = useGraph(graphContainerId, filteredWorkflowsNodes);
 
-	useGraphPpm(renderer);
+	useGraphPpm(renderer.current);
 
 	useEffect(() => {
-		if (activeTab === "explorer" && renderer) {
-			renderer.refresh();
+		if (activeTab === "explorer" && renderer.current) {
+			renderer.current.refresh();
 		}
-	}, [activeTab, renderer]);
+	}, [activeTab, renderer.current]);
 
 	const navigate = useNavigate();
 
@@ -321,7 +321,7 @@ export default function ExplorerProjectIdPage() {
 						className="group relative row-span-10 h-[692px]"
 						containerId={GRAPH_CONTAINER_ID}
 						isLoading={isLoading}
-						graphRenderer={renderer}
+						graphRenderer={renderer.current}
 					/>
 				</div>
 
