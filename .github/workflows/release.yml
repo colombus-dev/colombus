@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - deployment
-  push:
     tags: ["v*"]
 
 env:
