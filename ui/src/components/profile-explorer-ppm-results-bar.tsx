@@ -1,19 +1,19 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+import { cn, scoreToBandColor } from "@/lib/utils";
 import { useColombusStore } from "@/store";
-import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-
-let beforeAllChecked: string[] = [];
 
 const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
 > = ({ ...divProps }) => {
-	const [resultSearchFilter, setResultSearchFilter] = useState<string>("");
+	const [resultSearchFilter, setResultSearchFilter] = useState("");
 	const availableProfilesNames = useColombusStore(
 		(state) => state.availableProfilesNames,
+	);
+	const availableProfilesWithPpmData = useColombusStore(
+		(state) => state.availableProfilesWithPpmData,
 	);
 	const filteredProfilesNames = useColombusStore(
 		(state) => state.filteredProfilesNames,
@@ -21,80 +21,147 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 	const setFilteredProfilesNames = useColombusStore(
 		(state) => state.setFilteredProfilesNames,
 	);
-	const setReferenceDiffProfile = useColombusStore(
-		(state) => state.setReferenceDiffProfile,
-	);
+	const profilesScores = useColombusStore((state) => state.profilesScores);
+	const profiles = useMemo(() => {
+		return availableProfilesNames.map((name) => {
+			const profileData = availableProfilesWithPpmData.find(
+				(profile) => profile.profile_name === name,
+			);
+			const resultCount = profileData?.results.length ?? 0;
+			const score = profilesScores[name];
+
+			return {
+				key: name,
+				name,
+				resultCount,
+				score,
+			};
+		});
+	}, [availableProfilesNames, availableProfilesWithPpmData, profilesScores]);
+
+	const filteredProfiles = useMemo(() => {
+		return profiles.filter((profile) =>
+			profile.name.toLowerCase().includes(resultSearchFilter.toLowerCase()),
+		);
+	}, [profiles, resultSearchFilter]);
+
+	const selectedProfiles = useMemo(() => {
+		return filteredProfilesNames.filter((name) =>
+			profiles.some((p) => p.key === name),
+		);
+	}, [filteredProfilesNames, profiles]);
+
+	const selectedCount = useMemo(() => {
+		return profiles.filter((p) => selectedProfiles.includes(p.key)).length;
+	}, [profiles, selectedProfiles]);
+
+	const allProfilesSelected = useMemo(() => {
+		return (
+			filteredProfiles.length > 0 &&
+			filteredProfiles.every((p) => selectedProfiles.includes(p.key))
+		);
+	}, [filteredProfiles, selectedProfiles]);
+
+	const toggleProfile = (key: string) => {
+		if (selectedProfiles.includes(key)) {
+			setFilteredProfilesNames(selectedProfiles.filter((n) => n !== key));
+		} else {
+			setFilteredProfilesNames([...selectedProfiles, key]);
+		}
+	};
+
+	const toggleAll = () => {
+		if (allProfilesSelected) {
+			setFilteredProfilesNames([]);
+		} else {
+			setFilteredProfilesNames(filteredProfiles.map((p) => p.key));
+		}
+	};
+
 	return (
-		<div {...divProps} className={cn("space-y-2", divProps.className)}>
-			<p className="font-bold">
-				Results: {availableProfilesNames.length} matches
-			</p>
+		<section
+			{...divProps}
+			className={cn(
+				"flex h-[calc(100vh-76px)] min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)]",
+				divProps.className,
+			)}
+		>
+			<h3 className="mb-2 text-sm font-semibold text-slate-900">
+				Results ({selectedCount}/{profiles.length})
+			</h3>
+
 			<Input
-				id="filter-results"
 				type="text"
-				placeholder="Search profiles"
-				onChange={(e) => setResultSearchFilter(e.target.value.toLowerCase())}
+				placeholder="Search profiles..."
+				value={resultSearchFilter}
+				onChange={(e) => setResultSearchFilter(e.target.value)}
+				className="mb-2"
 			/>
-			<div className="flex space-x-2" key="check-all-div">
-				<Checkbox
-					id="check-all"
-					checked={
-						filteredProfilesNames?.length === availableProfilesNames.length
-					}
-					onCheckedChange={(c) => {
-						if (c) {
-							beforeAllChecked = filteredProfilesNames;
-							setFilteredProfilesNames(availableProfilesNames);
-						} else {
-							setFilteredProfilesNames(beforeAllChecked);
-						}
-					}}
-				/>
-				<div className="grid gap-1.5 leading-none">
-					<label htmlFor="check-all" className="text-sm font-medium italic">
-						Check all
-					</label>
-				</div>
-			</div>
-			<ScrollArea
-				className={`h-[${import.meta.env.VITE_INTERFACE_MODE === "full" ? 45 : 55}vh]`}
+
+			<div
+				role="button"
+				tabIndex={0}
+				onClick={toggleAll}
+				onKeyDown={(e) => e.key === "Enter" || e.key === " " ? toggleAll() : undefined}
+				className="mb-2 mt-1 flex w-full cursor-pointer items-center gap-2 rounded-md border-b border-slate-100 pb-2 text-left"
 			>
-				<RadioGroup onValueChange={setReferenceDiffProfile}>
-					<div className="space-y-1">
-						{availableProfilesNames
-							.filter((w) => w.toLowerCase().includes(resultSearchFilter))
-							.map((w) => (
-								<div className="flex space-x-2" key={w}>
-									<Checkbox
-										id={`cb_${w}`}
-										checked={filteredProfilesNames?.includes(w)}
-										onCheckedChange={(c) => {
-											if (!filteredProfilesNames) {
-												return;
-											}
-											setFilteredProfilesNames(
-												c
-													? [...filteredProfilesNames, w]
-													: filteredProfilesNames.filter((fw) => fw !== w),
-											);
-										}}
-									/>
-									<RadioGroupItem value={w} id={`checkbox-${w}`} />
-									<div className="grid gap-1.5 leading-none">
-										<label
-											htmlFor={`cb_${w}`}
-											className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-										>
-											{w}
-										</label>
-									</div>
-								</div>
-							))}
+				<Checkbox
+					checked={allProfilesSelected}
+					onCheckedChange={toggleAll}
+					className="pointer-events-none border-slate-300 data-[state=checked]:bg-slate-900 data-[state=checked]:text-white"
+				/>
+				<span className="text-sm font-semibold text-slate-900">Select all</span>
+			</div>
+
+			<div className="min-h-0 flex-1 overflow-auto pr-1">
+				{profiles.length === 0 ? (
+					<div className="px-1 py-2 text-xs text-slate-400">
+						No profiles found
 					</div>
-				</RadioGroup>
-				<ScrollBar />
-			</ScrollArea>
-		</div>
+				) : (
+					<ScrollArea className="h-full pr-1">
+						<div className="space-y-1">
+							{filteredProfiles.map((profile, index) => {
+								const isSelected = selectedProfiles.includes(profile.key);
+
+								return (
+									<div
+										key={`${profile.key}-${index}`}
+										className="flex w-full items-center gap-2 rounded-md px-1 py-1 text-left transition-colors hover:bg-slate-50"
+									>
+										<Checkbox
+											id={`cb_${profile.key}-${index}`}
+											checked={isSelected}
+											onCheckedChange={() => toggleProfile(profile.key)}
+											className="border-slate-300 data-[state=checked]:bg-slate-900 data-[state=checked]:text-white"
+										/>
+										<div
+											className="h-3 w-3 shrink-0 rounded-full"
+											style={{
+												backgroundColor: scoreToBandColor(profile.score),
+											}}
+										/>
+										<label
+											htmlFor={`cb_${profile.key}-${index}`}
+											className="min-w-0 flex-1 truncate text-[11px] font-medium text-slate-700 cursor-pointer"
+											style={{ fontFamily: "JetBrains Mono, monospace" }}
+										>
+											{profile.name}
+										</label>
+										<span className="shrink-0 text-[10px] font-bold text-slate-900">
+											{profile.score !== undefined && profile.score !== null
+												? profile.score.toFixed(2)
+												: "-"}
+										</span>
+									</div>
+								);
+							})}
+						</div>
+						<ScrollBar />
+					</ScrollArea>
+				)}
+			</div>
+		</section>
 	);
 };
 
