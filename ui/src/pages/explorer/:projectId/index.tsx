@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import type { GraphDefinition } from "@/api/client";
 import {
 	getAllProfiles,
@@ -146,7 +147,7 @@ export default function ExplorerProjectIdPage() {
 			} else if (typeof detail === "object" && detail !== null) {
 				detail = JSON.stringify(detail);
 			}
-			setExecutionError(detail ? `Execution failed: ${detail}` : "Execution failed. Step may not exist.");
+			setExecutionError(detail ? `Execution failed: ${detail}` : "Please check the pattern syntax");
 		};
 
 		if (currentPattern?.groups?.length) {
@@ -275,6 +276,7 @@ export default function ExplorerProjectIdPage() {
 										required
 									/>
 									<Button type="submit" disabled={isImporting}>
+										{isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 										Submit Profile
 									</Button>
 								</div>
