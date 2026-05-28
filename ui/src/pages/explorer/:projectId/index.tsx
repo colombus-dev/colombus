@@ -147,7 +147,7 @@ export default function ExplorerProjectIdPage() {
 			} else if (typeof detail === "object" && detail !== null) {
 				detail = JSON.stringify(detail);
 			}
-			setExecutionError(detail ? `Execution failed: ${detail}` : "Please check the pattern syntax");
+			setExecutionError(detail ? `Execution failed: ${detail}` : "Execution error: Please check the pattern syntax");
 		};
 
 		if (currentPattern?.groups?.length) {
