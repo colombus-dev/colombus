@@ -46,6 +46,7 @@ export default function ExplorerProjectIdPage() {
 	>();
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [executionError, setExecutionError] = useState<string | null>(null);
 	const [isImporting, setIsImporting] = useState<boolean>(false);
 	const editorRef = useRef<PatternDslEditorHandle>(null);
 	const formRef = useRef<HTMLFormElement>(null);
@@ -130,10 +131,23 @@ export default function ExplorerProjectIdPage() {
 			});
 		};
 		setIsLoading(true);
+		setExecutionError(null);
 
 		getProfilesScores(projectId).then((scores) => {
 			setProfilesScores(scores);
 		});
+
+		const handleError = (error: any) => {
+			console.error("Pattern execution error:", error);
+			setIsLoading(false);
+			let detail = error?.response?.data?.detail;
+			if (Array.isArray(detail)) {
+				detail = detail.map((d: any) => d.msg || JSON.stringify(d)).join(", ");
+			} else if (typeof detail === "object" && detail !== null) {
+				detail = JSON.stringify(detail);
+			}
+			setExecutionError(detail ? `Execution failed: ${detail}` : "Execution failed. Step may not exist.");
+		};
 
 		if (currentPattern?.groups?.length) {
 			postApplyPpmFilter(projectId, currentPattern.groups).then(
@@ -146,7 +160,7 @@ export default function ExplorerProjectIdPage() {
 						],
 						workflowsWithData,
 					),
-			);
+			).catch(handleError);
 		} else if (currentPattern?.name) {
 			postApplyPpmFilterByName(projectId, currentPattern.name).then(
 				(workflowsWithData) =>
@@ -158,11 +172,11 @@ export default function ExplorerProjectIdPage() {
 						],
 						workflowsWithData,
 					),
-			);
+			).catch(handleError);
 		} else {
 			getAllProfiles(projectId).then((wfs) =>
 				updateAndMergeWithPosted(wfs, undefined),
-			);
+			).catch(handleError);
 		}
 	}, [
 		projectId,
@@ -214,9 +228,17 @@ export default function ExplorerProjectIdPage() {
 			if (!projectId) {
 				return;
 			}
+			setExecutionError(null);
 			parsePpm(projectId, content).then((p) => {
 				// TODO: check sync here
 				setCurrentPattern({ ...p, dsl_content: content });
+			}).catch((error: any) => {
+				console.error("Parse pattern error:", error);
+				let detail = error?.response?.data?.detail;
+				if (typeof detail === "object" && detail !== null) {
+					detail = JSON.stringify(detail);
+				}
+				setExecutionError(detail ? `Failed to parse pattern: ${detail}` : "Failed to parse pattern.");
 			});
 		},
 		[projectId, setCurrentPattern],
@@ -322,6 +344,7 @@ export default function ExplorerProjectIdPage() {
 						containerId={GRAPH_CONTAINER_ID}
 						isLoading={isLoading}
 						graphRenderer={renderer.current}
+						errorMessage={executionError}
 					/>
 				</div>
 
