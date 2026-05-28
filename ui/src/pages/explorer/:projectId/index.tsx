@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import type { GraphDefinition } from "@/api/client";
@@ -17,6 +17,7 @@ import GraphContainer from "@/components/graph-container";
 import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
 import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
+import type { PatternDslEditorHandle } from "@/components/profile-pattern-dsl-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
 import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
 import ProfileScoreDistributionChart from "@/components/profile-score-distribution-chart";
@@ -45,6 +46,8 @@ export default function ExplorerProjectIdPage() {
 	>();
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const editorRef = useRef<PatternDslEditorHandle>(null);
+	const uploadFormRef = useRef<HTMLFormElement>(null);
 
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const setAvailableProfilesWithPpmData = useColombusStore(
@@ -188,6 +191,7 @@ export default function ExplorerProjectIdPage() {
 				loading: "Loading...",
 				success: (r) => {
 					setPostedProfiles(r);
+					uploadFormRef.current?.reset();
 					return "Profiles successfully imported.";
 				},
 				error: ({
@@ -230,7 +234,7 @@ export default function ExplorerProjectIdPage() {
 					<>
 						<p className="font-bold">Upload</p>
 						<div className="row-span-1">
-							<form action={handleNotebookOrProfileFormSubmit}>
+							<form ref={uploadFormRef} action={handleNotebookOrProfileFormSubmit}>
 								<div className="grid w-full max-w-sm items-center gap-1.5">
 									<Label htmlFor="notebook-or-profile-form">
 										Notebooks or profiles
@@ -257,10 +261,18 @@ export default function ExplorerProjectIdPage() {
 			</div>
 			<ProfileExplorerPpmResultsBar className="col-span-1" />
 			<div className="col-span-5 flex flex-col h-full space-y-4 relative">
-				<ProfilePatternActions />
+				<ProfilePatternActions
+					onExecute={() => {
+						const content = editorRef.current?.getContent();
+						if (content) {
+							handleExecuteCodeSubmit(content);
+						}
+					}}
+				/>
 				{projectId && (
 					<PatternDslEditor
-						className="group relative h-48 w-full"
+						ref={editorRef}
+						className="group relative h-48 w-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] overflow-hidden"
 						onSubmitted={handleExecuteCodeSubmit}
 					/>
 				)}
