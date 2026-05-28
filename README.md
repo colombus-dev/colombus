@@ -10,7 +10,7 @@ cp .env.sample .env # then edit .env
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-> Caddy provisions a TLS certificate automatically on first start.  
+> Caddy provisions a TLS certificate automatically on first start.
 > App is available at `https://<DOMAIN>`.
 
 **Update:**
