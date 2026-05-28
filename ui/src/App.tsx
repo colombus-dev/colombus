@@ -36,9 +36,6 @@ export default function App() {
                             </div>
                             <p className="font-bold">{projectName}</p>
                         </div>
-                        <Badge className="w-[12vw] bg-green-600 m-2">
-                            MODE: {import.meta.env.VITE_INTERFACE_MODE}
-                        </Badge>
                     </div>
                 </header>
                 <main className="flex-1">

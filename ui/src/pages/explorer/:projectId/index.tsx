@@ -218,29 +218,25 @@ export default function ExplorerProjectIdPage() {
 	return projectValidity === "valid" ? (
 		<section className="grid grid-cols-7 space-x-2 h-full">
 			<div className="col-span-1 space-y-4 p-2">
-				{import.meta.env.VITE_INTERFACE_MODE === "full" && (
-					<>
-						<p className="font-bold">Upload</p>
-						<div className="row-span-1">
-							<form action={handleNotebookOrProfileFormSubmit}>
-								<div className="grid w-full max-w-sm items-center gap-1.5">
-									<Label htmlFor="notebook-or-profile-form">
-										Notebooks or profiles
-									</Label>
-									<Input
-										id="notebook-or-profile-form"
-										name="notebook-or-profile-form"
-										type="file"
-										accept={NotebookFileExtension + "," + ProfileFileExtension}
-										multiple
-										required
-									/>
-									<Button type="submit">Submit Profile</Button>
-								</div>
-							</form>
+				<p className="font-bold">Upload</p>
+				<div className="row-span-1">
+					<form action={handleNotebookOrProfileFormSubmit}>
+						<div className="grid w-full max-w-sm items-center gap-1.5">
+							<Label htmlFor="notebook-or-profile-form">
+								Notebooks or profiles
+							</Label>
+							<Input
+								id="notebook-or-profile-form"
+								name="notebook-or-profile-form"
+								type="file"
+								accept={NotebookFileExtension + "," + ProfileFileExtension}
+								multiple
+								required
+							/>
+							<Button type="submit">Submit Profile</Button>
 						</div>
-					</>
-				)}
+					</form>
+				</div>
 				<p className="font-bold">Patterns Statistics</p>
 				<ProfilePatternStatsFreqMatrix />
 				<ProfileStepsFrequencyChart />

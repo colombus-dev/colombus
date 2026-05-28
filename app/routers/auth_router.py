@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Security
+from fastapi import APIRouter, HTTPException, Security, status
 from fastapi.security import APIKeyHeader
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
@@ -12,6 +12,15 @@ from app.settings import get_settings
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 settings = get_settings()
+
+
+class AuthConfig(BaseModel):
+    google_client_id: str
+
+
+@router.get("/config")
+def get_auth_config() -> AuthConfig:
+    return AuthConfig(google_client_id=settings.google_client_id)
 
 
 class GoogleAuthRequest(BaseModel):
@@ -27,6 +36,9 @@ def auth_google(body: GoogleAuthRequest):
             settings.google_client_id,
         )
     except ValueError:
+        raise InvalidTokenException(name="Google")
+
+    if info["email"] not in settings.allowed_google_emails:
         raise InvalidTokenException(name="Google")
 
     token = jwt.encode(

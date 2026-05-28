@@ -10,8 +10,6 @@ services:
       environment:
         VITE_API_HOST: "http://localhost"
         VITE_API_PORT: 8180
-        VITE_INTERFACE_MODE: "full"
-        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       depends_on:
         - colombus_app
   colombus_app:

@@ -1,5 +1,5 @@
 {
-    email {$CADDY_EMAIL:example@i3s.unice.fr}
+    email {$CADDY_EMAIL}
 }
 
 {$DOMAIN} {

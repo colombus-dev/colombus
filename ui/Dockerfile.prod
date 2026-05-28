@@ -9,11 +9,6 @@ RUN --mount=type=cache,target=/root/.cache/yarn \
 
 COPY . .
 
-ARG VITE_API_HOST
-ARG VITE_API_PORT
-ARG VITE_INTERFACE_MODE=full
-ARG VITE_GOOGLE_CLIENT_ID
-
 RUN yarn build
 
 FROM nginx:stable-alpine

@@ -35,9 +35,6 @@ export type GraphDefinition = {
 export const ProfileFileExtension = ".json";
 export const NotebookFileExtension = ".ipynb";
 
-// If VITE_API_HOST is set (e.g. in dev), build an absolute URL.
-// Otherwise fall back to a relative /api path — this works transparently
-// when a reverse-proxy (Caddy, nginx) serves UI and API from the same origin.
 const apiPath = import.meta.env.VITE_API_HOST;
 const apiPort = import.meta.env.VITE_API_PORT;
 
@@ -233,8 +230,14 @@ export async function postFrequentStepsData(
 		.then(({ data }) => data.map((d) => ({ step: d[0], frequency: d[1] })));
 }
 
+export async function getAuthConfig(): Promise<string> {
+	return await axiosInstance
+		.get<{ google_client_id: string }>("/auth/config")
+		.then(({ data }) => data.google_client_id);
+}
+
 export async function authGoogle(credential: string) {
-  return await axiosInstance
-    .post<{ api_key: string }>("/auth/google", { credential })
-    .then(({ data }) => data);
+	return await axiosInstance
+		.post<{ api_key: string }>("/auth/google", { credential })
+		.then(({ data }) => data);
 }

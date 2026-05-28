@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     database_url: str = Field()
     ml_profiler_api_url_prefix: str = Field()
     google_client_id: str = Field()
+    allowed_google_emails: list[str] = Field(
+        default=[],
+        description="Allowlist of Google email addresses permitted to log in. Empty means everyone is allowed.",
+    )
 
     @property
     def is_production(self) -> bool:
