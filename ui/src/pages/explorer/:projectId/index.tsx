@@ -46,6 +46,7 @@ export default function ExplorerProjectIdPage() {
 	>();
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [isImporting, setIsImporting] = useState<boolean>(false);
 	const editorRef = useRef<PatternDslEditorHandle>(null);
 	const formRef = useRef<HTMLFormElement>(null);
 
@@ -187,7 +188,11 @@ export default function ExplorerProjectIdPage() {
 			if (!files || !projectId) {
 				return;
 			}
-			toast.promise(postNotebookOrProfiles(projectId, files), {
+			setIsImporting(true);
+			const promise = postNotebookOrProfiles(projectId, files).finally(() => {
+				setIsImporting(false);
+			});
+			toast.promise(promise, {
 				loading: "Loading...",
 				success: (r) => {
 					setPostedProfiles(r);
@@ -247,7 +252,9 @@ export default function ExplorerProjectIdPage() {
 										multiple
 										required
 									/>
-									<Button type="submit">Submit Profile</Button>
+									<Button type="submit" disabled={isImporting}>
+										Submit Profile
+									</Button>
 								</div>
 							</form>
 						</div>
