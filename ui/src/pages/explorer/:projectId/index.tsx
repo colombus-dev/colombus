@@ -358,8 +358,13 @@ export default function ExplorerProjectIdPage() {
 					}
 				>
 					<div className="group relative row-span-10 h-[692px]">
-						<div className="w-full h-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] p-6 overflow-y-auto">
-							<ProfileScoreDistributionChart />
+						<div className="w-full h-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] p-6 overflow-y-auto relative">
+							{executionError && !isLoading && (
+								<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 font-bold text-xl bg-white p-4 rounded-lg shadow-lg border border-red-200 z-50">
+									{executionError}
+								</div>
+							)}
+							{!executionError && <ProfileScoreDistributionChart />}
 						</div>
 					</div>
 				</div>
