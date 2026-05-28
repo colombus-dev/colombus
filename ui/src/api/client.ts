@@ -35,13 +35,20 @@ export type GraphDefinition = {
 export const ProfileFileExtension = ".json";
 export const NotebookFileExtension = ".ipynb";
 
-const apiPath = import.meta.env.VITE_API_HOST ?? "http://localhost";
-const apiPort = import.meta.env.VITE_API_PORT ?? 8180;
+// If VITE_API_HOST is set (e.g. in dev), build an absolute URL.
+// Otherwise fall back to a relative /api path — this works transparently
+// when a reverse-proxy (Caddy, nginx) serves UI and API from the same origin.
+const apiPath = import.meta.env.VITE_API_HOST;
+const apiPort = import.meta.env.VITE_API_PORT;
 
 const API_KEY_HEADER_NAME = "x-api-key";
 
+const baseURL = apiPath
+	? `${apiPath}${apiPort ? `:${apiPort}` : ""}/api`
+	: "/api";
+
 const axiosInstance = axios.create({
-	baseURL: `${apiPath}:${apiPort}/api`,
+	baseURL,
 	headers: {
 		common: {
 			[API_KEY_HEADER_NAME]: useColombusStore.getState().apiKey,

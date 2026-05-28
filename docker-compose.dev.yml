@@ -28,7 +28,7 @@ services:
       UI_HOST: "http://localhost"
       UI_PORT: 5173
       DATABASE_URL: postgresql+psycopg://${DB_USERNAME}:${DB_PASSWORD}@colombus_postgresql:5432/${DB_NAME}
-      ML_PROFILER_API_URL_PREFIX: "http://mlprofiler_api:8081"
+      ML_PROFILER_API_URL_PREFIX: ${ML_PROFILER_API_URL_PREFIX}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       JWT_SECRET: ${JWT_SECRET}
     healthcheck:
@@ -55,9 +55,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready", "-U", "christopher", "-d", "colombusdb"]
-      timeout: 10s
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
       retries: 10
+      start_period: 15s
   colombus_pgadmin:
     image: 'dpage/pgadmin4:latest'
     ports:
@@ -71,7 +73,7 @@ services:
       colombus_postgresql:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      test: ["CMD", "curl", "-f", "http://localhost:80/misc/ping"]
       interval: 20s
       timeout: 10s
       retries: 3
