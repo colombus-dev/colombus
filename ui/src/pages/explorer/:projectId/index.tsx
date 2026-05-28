@@ -47,7 +47,7 @@ export default function ExplorerProjectIdPage() {
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const editorRef = useRef<PatternDslEditorHandle>(null);
-	const uploadFormRef = useRef<HTMLFormElement>(null);
+	const formRef = useRef<HTMLFormElement>(null);
 
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const setAvailableProfilesWithPpmData = useColombusStore(
@@ -191,7 +191,7 @@ export default function ExplorerProjectIdPage() {
 				loading: "Loading...",
 				success: (r) => {
 					setPostedProfiles(r);
-					uploadFormRef.current?.reset();
+					formRef.current?.reset();
 					return "Profiles successfully imported.";
 				},
 				error: ({
@@ -234,7 +234,7 @@ export default function ExplorerProjectIdPage() {
 					<>
 						<p className="font-bold">Upload</p>
 						<div className="row-span-1">
-							<form ref={uploadFormRef} action={handleNotebookOrProfileFormSubmit}>
+							<form ref={formRef} action={handleNotebookOrProfileFormSubmit}>
 								<div className="grid w-full max-w-sm items-center gap-1.5">
 									<Label htmlFor="notebook-or-profile-form">
 										Notebooks or profiles

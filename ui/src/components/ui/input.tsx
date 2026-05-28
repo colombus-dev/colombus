@@ -24,7 +24,18 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
 		React.useImperativeHandle(ref, () => internalRef.current as HTMLInputElement);
 
-	if (type === "file") {
+		React.useEffect(() => {
+			if (type === "file") {
+				const form = internalRef.current?.closest("form");
+				if (form) {
+					const handleReset = () => setFileLabel(noFileText);
+					form.addEventListener("reset", handleReset);
+					return () => form.removeEventListener("reset", handleReset);
+				}
+			}
+		}, [type, noFileText]);
+
+		if (type === "file") {
 			const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 				const files = e.target.files;
 				if (!files || files.length === 0) {
@@ -36,16 +47,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 				}
 				onChange?.(e);
 			};
-
-			// Reset label when the parent form is reset
-			// eslint-disable-next-line react-hooks/rules-of-hooks
-			React.useEffect(() => {
-				const form = internalRef.current?.form;
-				if (!form) return;
-				const handleReset = () => setFileLabel(noFileText);
-				form.addEventListener("reset", handleReset);
-				return () => form.removeEventListener("reset", handleReset);
-			}, [noFileText]);
 
 			return (
 				<div
