@@ -38,7 +38,7 @@ def auth_google(body: GoogleAuthRequest):
     except ValueError:
         raise AuthException(name="Google")
 
-    if info["email"] not in settings.allowed_google_emails:
+    if info["email"] not in settings.allowed_google_emails_list:
         raise AuthException(name="Google")
 
     token = jwt.encode(

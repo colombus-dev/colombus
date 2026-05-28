@@ -20,18 +20,17 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_hours: int = 1
     jwt_header_field: str = "x-api-key"
-    jwt_secret: str = Field(
-        min_length=16,
-        description="Used to generate a JWT token.",
-    )
+    jwt_secret: str = Field(min_length=16)
 
     database_url: str = Field()
     ml_profiler_api_url_prefix: str = Field()
     google_client_id: str = Field()
-    allowed_google_emails: list[str] = Field(
-        default=[],
-        description="Allowlist of Google email addresses permitted to log in. Empty means everyone is allowed.",
-    )
+
+    allowed_google_emails: str = Field()
+
+    @property
+    def allowed_google_emails_list(self) -> list[str]:
+        return [e.strip() for e in self.allowed_google_emails.split(",") if e.strip()]
 
     @property
     def is_production(self) -> bool:

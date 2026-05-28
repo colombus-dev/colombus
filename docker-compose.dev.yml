@@ -28,6 +28,7 @@ services:
       DATABASE_URL: postgresql+psycopg://${DB_USERNAME}:${DB_PASSWORD}@colombus_postgresql:5432/${DB_NAME}
       ML_PROFILER_API_URL_PREFIX: ${ML_PROFILER_API_URL_PREFIX}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      ALLOWED_GOOGLE_EMAILS: ${ALLOWED_GOOGLE_EMAILS}
       JWT_SECRET: ${JWT_SECRET}
     healthcheck:
       test: curl -f http://localhost:8180/health || exit 1
