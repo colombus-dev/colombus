@@ -65,8 +65,8 @@ services:
     networks:
       - colombus-dev_network
     environment:
-      PGADMIN_DEFAULT_EMAIL: user@domain.com
-      PGADMIN_DEFAULT_PASSWORD: pgpassword
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@localhost}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-changeme}
     depends_on:
       colombus_postgresql:
         condition: service_healthy

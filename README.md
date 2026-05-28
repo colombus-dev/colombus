@@ -27,7 +27,8 @@ docker network create colombus-dev_network  # once
 docker compose -f docker-compose.dev.yml up --build
 ```
 
-UI → http://localhost:5173 · API → http://localhost:8180
+UI → http://localhost:5173
+API → http://localhost:8180
 
 ## Contributing
 
