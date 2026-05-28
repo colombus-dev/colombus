@@ -269,6 +269,7 @@ export default function ExplorerProjectIdPage() {
 			<ProfileExplorerPpmResultsBar className="col-span-1" />
 			<div className="col-span-5 flex flex-col h-full space-y-4 relative">
 				<ProfilePatternActions
+					isExecuting={isLoading}
 					onExecute={() => {
 						const content = editorRef.current?.getContent();
 						if (content) {

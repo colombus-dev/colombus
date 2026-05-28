@@ -1,4 +1,4 @@
-import { Play, Save, RotateCcw } from "lucide-react";
+import { Play, Save, RotateCcw, Loader2 } from "lucide-react";
 import { useParams } from "react-router";
 import { getAllPatterns, postSavePpm } from "@/api/client";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,10 @@ import { useColombusStore } from "@/store";
 
 export interface ProfilePatternActionsProps extends React.HTMLAttributes<HTMLDivElement> {
 	onExecute?: () => void;
+	isExecuting?: boolean;
 }
 
-const ProfilePatternActions: React.FunctionComponent<ProfilePatternActionsProps> = ({ onExecute, ...divProps }) => {
+const ProfilePatternActions: React.FunctionComponent<ProfilePatternActionsProps> = ({ onExecute, isExecuting, ...divProps }) => {
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const resetCurrentPattern = useColombusStore(
 		(state) => state.resetCurrentPattern,
@@ -25,9 +26,14 @@ const ProfilePatternActions: React.FunctionComponent<ProfilePatternActionsProps>
 			<Button
 				variant="ghost"
 				onClick={onExecute}
-				disabled={currentPattern === undefined}
+				disabled={!projectId || isExecuting}
 			>
-				<Play className="mr-2 h-4 w-4" /> Execute pattern
+				{isExecuting ? (
+					<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+				) : (
+					<Play className="mr-2 h-4 w-4" />
+				)}{" "}
+				Execute pattern
 			</Button>
 			<Button
 				variant="ghost"
