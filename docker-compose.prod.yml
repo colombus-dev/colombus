@@ -39,6 +39,7 @@ services:
       ML_PROFILER_API_URL_PREFIX: ${ML_PROFILER_API_URL_PREFIX}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       JWT_SECRET: ${JWT_SECRET}
+      ALLOWED_GOOGLE_EMAILS: ${ALLOWED_GOOGLE_EMAILS}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8180/health"]
       interval: 30s
