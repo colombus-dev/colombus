@@ -1,5 +1,4 @@
 import {Outlet} from "react-router";
-import {Badge} from "@/components/ui/badge";
 import {
     NavigationMenu,
     NavigationMenuItem,
