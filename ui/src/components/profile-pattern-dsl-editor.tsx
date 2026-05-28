@@ -2,7 +2,7 @@ import type { OnMount } from "@monaco-editor/react";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import _ from "lodash";
 import type * as monaco_editor from "monaco-editor";
-import { useCallback, useEffect, useRef } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from "react";
 import BounceLoader from "react-spinners/BounceLoader";
 import useCanopusCompletion from "@/hooks/editor/useCanopusCompletion";
 import useCanopusGrammar from "@/hooks/editor/useCanopusGrammar";
@@ -12,18 +12,24 @@ import { DEFAULT_DSL_CODE, EDITOR_LANGUAGE_ID } from "@/lib/constants";
 import type { MonacoEditor } from "@/lib/types";
 import { useColombusStore } from "@/store";
 
+export interface PatternDslEditorHandle {
+	getContent: () => string | undefined;
+}
+
 interface PatternDslEditorProps {
 	onSubmitted?: (content: string) => void;
 }
 
-export default function PatternDslEditor({
-	onSubmitted,
-	...props
-}: PatternDslEditorProps &
-	React.HTMLAttributes<HTMLDivElement> &
-	React.RefAttributes<HTMLDivElement>) {
+const PatternDslEditor = forwardRef<
+	PatternDslEditorHandle,
+	PatternDslEditorProps & React.HTMLAttributes<HTMLDivElement>
+>(({ onSubmitted, ...props }, ref) => {
 	const monaco = useMonaco();
 	const editorRef = useRef<monaco_editor.editor.IStandaloneCodeEditor>(null);
+
+	useImperativeHandle(ref, () => ({
+		getContent: () => editorRef.current?.getValue(),
+	}));
 
 	const currentPatternContent = useColombusStore(
 		(state) => state.currentPattern?.dsl_content,
@@ -93,4 +99,8 @@ export default function PatternDslEditor({
 			/>
 		</div>
 	);
-}
+});
+
+PatternDslEditor.displayName = "PatternDslEditor";
+
+export default PatternDslEditor;
