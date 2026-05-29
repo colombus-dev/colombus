@@ -1,3 +1,4 @@
+import { useMonaco } from "@monaco-editor/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -16,9 +17,7 @@ import {
 } from "@/api/client";
 import GraphContainer from "@/components/graph-container";
 import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
-import ProfilePatternActions from "@/components/profile-pattern-actions";
 import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
-import type { PatternDslEditorHandle } from "@/components/profile-pattern-dsl-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
 import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
 import ProfileScoreDistributionChart from "@/components/profile-score-distribution-chart";
@@ -29,6 +28,7 @@ import { Label } from "@/components/ui/label";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
+import { DEFAULT_DSL_CODE } from "@/lib/constants";
 import { PATH } from "@/lib/constants";
 import type { PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
@@ -49,8 +49,8 @@ export default function ExplorerProjectIdPage() {
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [executionError, setExecutionError] = useState<string | null>(null);
 	const [isImporting, setIsImporting] = useState<boolean>(false);
-	const editorRef = useRef<PatternDslEditorHandle>(null);
 	const formRef = useRef<HTMLFormElement>(null);
+	const monaco = useMonaco();
 
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const setAvailableProfilesWithPpmData = useColombusStore(
@@ -292,19 +292,9 @@ export default function ExplorerProjectIdPage() {
 			</div>
 			<ProfileExplorerPpmResultsBar className="col-span-1" />
 			<div className="col-span-5 flex flex-col h-full space-y-4 relative">
-				<ProfilePatternActions
-					isExecuting={isLoading}
-					onExecute={() => {
-						const content = editorRef.current?.getContent();
-						if (content) {
-							handleExecuteCodeSubmit(content);
-						}
-					}}
-				/>
 				{projectId && (
 					<PatternDslEditor
-						ref={editorRef}
-						className="group relative h-48 w-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] overflow-hidden"
+						isExecuting={isLoading}
 						onSubmitted={handleExecuteCodeSubmit}
 					/>
 				)}
