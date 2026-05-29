@@ -1,7 +1,8 @@
-import { CirclePlus } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useMonaco } from "@monaco-editor/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import type { GraphDefinition } from "@/api/client";
 import {
 	getAllProfiles,
@@ -16,26 +17,28 @@ import {
 } from "@/api/client";
 import GraphContainer from "@/components/graph-container";
 import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
-import ProfilePatternActions from "@/components/profile-pattern-actions";
 import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
 import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
+import ProfileScoreDistributionChart from "@/components/profile-score-distribution-chart";
 import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
-import ProjectTaxonomyList from "@/components/project-taxonomy-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
+import { DEFAULT_DSL_CODE } from "@/lib/constants";
+import { PATH } from "@/lib/constants";
 import type { PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
-import {PATH} from "@/lib/constants";
 
 const GRAPH_CONTAINER_ID = "graph-container";
 
 export default function ExplorerProjectIdPage() {
+	const [activeTab, setActiveTab] = useState<"explorer" | "statistics">(
+		"explorer",
+	);
 	const [graphContainerId, setGraphContainerId] = useState<
 		string | undefined
 	>();
@@ -44,6 +47,11 @@ export default function ExplorerProjectIdPage() {
 	>();
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [executionError, setExecutionError] = useState<string | null>(null);
+	const [isImporting, setIsImporting] = useState<boolean>(false);
+	const formRef = useRef<HTMLFormElement>(null);
+	const monaco = useMonaco();
+
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const setAvailableProfilesWithPpmData = useColombusStore(
 		(state) => state.setAvailableProfilesWithPpmData,
@@ -67,6 +75,12 @@ export default function ExplorerProjectIdPage() {
 	const { renderer } = useGraph(graphContainerId, filteredWorkflowsNodes);
 
 	useGraphPpm(renderer.current);
+
+	useEffect(() => {
+		if (activeTab === "explorer" && renderer.current) {
+			renderer.current.refresh();
+		}
+	}, [activeTab, renderer.current]);
 
 	const navigate = useNavigate();
 
@@ -96,32 +110,45 @@ export default function ExplorerProjectIdPage() {
 			setAvailableProfilesWithPpmData(workflowsPpmData ?? []);
 			// Detect which profiles need to be fetched by comparing how many copies of each name exist
 			// in workflowsNames vs how many are already loaded in filteredWorkflowsNodes.
-			const countInWorkflows = (name: string) => workflowsNames.filter((n) => n === name).length;
-			const countInNodes = (name: string) => filteredWorkflowsNodes?.filter((n) => n.name === name).length ?? 0;
+			const countInWorkflows = (name: string) =>
+				workflowsNames.filter((n) => n === name).length;
+			const countInNodes = (name: string) =>
+				filteredWorkflowsNodes?.filter((n) => n.name === name).length ?? 0;
 
 			const namesToFetch = [...new Set(workflowsNames)].filter(
-				(name) => countInWorkflows(name) > countInNodes(name)
+				(name) => countInWorkflows(name) > countInNodes(name),
 			);
 
 			// Keep existing nodes that are still in the workflows list AND not being re-fetched.
 			const graphNodesToKeep =
-				filteredWorkflowsNodes?.filter(({ name }) =>
-					workflowsNames.includes(name) && !namesToFetch.includes(name)
+				filteredWorkflowsNodes?.filter(
+					({ name }) =>
+						workflowsNames.includes(name) && !namesToFetch.includes(name),
 				) ?? [];
 
-			await getGraphNodes(
-				projectId,
-				namesToFetch,
-			).then((r) => {
+			await getGraphNodes(projectId, namesToFetch).then((r) => {
 				setFilteredWorkflowsNodes([...graphNodesToKeep, ...r]);
 				setIsLoading(false);
 			});
 		};
 		setIsLoading(true);
+		setExecutionError(null);
 
 		getProfilesScores(projectId).then((scores) => {
 			setProfilesScores(scores);
 		});
+
+		const handleError = (error: any) => {
+			console.error("Pattern execution error:", error);
+			setIsLoading(false);
+			let detail = error?.response?.data?.detail;
+			if (Array.isArray(detail)) {
+				detail = detail.map((d: any) => d.msg || JSON.stringify(d)).join(", ");
+			} else if (typeof detail === "object" && detail !== null) {
+				detail = JSON.stringify(detail);
+			}
+			setExecutionError(detail ? `Execution failed: ${detail}` : "Execution error: Please check the pattern syntax");
+		};
 
 		if (currentPattern?.groups?.length) {
 			postApplyPpmFilter(projectId, currentPattern.groups).then(
@@ -134,7 +161,7 @@ export default function ExplorerProjectIdPage() {
 						],
 						workflowsWithData,
 					),
-			);
+			).catch(handleError);
 		} else if (currentPattern?.name) {
 			postApplyPpmFilterByName(projectId, currentPattern.name).then(
 				(workflowsWithData) =>
@@ -146,11 +173,11 @@ export default function ExplorerProjectIdPage() {
 						],
 						workflowsWithData,
 					),
-			);
+			).catch(handleError);
 		} else {
 			getAllProfiles(projectId).then((wfs) =>
 				updateAndMergeWithPosted(wfs, undefined),
-			);
+			).catch(handleError);
 		}
 	}, [
 		projectId,
@@ -176,10 +203,15 @@ export default function ExplorerProjectIdPage() {
 			if (!files || !projectId) {
 				return;
 			}
-			toast.promise(postNotebookOrProfiles(projectId, files), {
+			setIsImporting(true);
+			const promise = postNotebookOrProfiles(projectId, files).finally(() => {
+				setIsImporting(false);
+			});
+			toast.promise(promise, {
 				loading: "Loading...",
 				success: (r) => {
 					setPostedProfiles(r);
+					formRef.current?.reset();
 					return "Profiles successfully imported.";
 				},
 				error: ({
@@ -197,9 +229,17 @@ export default function ExplorerProjectIdPage() {
 			if (!projectId) {
 				return;
 			}
+			setExecutionError(null);
 			parsePpm(projectId, content).then((p) => {
 				// TODO: check sync here
 				setCurrentPattern({ ...p, dsl_content: content });
+			}).catch((error: any) => {
+				console.error("Parse pattern error:", error);
+				let detail = error?.response?.data?.detail;
+				if (typeof detail === "object" && detail !== null) {
+					detail = JSON.stringify(detail);
+				}
+				setExecutionError(detail ? `Failed to parse pattern: ${detail}` : "Failed to parse pattern.");
 			});
 		},
 		[projectId, setCurrentPattern],
@@ -216,13 +256,13 @@ export default function ExplorerProjectIdPage() {
 	}
 
 	return projectValidity === "valid" ? (
-		<section className="grid grid-cols-7 space-x-2 h-full">
+		<section className="grid grid-cols-7 gap-4 px-4 h-full">
 			<div className="col-span-1 space-y-4 p-2">
 				{import.meta.env.VITE_INTERFACE_MODE === "full" && (
 					<>
 						<p className="font-bold">Upload</p>
 						<div className="row-span-1">
-							<form action={handleNotebookOrProfileFormSubmit}>
+							<form ref={formRef} action={handleNotebookOrProfileFormSubmit}>
 								<div className="grid w-full max-w-sm items-center gap-1.5">
 									<Label htmlFor="notebook-or-profile-form">
 										Notebooks or profiles
@@ -235,7 +275,10 @@ export default function ExplorerProjectIdPage() {
 										multiple
 										required
 									/>
-									<Button type="submit">Submit Profile</Button>
+									<Button type="submit" disabled={isImporting}>
+										{isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+										Submit Profile
+									</Button>
 								</div>
 							</form>
 						</div>
@@ -245,36 +288,76 @@ export default function ExplorerProjectIdPage() {
 				<ProfilePatternStatsFreqMatrix />
 				<ProfileStepsFrequencyChart />
 				<p className="font-bold">Saved patterns</p>
-				<div className="col-span-2">
-					<Button
-						className="w-full"
-						onClick={() => setCurrentPattern({ groups: [] })}
-					>
-						<CirclePlus />
-						Create new pattern
-					</Button>
-				</div>
-				<Separator />
 				<ProfilePatternList />
 			</div>
 			<ProfileExplorerPpmResultsBar className="col-span-1" />
-			<div className="col-span-4 grid grid-rows-10 items-center">
-				{currentPattern && <ProfilePatternActions />}
-				{currentPattern && projectId && (
+			<div className="col-span-5 flex flex-col h-full space-y-4 relative">
+				{projectId && (
 					<PatternDslEditor
-						className="group relative row-span-2 h-full"
+						isExecuting={isLoading}
 						onSubmitted={handleExecuteCodeSubmit}
 					/>
 				)}
-				<GraphContainer
-					className="group relative row-span-10 h-full"
-					containerId={GRAPH_CONTAINER_ID}
-					isLoading={isLoading}
-					graphRenderer={renderer.current}
-				/>
-			</div>
-			<div className="col-span-1">
-				<ProjectTaxonomyList className="space-y-4" />
+
+				<div className="flex items-center justify-start py-2 border-b border-slate-100 dark:border-slate-800">
+					<div className="flex items-center space-x-2">
+						<button
+							type="button"
+							onClick={() => setActiveTab("explorer")}
+							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${activeTab === "explorer"
+								? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
+								: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+								}`}
+						>
+							Explorer
+						</button>
+						<button
+							type="button"
+							onClick={() => setActiveTab("statistics")}
+							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${activeTab === "statistics"
+								? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
+								: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+								}`}
+						>
+							Statistics
+						</button>
+					</div>
+				</div>
+
+				<div
+					className={
+						activeTab === "explorer"
+							? "flex-1 grid grid-rows-10 items-center gap-4 min-h-0"
+							: "absolute left-[-9999px] top-[-9999px] invisible pointer-events-none w-full h-full grid grid-rows-10 items-center gap-4 min-h-0"
+					}
+				>
+					<GraphContainer
+						className="group relative row-span-10 h-[692px]"
+						containerId={GRAPH_CONTAINER_ID}
+						isLoading={isLoading}
+						graphRenderer={renderer.current}
+						errorMessage={executionError}
+					/>
+				</div>
+
+				<div
+					className={
+						activeTab === "statistics"
+							? "flex-1 min-h-0 py-2"
+							: "absolute left-[-9999px] top-[-9999px] invisible pointer-events-none w-full h-full py-2"
+					}
+				>
+					<div className="group relative row-span-10 h-[692px]">
+						<div className="w-full h-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] p-6 overflow-y-auto relative">
+							{executionError && !isLoading && (
+								<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 font-bold text-xl bg-white p-4 rounded-lg shadow-lg border border-red-200 z-50">
+									{executionError}
+								</div>
+							)}
+							{!executionError && <ProfileScoreDistributionChart />}
+						</div>
+					</div>
+				</div>
 			</div>
 		</section>
 	) : (

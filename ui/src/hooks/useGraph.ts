@@ -29,7 +29,6 @@ export default function useGraph(
 
 	useEffect(() => {
 		if (containerId) {
-			renderer.current?.kill();
 			const graphContainer = document.getElementById("graph-container");
 			if (graphContainer) {
 				renderer.current = new Sigma(graph.current, graphContainer, {
@@ -79,7 +78,7 @@ export default function useGraph(
 		let addedY = 0;
 		const sortedGraphDefinition = graphDefinitions.toSorted((a, b) =>
 			availableProfilesNames.indexOf(a.name) >
-			availableProfilesNames.indexOf(b.name)
+				availableProfilesNames.indexOf(b.name)
 				? 1
 				: -1,
 		);
@@ -104,11 +103,6 @@ export default function useGraph(
 		addNewProfile,
 	]);
 
-	useEffect(() => {
-		return () => {
-			renderer.current?.kill();
-		};
-	}, []);
 
 	return { renderer };
 }
