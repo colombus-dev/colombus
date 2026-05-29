@@ -2,7 +2,7 @@ import type { OnMount } from "@monaco-editor/react";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import _ from "lodash";
 import type * as monaco_editor from "monaco-editor";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import BounceLoader from "react-spinners/BounceLoader";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
 import useCanopusCompletion from "@/hooks/editor/useCanopusCompletion";
@@ -19,9 +19,15 @@ interface PatternDslEditorProps {
 	isExecuting?: boolean;
 }
 
-export default function PatternDslEditor({ onSubmitted, isExecuting, ...props }: PatternDslEditorProps & React.HTMLAttributes<HTMLDivElement>) {
+export default function PatternDslEditor({
+	onSubmitted,
+	isExecuting,
+	...props
+}: PatternDslEditorProps &
+	React.HTMLAttributes<HTMLDivElement> &
+	React.RefAttributes<HTMLDivElement>) {
 	const monaco = useMonaco();
-	const [editor, setEditor] = useState<monaco_editor.editor.IStandaloneCodeEditor | null>(null);
+	const editorRef = useRef<monaco_editor.editor.IStandaloneCodeEditor>(null);
 
 	const currentPatternContent = useColombusStore(
 		(state) => state.currentPattern?.dsl_content,
@@ -33,29 +39,33 @@ export default function PatternDslEditor({ onSubmitted, isExecuting, ...props }:
 	useCompletionActions(monaco, onSubmitted);
 
 	useEffect(() => {
-		if (editor) {
-			editor.setValue(currentPatternContent ?? DEFAULT_DSL_CODE);
-		}
-	}, [currentPatternContent, editor]);
+		return () => {
+			editorRef.current?.dispose();
+		};
+	}, []);
+
+	useEffect(() => {
+		editorRef.current?.setValue(currentPatternContent ?? DEFAULT_DSL_CODE);
+	}, [currentPatternContent]);
 
 	const onModelContentChange = useCallback(
 		(newContent: string | undefined) => {
-			const model = editor?.getModel();
+			const model = editorRef.current?.getModel();
 			if (model && newContent) {
 				validateGrammarModel(model);
 			}
 		},
-		[validateGrammarModel, editor],
+		[validateGrammarModel],
 	);
 
 	const handleEditorDidMount: OnMount = useCallback(
 		_.debounce(
 			(
-				mountedEditor: monaco_editor.editor.IStandaloneCodeEditor,
+				editor: monaco_editor.editor.IStandaloneCodeEditor,
 				_monaco: MonacoEditor,
 			) => {
-				setEditor(mountedEditor);
-				const model = mountedEditor.getModel();
+				editorRef.current = editor;
+				const model = editor.getModel();
 				if (model) {
 					// TODO: to check
 					validateGrammarModel(model);
@@ -76,7 +86,7 @@ export default function PatternDslEditor({ onSubmitted, isExecuting, ...props }:
 				isExecuting={isExecuting}
 				onExecute={() => {
 					const content =
-						editor?.getValue() ??
+						editorRef.current?.getValue() ??
 						currentPatternContent ??
 						DEFAULT_DSL_CODE;
 					if (content) {
