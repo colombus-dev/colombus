@@ -12,9 +12,6 @@ export default defineConfig({
 		dedupe: ["react", "react-dom"],
 	},
 	server: {
-		allowedHosts: ["erebe-vm9.i3s.unice.fr"],
-	},
-	preview: {
-		allowedHosts: ["erebe-vm9.i3s.unice.fr"],
+		allowedHosts: true,
 	},
 });

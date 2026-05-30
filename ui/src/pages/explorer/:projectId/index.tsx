@@ -258,32 +258,28 @@ export default function ExplorerProjectIdPage() {
 	return projectValidity === "valid" ? (
 		<section className="grid grid-cols-7 gap-4 px-4 h-full">
 			<div className="col-span-1 space-y-4 p-2">
-				{import.meta.env.VITE_INTERFACE_MODE === "full" && (
-					<>
-						<p className="font-bold">Upload</p>
-						<div className="row-span-1">
-							<form ref={formRef} action={handleNotebookOrProfileFormSubmit}>
-								<div className="grid w-full max-w-sm items-center gap-1.5">
-									<Label htmlFor="notebook-or-profile-form">
-										Notebooks or profiles
-									</Label>
-									<Input
-										id="notebook-or-profile-form"
-										name="notebook-or-profile-form"
-										type="file"
-										accept={NotebookFileExtension + "," + ProfileFileExtension}
-										multiple
-										required
-									/>
-									<Button type="submit" disabled={isImporting}>
-										{isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-										Submit Profile
-									</Button>
-								</div>
-							</form>
+				<p className="font-bold">Upload</p>
+				<div className="row-span-1">
+					<form ref={formRef} action={handleNotebookOrProfileFormSubmit}>
+						<div className="grid w-full max-w-sm items-center gap-1.5">
+							<Label htmlFor="notebook-or-profile-form">
+								Notebooks or profiles
+							</Label>
+							<Input
+								id="notebook-or-profile-form"
+								name="notebook-or-profile-form"
+								type="file"
+								accept={NotebookFileExtension + "," + ProfileFileExtension}
+								multiple
+								required
+							/>
+							<Button type="submit" disabled={isImporting}>
+								{isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+								Submit Profile
+							</Button>
 						</div>
-					</>
-				)}
+					</form>
+				</div>
 				<p className="font-bold">Patterns Statistics</p>
 				<ProfilePatternStatsFreqMatrix />
 				<ProfileStepsFrequencyChart />

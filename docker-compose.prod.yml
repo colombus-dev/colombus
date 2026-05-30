@@ -1,0 +1,81 @@
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+      CADDY_EMAIL: ${CADDY_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - colombus-net
+    depends_on:
+      colombus_app:
+        condition: service_healthy
+      colombus_ui:
+        condition: service_started
+
+  colombus_ui:
+    image: ghcr.io/colombus-dev/colombus-ui:latest
+    restart: unless-stopped
+    networks:
+      - colombus-net
+
+  colombus_app:
+    image: ghcr.io/colombus-dev/colombus-app:latest
+    restart: unless-stopped
+    environment:
+      APP_HOST: https://${DOMAIN}
+      APP_PORT: 443
+      UI_HOST: https://${DOMAIN}
+      UI_PORT: 443
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql+psycopg://${DB_USERNAME}:${DB_PASSWORD}@colombus_postgresql:5432/${DB_NAME}
+      ML_PROFILER_API_URL_PREFIX: ${ML_PROFILER_API_URL_PREFIX}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      JWT_SECRET: ${JWT_SECRET}
+      ALLOWED_GOOGLE_EMAILS: ${ALLOWED_GOOGLE_EMAILS}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8180/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - colombus-net
+    depends_on:
+      colombus_postgresql:
+        condition: service_healthy
+
+  colombus_postgresql:
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - colombus-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+networks:
+  colombus-net:
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
