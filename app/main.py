@@ -38,9 +38,8 @@ def create_app() -> FastAPI:
     application.add_middleware(
         CORSMiddleware,
         allow_origins=settings.allowed_origins,
-        allow_credentials=True,
         allow_methods=["GET", "POST", "DELETE"],
-        allow_headers=[settings.jwt_header_field],
+        allow_headers=[settings.jwt_header_field, "content-type"],
     )
     # TODO: add security dependency
     application.include_router(auth_router.router)

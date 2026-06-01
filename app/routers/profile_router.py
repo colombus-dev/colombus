@@ -33,6 +33,20 @@ async def get_all_profile(
     ).all()
 
 
+@router.get("/api/project/{project_id}/profile/scores")
+async def get_profiles_scores(
+    project_id: uuid.UUID,
+    session: DatabaseSession,
+) -> dict[str, float | None]:
+    results = session.exec(
+        select(Profile.name, Profile.json_profile).where(
+            Profile.project_id == project_id
+        )
+    ).all()
+    # TODO : We delete profiles with the same name
+    return {name: json_profile.get("score") for name, json_profile in results}
+
+
 @router.get("/api/project/{project_id}/profile/getJson")
 async def get_json_profile(
     project_id: uuid.UUID, profile_name: str, session: DatabaseSession

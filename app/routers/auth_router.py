@@ -7,11 +7,20 @@ from google.oauth2 import id_token
 from jose import JWTError, jwt
 from pydantic import BaseModel
 
-from app.exceptions import InvalidTokenException
+from app.exceptions import AuthException
 from app.settings import get_settings
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 settings = get_settings()
+
+
+class AuthConfig(BaseModel):
+    google_client_id: str
+
+
+@router.get("/config")
+def get_auth_config() -> AuthConfig:
+    return AuthConfig(google_client_id=settings.google_client_id)
 
 
 class GoogleAuthRequest(BaseModel):
@@ -27,7 +36,10 @@ def auth_google(body: GoogleAuthRequest):
             settings.google_client_id,
         )
     except ValueError:
-        raise InvalidTokenException(name="Google")
+        raise AuthException(name="Google")
+
+    if info["email"] not in settings.allowed_google_emails_list:
+        raise AuthException(name="Google")
 
     token = jwt.encode(
         {
@@ -55,4 +67,4 @@ def check_api_key(api_key_header_value: str = Security(api_key_header)) -> dict:
         )
         return payload
     except JWTError:
-        raise InvalidTokenException(name="Api")
+        raise AuthException(name="Api")

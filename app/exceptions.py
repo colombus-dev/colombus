@@ -1,10 +1,10 @@
 from fastapi import HTTPException, status
 
 
-class InvalidTokenException(HTTPException):
+class AuthException(HTTPException):
     def __init__(self, name) -> None:
         super().__init__(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid {name} token."
+            status_code=status.HTTP_401_UNAUTHORIZED, detail=f"{name} auth failed."
         )
 
 

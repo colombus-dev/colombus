@@ -1,14 +1,16 @@
-import { CircleX, Save, Trash } from "lucide-react";
+import { Play, Save, RotateCcw, Loader2 } from "lucide-react";
 import { useParams } from "react-router";
 import { getAllPatterns, postSavePpm } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
-import DeletePatternDialog from "./delete-pattern-dialog";
 
-const ProfilePatternActions: React.FunctionComponent<
-	React.HTMLAttributes<HTMLDivElement>
-> = ({ ...divProps }) => {
+export interface ProfilePatternActionsProps extends React.HTMLAttributes<HTMLDivElement> {
+	onExecute?: () => void;
+	isExecuting?: boolean;
+}
+
+const ProfilePatternActions: React.FunctionComponent<ProfilePatternActionsProps> = ({ onExecute, isExecuting, ...divProps }) => {
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const resetCurrentPattern = useColombusStore(
 		(state) => state.resetCurrentPattern,
@@ -23,17 +25,23 @@ const ProfilePatternActions: React.FunctionComponent<
 		<div {...divProps} className={cn("flex", divProps.className)}>
 			<Button
 				variant="ghost"
-				onClick={() => {
-					resetCurrentPattern();
-				}}
+				onClick={onExecute}
+				disabled={!projectId || isExecuting}
 			>
-				<CircleX /> Close pattern
+				{isExecuting ? (
+					<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+				) : (
+					<Play className="mr-2 h-4 w-4" />
+				)}{" "}
+				Execute pattern
 			</Button>
-			<DeletePatternDialog patternName={currentPattern?.name}>
-				<Button variant="ghost" disabled={currentPattern?.name === undefined}>
-					<Trash /> Delete pattern
-				</Button>
-			</DeletePatternDialog>
+			<Button
+				variant="ghost"
+				onClick={resetCurrentPattern}
+				disabled={currentPattern === undefined}
+			>
+				<RotateCcw className="mr-2 h-4 w-4" /> Reset pattern
+			</Button>
 			<Button
 				variant="ghost"
 				onClick={() => {
@@ -45,7 +53,7 @@ const ProfilePatternActions: React.FunctionComponent<
 				}}
 				disabled={!(currentPattern?.groups && projectId)}
 			>
-				<Save /> Save pattern
+				<Save className="mr-2 h-4 w-4" /> Save pattern
 			</Button>
 		</div>
 	);

@@ -41,6 +41,10 @@ interface ProfilesSlice {
 	setAvailableProfilesWithPpmData: (data: PpmResult[]) => void;
 	filteredProfilesNames: string[];
 	setFilteredProfilesNames: (profiles: string[]) => void;
+	profilesScores: Record<string, number | null | undefined>;
+	setProfilesScores: (
+		scores: Record<string, number | null | undefined>,
+	) => void;
 }
 
 interface ProjectSlice {
@@ -143,6 +147,9 @@ const createProfilesSlice: StateCreator<
 	filteredProfilesNames: [],
 	setFilteredProfilesNames: (profiles) =>
 		set((state) => ({ ...state, filteredProfilesNames: profiles })),
+	profilesScores: {},
+	setProfilesScores: (scores) =>
+		set((state) => ({ ...state, profilesScores: scores })),
 });
 
 const createProjectSlice: StateCreator<ColombusStore, [], [], ProjectSlice> = (

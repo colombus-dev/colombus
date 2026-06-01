@@ -32,16 +32,20 @@ export type GraphDefinition = {
 	meta_instructions: MetaInstructionNode[];
 	codes: CodeNode[];
 };
-export const ProfileFileExtension = '.json';
-export const NotebookFileExtension = '.ipynb';
+export const ProfileFileExtension = ".json";
+export const NotebookFileExtension = ".ipynb";
 
-const apiPath = import.meta.env.VITE_API_HOST ?? "http://localhost";
-const apiPort = import.meta.env.VITE_API_PORT ?? 8180;
+const apiPath = import.meta.env.VITE_API_HOST;
+const apiPort = import.meta.env.VITE_API_PORT;
 
 const API_KEY_HEADER_NAME = "x-api-key";
 
+const baseURL = apiPath
+	? `${apiPath}${apiPort ? `:${apiPort}` : ""}/api`
+	: "/api";
+
 const axiosInstance = axios.create({
-	baseURL: `${apiPath}:${apiPort}/api`,
+	baseURL,
 	headers: {
 		common: {
 			[API_KEY_HEADER_NAME]: useColombusStore.getState().apiKey,
@@ -104,12 +108,21 @@ export async function getAllProfiles(projectId: string) {
 		.then(({ data }) => data);
 }
 
+export async function getProfilesScores(projectId: string) {
+	const response = await axiosInstance.get<Record<string, number | null>>(
+		`/project/${projectId}/profile/scores`,
+	);
+	return response.data;
+}
+
 export async function postNotebookOrProfiles(projectId: string, files: File[]) {
 	const formData = new FormData();
 	for (const file of files)
-		file.name.endsWith(ProfileFileExtension) ? formData.append("profile_files", file)
-			: file.name.endsWith(NotebookFileExtension) ? formData.append("notebook_files", file)
-			: console.assert('Failed to upload unknown file type {file.name}');
+		file.name.endsWith(ProfileFileExtension)
+			? formData.append("profile_files", file)
+			: file.name.endsWith(NotebookFileExtension)
+				? formData.append("notebook_files", file)
+				: console.assert("Failed to upload unknown file type {file.name}");
 	return await axiosInstance
 		.post<string[]>(`/project/${projectId}/profile/import/multiple`, formData, {
 			headers: {
@@ -217,8 +230,14 @@ export async function postFrequentStepsData(
 		.then(({ data }) => data.map((d) => ({ step: d[0], frequency: d[1] })));
 }
 
+export async function getAuthConfig(): Promise<string> {
+	return await axiosInstance
+		.get<{ google_client_id: string }>("/auth/config")
+		.then(({ data }) => data.google_client_id);
+}
+
 export async function authGoogle(credential: string) {
-  return await axiosInstance
-    .post<{ api_key: string }>("/auth/google", { credential })
-    .then(({ data }) => data);
+	return await axiosInstance
+		.post<{ api_key: string }>("/auth/google", { credential })
+		.then(({ data }) => data);
 }

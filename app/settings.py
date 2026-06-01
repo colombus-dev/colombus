@@ -20,14 +20,17 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_hours: int = 1
     jwt_header_field: str = "x-api-key"
-    jwt_secret: str = Field(
-        min_length=16,
-        description="Used to generate a JWT token.",
-    )
+    jwt_secret: str = Field(min_length=16)
 
     database_url: str = Field()
     ml_profiler_api_url_prefix: str = Field()
     google_client_id: str = Field()
+
+    allowed_google_emails: str = Field()
+
+    @property
+    def allowed_google_emails_list(self) -> list[str]:
+        return [e.strip() for e in self.allowed_google_emails.split(",") if e.strip()]
 
     @property
     def is_production(self) -> bool:
@@ -35,8 +38,10 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def set_allowed_origins(self) -> "Settings":
-        if not self.allowed_origins:
-            self.allowed_origins = [f"{self.ui_host}", f"{self.ui_host}:{self.ui_port}"]
+        if self.is_production:
+            self.allowed_origins = [self.ui_host]
+        else:
+            self.allowed_origins = ["*"]
         return self
 
 
