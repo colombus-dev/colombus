@@ -1,14 +1,14 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "@/index.css";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { BrowserRouter, Route, Routes } from "react-router";
+import App from "@/App.tsx";
+import { getAuthConfig } from "@/api/client";
 import Home from "@/components/home.tsx";
+import { PATH } from "@/lib/constants";
 import ExplorerPage from "@/pages/explorer";
 import ExplorerProjectIdPage from "@/pages/explorer/:projectId";
-import App from "@/App.tsx";
-import { PATH } from "@/lib/constants";
-import { GoogleOAuthProvider } from "@react-oauth/google";
-import { getAuthConfig } from "@/api/client";
 
 async function bootstrap() {
 	const googleClientId = await getAuthConfig();

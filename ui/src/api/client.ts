@@ -54,14 +54,14 @@ const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.response.use(
-  (r) => r,
-  (error) => {
-    if (error.response?.status === 401) {
-      delete axiosInstance.defaults.headers.common[API_KEY_HEADER_NAME];
-      useColombusStore.getState().setApiKey(undefined);
-    }
-    return Promise.reject(error);
-  },
+	(r) => r,
+	(error) => {
+		if (error.response?.status === 401) {
+			delete axiosInstance.defaults.headers.common[API_KEY_HEADER_NAME];
+			useColombusStore.getState().setApiKey(undefined);
+		}
+		return Promise.reject(error);
+	},
 );
 
 export function updateHttpClientApiKey() {

@@ -22,7 +22,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 		const internalRef = React.useRef<HTMLInputElement>(null);
 		const [fileLabel, setFileLabel] = React.useState(noFileText);
 
-		React.useImperativeHandle(ref, () => internalRef.current as HTMLInputElement);
+		React.useImperativeHandle(
+			ref,
+			() => internalRef.current as HTMLInputElement,
+		);
 
 		React.useEffect(() => {
 			if (type === "file") {

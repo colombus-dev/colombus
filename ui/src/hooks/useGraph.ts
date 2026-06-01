@@ -78,7 +78,7 @@ export default function useGraph(
 		let addedY = 0;
 		const sortedGraphDefinition = graphDefinitions.toSorted((a, b) =>
 			availableProfilesNames.indexOf(a.name) >
-				availableProfilesNames.indexOf(b.name)
+			availableProfilesNames.indexOf(b.name)
 				? 1
 				: -1,
 		);
@@ -102,7 +102,6 @@ export default function useGraph(
 		displayedLevel,
 		addNewProfile,
 	]);
-
 
 	return { renderer };
 }
