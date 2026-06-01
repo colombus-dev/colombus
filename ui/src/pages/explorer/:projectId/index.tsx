@@ -18,7 +18,6 @@ import GraphContainer from "@/components/graph-container";
 import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
 import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
-import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
 import ProfileScoreDistributionChart from "@/components/profile-score-distribution-chart";
 import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
 import { Button } from "@/components/ui/button";
@@ -277,8 +276,6 @@ export default function ExplorerProjectIdPage() {
 						</div>
 					</form>
 				</div>
-				<p className="font-bold">Patterns Statistics</p>
-				<ProfilePatternStatsFreqMatrix />
 				<p className="font-bold">Saved patterns</p>
 				<ProfilePatternList />
 			</div>
