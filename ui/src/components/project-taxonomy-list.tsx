@@ -18,7 +18,7 @@ const ProjectTaxonomyList: React.FunctionComponent<
 				{Object.entries(stepsColorsMapping).map(([n, c]) => (
 					<li
 						key={`legend_color_${c}`}
-						className="flex items-center gap-2 px-1 py-1 text-xs font-medium text-[#475569] transition-all w-full shrink-0"
+						className="flex items-center gap-2 px-1 py-0.5 text-xs font-medium text-[#475569] transition-all w-full shrink-0"
 					>
 						<div
 							className={`${colorSize} rounded-full shrink-0`}
