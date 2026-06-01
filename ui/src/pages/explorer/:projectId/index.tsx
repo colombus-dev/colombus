@@ -279,7 +279,6 @@ export default function ExplorerProjectIdPage() {
 				</div>
 				<p className="font-bold">Patterns Statistics</p>
 				<ProfilePatternStatsFreqMatrix />
-				<ProfileStepsFrequencyChart />
 				<p className="font-bold">Saved patterns</p>
 				<ProfilePatternList />
 			</div>
@@ -347,7 +346,12 @@ export default function ExplorerProjectIdPage() {
 									{executionError}
 								</div>
 							)}
-							{!executionError && <ProfileScoreDistributionChart />}
+							{!executionError && (
+								<div className="grid grid-cols-2 gap-4 h-full items-center">
+									<ProfileScoreDistributionChart />
+									<ProfileStepsFrequencyChart />
+								</div>
+							)}
 						</div>
 					</div>
 				</div>
