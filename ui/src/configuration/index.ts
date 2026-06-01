@@ -2,40 +2,13 @@
 
 export type PpmNodesDisplayMode = "show-all" | "show-fixed" | "show-variable";
 
-// export const supportedSteps = [
-// 	"Data acquisition",
-//     "Data preparation",
-//     "Storage",
-//     "Feature Engineering",
-//     "Modeling",
-//     "Training",
-//     "Evaluation",
-//     "Prediction",
-//     "Interpretation",
-//     "Communication",
-//     "Deployment",
-//     "Library Loading",
-//     "Other",
-// ];
-
 export const supportedSteps = [
-	"Library Loading",
-	"Visualization",
-	"Other",
+	"Data Collection",
 	"Data Preparation",
-	"Data Profiling and Exploratory Data Analysis",
-	"Data Preparation and Exploration",
-	"Data Cleaning Filtering",
-	"Data Sub-sampling and Train-test Splitting",
-	"Data Loading",
-	"Exploratory Data Analysis",
-	"Feature Engineering",
-	"Feature Transformation",
-	"Feature Selection",
-	"Model Building and Training",
-	"Model Training",
-	"Model Parameter Tuning",
-	"Model Validation and Assembling",
+	"Data Modeling",
+	"Model Deployment",
+	"Model Evaluation",
+	"Save Results",
 ];
 
 export const metacharacterSTARTS = "^";
@@ -59,53 +32,11 @@ export const colors = [
 export const algoNodeSuffix = "-algo";
 export const libraryFunctionNodeSuffix = "-libfunc";
 
-// export const stepsColorsMapping: { [stepName: string]: string } = {
-// 	"Data acquisition": "#b3e900",
-//     "Data preparation": "#984ea3",
-//     "Storage": "#80b1d3",
-//     "Feature Engineering": "#a65628",
-//     "Modeling": "#bebada",
-//     "Training": "#fb8072",
-//     "Evaluation": "#fdb462",
-//     "Prediction": "#af8d00",
-//     "Interpretation": "#f781bf",
-//     "Communication": "#8dd3c7",
-//     "Deployment": "#ff7f00",
-//     "Library Loading": "#ff0029",
-//     "Other": "#66a61e",
-// };
-
-// export const stepsColorsMapping: { [stepName: string]: string } = {
-// 	"Library Loading": "#ff0029",
-// 	Visualization: "#377eb8",
-// 	Other: "#66a61e",
-// 	"Data Preparation": "#984ea3",
-// 	"Data Profiling and Exploratory Data Analysis": "#00d2d5",
-// 	"Data Preparation and Exploration": "#ff7f00",
-// 	"Data Cleaning Filtering": "#af8d00",
-// 	"Data Sub-sampling and Train-test Splitting": "#7f80cd",
-// 	"Data Loading": "#b3e900",
-// 	"Exploratory Data Analysis": "#c42e60",
-// 	"Feature Engineering": "#a65628",
-// 	"Feature Transformation": "#f781bf",
-// 	"Feature Selection": "#8dd3c7",
-// 	"Model Building and Training": "#bebada",
-// 	"Model Training": "#fb8072",
-// 	"Model Parameter Tuning": "#80b1d3",
-// 	"Model Validation and Assembling": "#fdb462",
-// };
-
 export const stepsColorsMapping: { [stepName: string]: string } = {
-	"Data Acquisition": "#ff0029",
+	"Data Collection": "#ff0029",
 	"Data Preparation": "#984ea3",
-	Storage: "#377eb8",
-	"Feature Engineering": "#00d2d5",
-	Modeling: "#7f80cd",
-	Training: "#ff7f00",
-	Evaluation: "#af8d00",
-	Prediction: "#80b1d3",
-	Interpretation: "#bebada",
-	Communication: "#8dd3c7",
-	Deployment: "#fdb462",
-	Other: "#66a61e",
+	"Data Modeling": "#7f80cd",
+	"Model Deployment": "#80b1d3",
+	"Model Evaluation": "#af8d00",
+	"Save Results": "#8dd3c7",
 };

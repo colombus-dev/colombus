@@ -1,4 +1,3 @@
-import { useMonaco } from "@monaco-editor/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -28,7 +27,6 @@ import { Label } from "@/components/ui/label";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
-import { DEFAULT_DSL_CODE } from "@/lib/constants";
 import { PATH } from "@/lib/constants";
 import type { PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
@@ -50,7 +48,6 @@ export default function ExplorerProjectIdPage() {
 	const [executionError, setExecutionError] = useState<string | null>(null);
 	const [isImporting, setIsImporting] = useState<boolean>(false);
 	const formRef = useRef<HTMLFormElement>(null);
-	const monaco = useMonaco();
 
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const setAvailableProfilesWithPpmData = useColombusStore(
