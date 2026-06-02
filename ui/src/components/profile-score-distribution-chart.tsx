@@ -54,10 +54,11 @@ export default function ProfileScoreDistributionChart() {
 						{bands.map((band) => (
 							<div
 								key={band.label}
-								className={`border border-slate-100 dark:border-slate-800/60 rounded-2xl p-4 flex flex-col space-y-1.5 transition-all duration-150 ${band.count > 0
-									? "bg-slate-50/50 dark:bg-slate-900/50 shadow-sm"
-									: "bg-transparent opacity-60"
-									}`}
+								className={`border border-slate-100 dark:border-slate-800/60 rounded-2xl p-4 flex flex-col space-y-1.5 transition-all duration-150 ${
+									band.count > 0
+										? "bg-slate-50/50 dark:bg-slate-900/50 shadow-sm"
+										: "bg-transparent opacity-60"
+								}`}
 							>
 								<span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
 									{band.label}

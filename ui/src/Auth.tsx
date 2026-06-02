@@ -18,7 +18,7 @@ export default function Auth({ children }: React.PropsWithChildren) {
 	};
 
 	return apiKey ? (
-		children
+		<>{children}</>
 	) : (
 		<div className="grid place-items-center h-screen">
 			<div className="flex flex-col items-center gap-6 p-12 border rounded-lg shadow-sm">
