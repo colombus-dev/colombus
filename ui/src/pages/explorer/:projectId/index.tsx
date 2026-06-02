@@ -18,6 +18,7 @@ import GraphContainer from "@/components/graph-container";
 import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
 import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
+import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
 import ProfileScoreDistributionChart from "@/components/profile-score-distribution-chart";
 import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
 import { Button } from "@/components/ui/button";
@@ -276,6 +277,7 @@ export default function ExplorerProjectIdPage() {
 						</div>
 					</form>
 				</div>
+
 				<p className="font-bold">Saved patterns</p>
 				<ProfilePatternList />
 			</div>
@@ -346,7 +348,12 @@ export default function ExplorerProjectIdPage() {
 							{!executionError && (
 								<div className="grid grid-cols-2 gap-4 h-full items-center">
 									<ProfileScoreDistributionChart />
-									<ProfileStepsFrequencyChart />
+									<div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] w-full h-full">
+										<ProfileStepsFrequencyChart />
+									</div>
+									<div className="col-span-2 w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+										<ProfilePatternStatsFreqMatrix />
+									</div>
 								</div>
 							)}
 						</div>

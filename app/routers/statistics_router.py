@@ -96,29 +96,51 @@ async def post_project_stats_patterns(
 
     freq_patterns_matrix = get_frequent_patterns_matrix(profiles_content)
 
-    import matplotlib.pyplot as plt
-    import seaborn as sns
+    import plotly.express as px
 
     MAX_NB_PATTERNS = 30
-    HEAT_THRESHOLD = round(nb_profiles * 1)
+    matrix_top = freq_patterns_matrix[:MAX_NB_PATTERNS].copy()
+    import textwrap
 
-    plt.figure(figsize=(12, 6), dpi=100)
+    full_labels = matrix_top.index.tolist()
+    matrix_top.index = full_labels
 
-    sns.heatmap(
-        freq_patterns_matrix[:MAX_NB_PATTERNS],
-        yticklabels=freq_patterns_matrix[:MAX_NB_PATTERNS].index,
-        vmax=HEAT_THRESHOLD,
+    hover_labels = [
+        "<br>".join(textwrap.wrap(label, width=50)) for label in full_labels
+    ]
+    import seaborn as sns
+
+    rocket_colors = sns.color_palette("rocket", as_cmap=False, n_colors=256).as_hex()
+
+    fig = px.imshow(
+        matrix_top,
+        aspect="auto",
+        labels=dict(x="Position in the profile (in %)", y="Pattern", color="Frequency"),
+        title="Heatmap of patterns occurences in the selected profiles",
+        color_continuous_scale=rocket_colors,
     )
-    plt.title("Heatmap of patterns occurences in the selected profiles", fontsize=10)
-    plt.xlabel("Position in the profile (in %)", fontsize=10)
-    plt.ylabel("Pattern", fontsize=10)
+    fig.update_traces(
+        customdata=[[label] * len(matrix_top.columns) for label in hover_labels],
+        hovertemplate="Pattern: %{customdata}<br>Position: %{x}%<br>Frequency: %{z}<extra></extra>",
+    )
 
-    plt.tight_layout()
-    buf = BytesIO()
-    plt.savefig(buf, format="png")
-    buf.seek(0)
+    truncated_labels = [
+        (label[:37] + "...") if len(label) > 40 else label for label in full_labels
+    ]
 
-    return StreamingResponse(buf, media_type="image/png")
+    fig.update_layout(
+        margin=dict(l=20, r=20, t=50, b=50),
+        yaxis=dict(
+            automargin=True,
+            tickmode="array",
+            tickvals=full_labels,
+            ticktext=truncated_labels,
+        ),
+    )
+
+    from fastapi.responses import Response
+
+    return Response(content=fig.to_json(), media_type="application/json")
 
 
 @router.post("/api/project/{project_id}/stats/steps/frequency")

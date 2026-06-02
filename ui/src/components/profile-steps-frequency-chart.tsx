@@ -44,7 +44,7 @@ const ProfileStepsFrequencyChart: React.FunctionComponent<
 
 	return (
 		<div className="w-full h-full flex flex-col items-center justify-center p-4">
-			<h3 className="text-lg font-semibold mb-4">Steps Frequency</h3>
+			<h2 className="text-xl font-bold mb-4">Steps Frequency</h2>
 			{isLoading ? (
 				<BounceLoader color="green" loading={isLoading} />
 			) : (

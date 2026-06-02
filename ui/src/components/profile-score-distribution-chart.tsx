@@ -5,12 +5,12 @@ export default function ProfileScoreDistributionChart() {
 	const { average, bands, hasData, chartData } = useScoreDistribution();
 
 	return (
-		<div className="space-y-6">
-			<div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] max-w-3xl">
+		<div className="w-full h-full">
+			<div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] w-full h-full flex flex-col justify-center">
 				<div className="mb-6">
-					<h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+					<h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
 						Notebooks average
-					</h3>
+					</h2>
 					<p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
 						Global score distribution
 					</p>
@@ -55,8 +55,8 @@ export default function ProfileScoreDistributionChart() {
 							<div
 								key={band.label}
 								className={`border border-slate-100 dark:border-slate-800/60 rounded-2xl p-4 flex flex-col space-y-1.5 transition-all duration-150 ${band.count > 0
-										? "bg-slate-50/50 dark:bg-slate-900/50 shadow-sm"
-										: "bg-transparent opacity-60"
+									? "bg-slate-50/50 dark:bg-slate-900/50 shadow-sm"
+									: "bg-transparent opacity-60"
 									}`}
 							>
 								<span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
