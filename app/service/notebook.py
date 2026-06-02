@@ -20,12 +20,13 @@ class ProfilerFunction(str, Enum):
     LLM = "llm"
     DSPIPELINES = "dspipelines"
     HEADERGEN = "headergen"
+    EMBEDDING = "embedding"
 
 
 async def convert_to_profiles(
     notebook_files: list[Any],
     taxonomy: TaxonomyFunction = TaxonomyFunction.DSPIPELINES,
-    profiler: ProfilerFunction = ProfilerFunction.LLM,
+    profiler: ProfilerFunction = ProfilerFunction.EMBEDDING,
 ):
     if not notebook_files:
         return []

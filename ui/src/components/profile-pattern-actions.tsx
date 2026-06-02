@@ -1,16 +1,19 @@
-import { Play, Save, RotateCcw, Loader2 } from "lucide-react";
+import { Loader2, Play, RotateCcw, Save } from "lucide-react";
 import { useParams } from "react-router";
 import { getAllPatterns, postSavePpm } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 
-export interface ProfilePatternActionsProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface ProfilePatternActionsProps
+	extends React.HTMLAttributes<HTMLDivElement> {
 	onExecute?: () => void;
 	isExecuting?: boolean;
 }
 
-const ProfilePatternActions: React.FunctionComponent<ProfilePatternActionsProps> = ({ onExecute, isExecuting, ...divProps }) => {
+const ProfilePatternActions: React.FunctionComponent<
+	ProfilePatternActionsProps
+> = ({ onExecute, isExecuting, ...divProps }) => {
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const resetCurrentPattern = useColombusStore(
 		(state) => state.resetCurrentPattern,

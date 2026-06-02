@@ -58,6 +58,7 @@ export default function PatternDslEditor({
 		[validateGrammarModel],
 	);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: validateGrammarModel is used inside _.debounce, which biome cannot statically analyse
 	const handleEditorDidMount: OnMount = useCallback(
 		_.debounce(
 			(

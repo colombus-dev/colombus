@@ -98,11 +98,14 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 				className="mb-2"
 			/>
 
+			{/* biome-ignore lint/a11y/useSemanticElements: cannot use <button> here as Checkbox (Radix UI) renders a <button> internally, nesting buttons is invalid HTML */}
 			<div
 				role="button"
 				tabIndex={0}
 				onClick={toggleAll}
-				onKeyDown={(e) => e.key === "Enter" || e.key === " " ? toggleAll() : undefined}
+				onKeyDown={(e) =>
+					e.key === "Enter" || e.key === " " ? toggleAll() : undefined
+				}
 				className="mb-2 mt-1 flex w-full cursor-pointer items-center gap-2 rounded-md border-b border-slate-100 pb-2 text-left"
 			>
 				<Checkbox

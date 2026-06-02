@@ -103,10 +103,10 @@ export default function useScoreDistribution() {
 
 		const donutData: ChartDataEntry[] = hasActiveData
 			? activeBands.map((b) => ({
-				name: b.label,
-				value: b.count,
-				color: b.color,
-			}))
+					name: b.label,
+					value: b.count,
+					color: b.color,
+				}))
 			: [{ name: "No data", value: 1, color: "#e2e8f0" }];
 
 		return {

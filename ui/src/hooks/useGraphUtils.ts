@@ -242,7 +242,9 @@ export default function useGraphUtils(graph: Graph) {
 				const flatGroupsNodes = groupsNodes.flat();
 				// Keep a reverse map: prefixed step id → original step id,
 				// so PPM childrenIds lookups (which use original UUIDs) still work
-				const stepOriginalIds = new Map(steps.map((s) => [prefixId(s.id), s.id]));
+				const stepOriginalIds = new Map(
+					steps.map((s) => [prefixId(s.id), s.id]),
+				);
 				addedX = Math.max(
 					addedX,
 					addNodes(

@@ -30,6 +30,7 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 					{
 						label: "pattern",
 						kind: monaco.languages.CompletionItemKind.Keyword,
+						// biome-ignore lint/suspicious/noTemplateCurlyInString: Monaco snippet placeholder syntax, not a JS template literal
 						insertText: 'pattern ${1:Name} = [${2:key}="${3:value}"]',
 						insertTextRules:
 							monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
@@ -45,6 +46,7 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 					{
 						label: "import",
 						kind: monaco.languages.CompletionItemKind.Keyword,
+						// biome-ignore lint/suspicious/noTemplateCurlyInString: Monaco snippet placeholder syntax, not a JS template literal
 						insertText: "import ${1:Name}",
 						insertTextRules:
 							monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,

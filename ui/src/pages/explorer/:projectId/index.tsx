@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 import type { GraphDefinition } from "@/api/client";
 import {
 	getAllProfiles,
@@ -144,12 +143,16 @@ export default function ExplorerProjectIdPage() {
 			} else if (typeof detail === "object" && detail !== null) {
 				detail = JSON.stringify(detail);
 			}
-			setExecutionError(detail ? `Execution failed: ${detail}` : "Execution error: Please check the pattern syntax");
+			setExecutionError(
+				detail
+					? `Execution failed: ${detail}`
+					: "Execution error: Please check the pattern syntax",
+			);
 		};
 
 		if (currentPattern?.groups?.length) {
-			postApplyPpmFilter(projectId, currentPattern.groups).then(
-				(workflowsWithData) =>
+			postApplyPpmFilter(projectId, currentPattern.groups)
+				.then((workflowsWithData) =>
 					updateAndMergeWithPosted(
 						[
 							...new Set(
@@ -158,10 +161,11 @@ export default function ExplorerProjectIdPage() {
 						],
 						workflowsWithData,
 					),
-			).catch(handleError);
+				)
+				.catch(handleError);
 		} else if (currentPattern?.name) {
-			postApplyPpmFilterByName(projectId, currentPattern.name).then(
-				(workflowsWithData) =>
+			postApplyPpmFilterByName(projectId, currentPattern.name)
+				.then((workflowsWithData) =>
 					updateAndMergeWithPosted(
 						[
 							...new Set(
@@ -170,11 +174,12 @@ export default function ExplorerProjectIdPage() {
 						],
 						workflowsWithData,
 					),
-			).catch(handleError);
+				)
+				.catch(handleError);
 		} else {
-			getAllProfiles(projectId).then((wfs) =>
-				updateAndMergeWithPosted(wfs, undefined),
-			).catch(handleError);
+			getAllProfiles(projectId)
+				.then((wfs) => updateAndMergeWithPosted(wfs, undefined))
+				.catch(handleError);
 		}
 	}, [
 		projectId,
@@ -227,17 +232,23 @@ export default function ExplorerProjectIdPage() {
 				return;
 			}
 			setExecutionError(null);
-			parsePpm(projectId, content).then((p) => {
-				// TODO: check sync here
-				setCurrentPattern({ ...p, dsl_content: content });
-			}).catch((error: any) => {
-				console.error("Parse pattern error:", error);
-				let detail = error?.response?.data?.detail;
-				if (typeof detail === "object" && detail !== null) {
-					detail = JSON.stringify(detail);
-				}
-				setExecutionError(detail ? `Failed to parse pattern: ${detail}` : "Failed to parse pattern.");
-			});
+			parsePpm(projectId, content)
+				.then((p) => {
+					// TODO: check sync here
+					setCurrentPattern({ ...p, dsl_content: content });
+				})
+				.catch((error: any) => {
+					console.error("Parse pattern error:", error);
+					let detail = error?.response?.data?.detail;
+					if (typeof detail === "object" && detail !== null) {
+						detail = JSON.stringify(detail);
+					}
+					setExecutionError(
+						detail
+							? `Failed to parse pattern: ${detail}`
+							: "Failed to parse pattern.",
+					);
+				});
 		},
 		[projectId, setCurrentPattern],
 	);
@@ -271,7 +282,9 @@ export default function ExplorerProjectIdPage() {
 								required
 							/>
 							<Button type="submit" disabled={isImporting}>
-								{isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+								{isImporting && (
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+								)}
 								Submit Profile
 							</Button>
 						</div>
@@ -295,20 +308,22 @@ export default function ExplorerProjectIdPage() {
 						<button
 							type="button"
 							onClick={() => setActiveTab("explorer")}
-							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${activeTab === "explorer"
-								? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
-								: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-								}`}
+							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${
+								activeTab === "explorer"
+									? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
+									: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+							}`}
 						>
 							Explorer
 						</button>
 						<button
 							type="button"
 							onClick={() => setActiveTab("statistics")}
-							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${activeTab === "statistics"
-								? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
-								: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-								}`}
+							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${
+								activeTab === "statistics"
+									? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
+									: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+							}`}
 						>
 							Statistics
 						</button>
