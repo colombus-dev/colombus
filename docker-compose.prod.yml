@@ -74,6 +74,7 @@ services:
 
 networks:
   colombus-net:
+    name: colombus-net
 
 volumes:
   postgres_data:
