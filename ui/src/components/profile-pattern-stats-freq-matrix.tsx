@@ -102,7 +102,7 @@ const ProfilePatternStatsFreqMatrix: React.FunctionComponent<
 							top: 0,
 							left: 0,
 						}}
-						config={{ responsive: true, displaylogo: false }}
+						config={{ responsive: true, displaylogo: false, showTips: false }}
 						onInitialized={injectTooltips}
 						onUpdate={injectTooltips}
 					/>

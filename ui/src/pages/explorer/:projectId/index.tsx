@@ -367,9 +367,7 @@ export default function ExplorerProjectIdPage() {
 									<div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] w-full h-full">
 										<ProfileStepsFrequencyChart />
 									</div>
-									<div className="col-span-2 w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
-										<ProfilePatternStatsFreqMatrix />
-									</div>
+									<ProfilePatternStatsFreqMatrix className="col-span-2" />
 								</div>
 							)}
 						</div>

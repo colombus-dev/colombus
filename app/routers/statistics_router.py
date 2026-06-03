@@ -112,7 +112,6 @@ async def post_project_stats_patterns(
         matrix_top,
         aspect="auto",
         labels=dict(x="Position in the profile (in %)", y="Pattern", color="Frequency"),
-        title="Heatmap of patterns occurences in the selected profiles",
         color_continuous_scale=rocket_colors,
     )
     fig.update_traces(

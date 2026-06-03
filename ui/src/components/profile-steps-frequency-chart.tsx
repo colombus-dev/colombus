@@ -43,31 +43,40 @@ const ProfileStepsFrequencyChart: React.FunctionComponent<
 	}
 
 	return (
-		<div className="w-full h-full flex flex-col items-center justify-center p-4">
-			<h2 className="text-xl font-bold mb-4">Steps Frequency</h2>
-			{isLoading ? (
-				<BounceLoader color="green" loading={isLoading} />
-			) : (
-				<ChartContainer config={chartConfig} className="w-full max-h-[500px]">
-					<RadarChart data={frequentStepsData}>
-						<ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-						<PolarGrid />
-						<PolarAngleAxis dataKey="step" />
-						<Radar
-							name="Steps"
-							dataKey="frequency"
-							stroke="#8884d8"
-							fill="#8884d8"
-							fillOpacity={0.6}
-							dot={{
-								r: 2,
-								fillOpacity: 1,
-							}}
-						/>
-						<Legend />
-					</RadarChart>
-				</ChartContainer>
-			)}
+		<div className="w-full h-full flex flex-col">
+			<div className="mb-6 text-center w-full shrink-0">
+				<h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-1">
+					Steps frequency
+				</h2>
+				<p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+					Global steps distribution
+				</p>
+			</div>
+			<div className="flex-1 flex items-center justify-center w-full">
+				{isLoading ? (
+					<BounceLoader color="green" loading={isLoading} />
+				) : (
+					<ChartContainer config={chartConfig} className="w-full max-h-[500px]">
+						<RadarChart data={frequentStepsData}>
+							<ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+							<PolarGrid />
+							<PolarAngleAxis dataKey="step" />
+							<Radar
+								name="Steps"
+								dataKey="frequency"
+								stroke="#8884d8"
+								fill="#8884d8"
+								fillOpacity={0.6}
+								dot={{
+									r: 2,
+									fillOpacity: 1,
+								}}
+							/>
+							<Legend />
+						</RadarChart>
+					</ChartContainer>
+				)}
+			</div>
 		</div>
 	);
 };
