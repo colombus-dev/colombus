@@ -1,10 +1,14 @@
 from difflib import SequenceMatcher
 from io import BytesIO
+from itertools import groupby
+from textwrap import wrap
 from typing import Any, Sequence
 
 from fastapi import APIRouter
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
+from plotly import express as px
 from pydantic import BaseModel
+from seaborn import color_palette
 from sqlmodel import col, func, select
 
 from app.constants import __TMP_ENCODING_MAPPING
@@ -18,8 +22,6 @@ router = APIRouter()
 @router.get("/api/project/{project_id}/stats")
 async def get_project_stats(project_id: str, session: DatabaseSession):
     # TODO: seems duplicated with get_frequent_patterns_matrix
-
-    from itertools import groupby
 
     profiles_content = session.exec(
         select(Profile.name, Step.id, Step.name)
@@ -96,21 +98,15 @@ async def post_project_stats_patterns(
 
     freq_patterns_matrix = get_frequent_patterns_matrix(profiles_content)
 
-    import plotly.express as px
-
     MAX_NB_PATTERNS = 30
     matrix_top = freq_patterns_matrix[:MAX_NB_PATTERNS].copy()
-    import textwrap
 
     full_labels = matrix_top.index.tolist()
     matrix_top.index = full_labels
 
-    hover_labels = [
-        "<br>".join(textwrap.wrap(label, width=50)) for label in full_labels
-    ]
-    import seaborn as sns
+    hover_labels = ["<br>".join(wrap(label, width=50)) for label in full_labels]
 
-    rocket_colors = sns.color_palette("rocket", as_cmap=False, n_colors=256).as_hex()
+    rocket_colors = color_palette("rocket", as_cmap=False, n_colors=256).as_hex()
 
     fig = px.imshow(
         matrix_top,
@@ -137,8 +133,6 @@ async def post_project_stats_patterns(
             ticktext=truncated_labels,
         ),
     )
-
-    from fastapi.responses import Response
 
     return Response(content=fig.to_json(), media_type="application/json")
 
