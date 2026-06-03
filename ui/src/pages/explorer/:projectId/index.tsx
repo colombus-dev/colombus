@@ -291,9 +291,7 @@ export default function ExplorerProjectIdPage() {
 						</div>
 					</form>
 				</div>
-				<p className="font-bold">Patterns Statistics</p>
-				<ProfilePatternStatsFreqMatrix />
-				<ProfileStepsFrequencyChart />
+
 				<p className="font-bold">Saved patterns</p>
 				<ProfilePatternList />
 			</div>
@@ -363,7 +361,15 @@ export default function ExplorerProjectIdPage() {
 									{executionError}
 								</div>
 							)}
-							{!executionError && <ProfileScoreDistributionChart />}
+							{!executionError && (
+								<div className="grid grid-cols-2 gap-4 h-full items-center">
+									<ProfileScoreDistributionChart />
+									<div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] w-full h-full">
+										<ProfileStepsFrequencyChart />
+									</div>
+									<ProfilePatternStatsFreqMatrix className="col-span-2" />
+								</div>
+							)}
 						</div>
 					</div>
 				</div>

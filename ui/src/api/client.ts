@@ -192,31 +192,15 @@ export async function postDiffSort(profiles: string[]) {
 		.then(({ data }) => data);
 }
 
-export async function postFrequentPatternsMatrixImage(
+export async function postFrequentPatternsMatrixPlotly(
 	projectId: string,
 	profilesNames?: string[],
 ) {
 	return await axiosInstance
-		.post(
-			`/project/${projectId}/stats/patterns`,
-			{
-				profiles_names: profilesNames,
-			},
-			{
-				responseType: "arraybuffer",
-			},
-		)
-		.then(({ data }) =>
-			btoa(
-				// TODO: to improve
-				// @ts-expect-error: to improve
-				[].reduce.call(
-					new Uint8Array(data),
-					(p, c) => p + String.fromCharCode(c),
-					"",
-				),
-			),
-		);
+		.post<any>(`/project/${projectId}/stats/patterns`, {
+			profiles_names: profilesNames,
+		})
+		.then(({ data }) => data);
 }
 
 export async function postFrequentStepsData(

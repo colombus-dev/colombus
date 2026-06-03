@@ -1,10 +1,14 @@
 from difflib import SequenceMatcher
 from io import BytesIO
+from itertools import groupby
+from textwrap import wrap
 from typing import Any, Sequence
 
 from fastapi import APIRouter
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
+from plotly import express as px
 from pydantic import BaseModel
+from seaborn import color_palette
 from sqlmodel import col, func, select
 
 from app.constants import __TMP_ENCODING_MAPPING
@@ -18,8 +22,6 @@ router = APIRouter()
 @router.get("/api/project/{project_id}/stats")
 async def get_project_stats(project_id: str, session: DatabaseSession):
     # TODO: seems duplicated with get_frequent_patterns_matrix
-
-    from itertools import groupby
 
     profiles_content = session.exec(
         select(Profile.name, Step.id, Step.name)
@@ -96,29 +98,42 @@ async def post_project_stats_patterns(
 
     freq_patterns_matrix = get_frequent_patterns_matrix(profiles_content)
 
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-
     MAX_NB_PATTERNS = 30
-    HEAT_THRESHOLD = round(nb_profiles * 1)
+    matrix_top = freq_patterns_matrix[:MAX_NB_PATTERNS].copy()
 
-    plt.figure(figsize=(12, 6), dpi=100)
+    full_labels = matrix_top.index.tolist()
+    matrix_top.index = full_labels
 
-    sns.heatmap(
-        freq_patterns_matrix[:MAX_NB_PATTERNS],
-        yticklabels=freq_patterns_matrix[:MAX_NB_PATTERNS].index,
-        vmax=HEAT_THRESHOLD,
+    hover_labels = ["<br>".join(wrap(label, width=50)) for label in full_labels]
+
+    rocket_colors = color_palette("rocket", as_cmap=False, n_colors=256).as_hex()
+
+    fig = px.imshow(
+        matrix_top,
+        aspect="auto",
+        labels=dict(x="Position in the profile (in %)", y="Pattern", color="Frequency"),
+        color_continuous_scale=rocket_colors,
     )
-    plt.title("Heatmap of patterns occurences in the selected profiles", fontsize=10)
-    plt.xlabel("Position in the profile (in %)", fontsize=10)
-    plt.ylabel("Pattern", fontsize=10)
+    fig.update_traces(
+        customdata=[[label] * len(matrix_top.columns) for label in hover_labels],
+        hovertemplate="Pattern: %{customdata}<br>Position: %{x}%<br>Frequency: %{z}<extra></extra>",
+    )
 
-    plt.tight_layout()
-    buf = BytesIO()
-    plt.savefig(buf, format="png")
-    buf.seek(0)
+    truncated_labels = [
+        (label[:37] + "...") if len(label) > 40 else label for label in full_labels
+    ]
 
-    return StreamingResponse(buf, media_type="image/png")
+    fig.update_layout(
+        margin=dict(l=20, r=20, t=50, b=50),
+        yaxis=dict(
+            automargin=True,
+            tickmode="array",
+            tickvals=full_labels,
+            ticktext=truncated_labels,
+        ),
+    )
+
+    return Response(content=fig.to_json(), media_type="application/json")
 
 
 @router.post("/api/project/{project_id}/stats/steps/frequency")

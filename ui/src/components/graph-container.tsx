@@ -36,7 +36,7 @@ export default function GraphContainer({
 			)}
 			{!isLoading && !errorMessage && (
 				<>
-					<ProfileExplorerGraphSettingsBar className="absolute top-4 right-12 w-72 h-[662px] bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-[20px] p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] z-10" />
+					<ProfileExplorerGraphSettingsBar className="absolute top-4 right-12 w-72 h-[625px] bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-[20px] p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] z-10" />
 					<GraphControls
 						graphRenderer={graphRenderer}
 						className="absolute bottom-3 right-[350px] bg-white bg-opacity-80"
