@@ -34,41 +34,38 @@ const ProfilePatternStatsFreqMatrix: React.FunctionComponent<
 
 	const injectTooltips = () => {
 		if (!plotData) return;
-		setTimeout(() => {
-			const yaxisLayer = document.querySelector(".yaxislayer-above");
-			if (yaxisLayer?.parentNode) {
-				yaxisLayer.parentNode.appendChild(yaxisLayer);
-			}
+		const yaxisLayer = document.querySelector(".yaxislayer-above");
+		if (yaxisLayer?.parentNode) {
+			yaxisLayer.parentNode.appendChild(yaxisLayer);
+		}
 
-			const yticks = document.querySelectorAll(".yaxislayer-above .ytick text");
-			const ticktext = plotData.layout?.yaxis?.ticktext;
-			const tickvals = plotData.layout?.yaxis?.tickvals;
+		const yticks = document.querySelectorAll(".yaxislayer-above .ytick text");
+		const ticktext = plotData.layout?.yaxis?.ticktext;
+		const tickvals = plotData.layout?.yaxis?.tickvals;
 
-			if (ticktext && tickvals) {
-				yticks.forEach((tickNode: any) => {
-					const text = tickNode.textContent;
-					const index = ticktext.findIndex(
-						(t: string) =>
-							t === text ||
-							tickNode.innerHTML.includes(t) ||
-							(text &&
-								t.replace(/\.\.\./g, "") === text.replace(/\.\.\./g, "")),
-					);
-					if (index !== -1) {
-						if (!tickNode.querySelector("title")) {
-							const titleEl = document.createElementNS(
-								"http://www.w3.org/2000/svg",
-								"title",
-							);
-							titleEl.textContent = tickvals[index].replace(/<br>/g, "\n");
-							tickNode.appendChild(titleEl);
-							tickNode.style.pointerEvents = "all";
-							tickNode.style.cursor = "help";
-						}
+		if (ticktext && tickvals) {
+			yticks.forEach((tickNode: any) => {
+				const text = tickNode.textContent;
+				const index = ticktext.findIndex(
+					(t: string) =>
+						t === text ||
+						tickNode.innerHTML.includes(t) ||
+						(text && t.replace(/\.\.\./g, "") === text.replace(/\.\.\./g, "")),
+				);
+				if (index !== -1) {
+					if (!tickNode.querySelector("title")) {
+						const titleEl = document.createElementNS(
+							"http://www.w3.org/2000/svg",
+							"title",
+						);
+						titleEl.textContent = tickvals[index].replace(/<br>/g, "\n");
+						tickNode.appendChild(titleEl);
+						tickNode.style.pointerEvents = "all";
+						tickNode.style.cursor = "help";
 					}
-				});
-			}
-		}, 300);
+				}
+			});
+		}
 	};
 
 	if (!projectId) {
@@ -79,9 +76,14 @@ const ProfilePatternStatsFreqMatrix: React.FunctionComponent<
 		<div
 			className={`w-full h-full relative flex flex-col bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] min-h-[500px] ${className || ""}`}
 		>
-			<h2 className="text-xl font-bold mb-4">
-				Frequent Patterns Matrix (top 30)
-			</h2>
+			<div className="mb-6 text-center w-full">
+				<h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-1">
+					Frequent patterns matrix (top 30)
+				</h2>
+				<p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+					Heatmap of patterns occurrences in the selected profiles
+				</p>
+			</div>
 			<div className="flex-1 w-full h-full min-h-[400px] relative">
 				{isLoading ? (
 					<BounceLoader color="green" loading={isLoading} />
