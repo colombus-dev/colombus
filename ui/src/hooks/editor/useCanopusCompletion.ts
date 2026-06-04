@@ -21,11 +21,25 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 		// register new pattern creation completion
 		monaco.languages.registerCompletionItemProvider(EDITOR_LANGUAGE_ID, {
 			provideCompletionItems(
-				_model,
+				model,
 				position,
 				_context,
 				_token,
 			): monaco_editor.languages.CompletionList {
+				const textUntilPosition = model.getValueInRange({
+					startLineNumber: position.lineNumber,
+					startColumn: 1,
+					endLineNumber: position.lineNumber,
+					endColumn: position.column,
+				});
+				const match = textUntilPosition.match(/([a-zA-Z0-9_]+)$/);
+				const wordLength = match ? match[1].length : 0;
+				const range = {
+					startLineNumber: position.lineNumber,
+					endLineNumber: position.lineNumber,
+					startColumn: position.column - wordLength,
+					endColumn: position.column,
+				};
 				const suggestions: monaco_editor.languages.CompletionItem[] = [
 					{
 						label: "pattern",
@@ -35,13 +49,7 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 						insertTextRules:
 							monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
 						documentation: "Define a new pattern.",
-						range: {
-							startLineNumber: position.lineNumber,
-							endLineNumber: position.lineNumber,
-							// TODO: check startColumn and endColumn
-							startColumn: 0,
-							endColumn: position.column,
-						},
+						range,
 					},
 					{
 						label: "import",
@@ -51,13 +59,7 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 						insertTextRules:
 							monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
 						documentation: "Import a new pattern.",
-						range: {
-							startLineNumber: position.lineNumber,
-							endLineNumber: position.lineNumber,
-							// TODO: check startColumn and endColumn
-							startColumn: 0,
-							endColumn: position.column,
-						},
+						range,
 					},
 				];
 				return { suggestions };
@@ -70,19 +72,26 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 				model,
 				position,
 			): monaco_editor.languages.CompletionList {
-				const textUntilPosition = model
-					.getValueInRange({
-						startLineNumber: position.lineNumber,
-						startColumn: 1,
-						endLineNumber: position.lineNumber,
-						endColumn: position.column,
-					})
-					.trim();
+				const textUntilPosition = model.getValueInRange({
+					startLineNumber: position.lineNumber,
+					startColumn: 1,
+					endLineNumber: position.lineNumber,
+					endColumn: position.column,
+				});
 
 				// Only trigger suggestions when typing a key
 				const isAfterImport = /import/.test(textUntilPosition);
 
 				if (!isAfterImport) return { suggestions: [] };
+
+				const match = textUntilPosition.match(/([a-zA-Z0-9_]+)$/);
+				const wordLength = match ? match[1].length : 0;
+				const range = {
+					startLineNumber: position.lineNumber,
+					endLineNumber: position.lineNumber,
+					startColumn: position.column - wordLength,
+					endColumn: position.column,
+				};
 
 				const suggestions: monaco_editor.languages.CompletionItem[] =
 					allSavedPatterns
@@ -94,12 +103,7 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 							insertText: name,
 							detail: "Available patterns to import",
 							documentation: `Insert the pattern "${name}"`,
-							range: {
-								startLineNumber: position.lineNumber,
-								endLineNumber: position.lineNumber,
-								startColumn: position.column,
-								endColumn: position.column,
-							},
+							range,
 						}));
 
 				return { suggestions };
@@ -112,20 +116,27 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 				model,
 				position,
 			): monaco_editor.languages.CompletionList {
-				const textUntilPosition = model
-					.getValueInRange({
-						startLineNumber: position.lineNumber,
-						startColumn: 1,
-						endLineNumber: position.lineNumber,
-						endColumn: position.column,
-					})
-					.trim();
+				const textUntilPosition = model.getValueInRange({
+					startLineNumber: position.lineNumber,
+					startColumn: 1,
+					endLineNumber: position.lineNumber,
+					endColumn: position.column,
+				});
 
 				// Only trigger suggestions when typing a key
 				const isInsideBracket = /\[/.test(textUntilPosition);
 				const isInsideString = /"/.test(textUntilPosition);
 
 				if (!isInsideBracket || isInsideString) return { suggestions: [] };
+
+				const match = textUntilPosition.match(/([a-zA-Z0-9_]+)$/);
+				const wordLength = match ? match[1].length : 0;
+				const range = {
+					startLineNumber: position.lineNumber,
+					endLineNumber: position.lineNumber,
+					startColumn: position.column - wordLength,
+					endColumn: position.column,
+				};
 
 				const suggestions: monaco_editor.languages.CompletionItem[] = [
 					"step",
@@ -137,12 +148,7 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 					insertText: key,
 					detail: "Available key",
 					documentation: `Insert the key "${key}"`,
-					range: {
-						startLineNumber: position.lineNumber,
-						endLineNumber: position.lineNumber,
-						startColumn: position.column,
-						endColumn: position.column,
-					},
+					range,
 				}));
 
 				return { suggestions };
@@ -155,14 +161,12 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 				model,
 				position,
 			): monaco_editor.languages.CompletionList {
-				const textUntilPosition = model
-					.getValueInRange({
-						startLineNumber: position.lineNumber,
-						startColumn: 1,
-						endLineNumber: position.lineNumber,
-						endColumn: position.column,
-					})
-					.trim();
+				const textUntilPosition = model.getValueInRange({
+					startLineNumber: position.lineNumber,
+					startColumn: 1,
+					endLineNumber: position.lineNumber,
+					endColumn: position.column,
+				});
 				// Only trigger suggestions when typing a value
 				const isInsideBracket = /\[/.test(textUntilPosition);
 				const isBracketClosed = /\]/.test(textUntilPosition);
@@ -172,7 +176,7 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 					return { suggestions: [] };
 				}
 
-				const currentKeyValuePair = textUntilPosition.split(",").at(-1);
+				const currentKeyValuePair = textUntilPosition.trim().split(",").at(-1);
 				const currentKey = currentKeyValuePair
 					?.split("=")
 					.at(-2)
@@ -183,6 +187,15 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 					return { suggestions: [] };
 				}
 
+				const match = textUntilPosition.match(/([a-zA-Z0-9_]+)$/);
+				const wordLength = match ? match[1].length : 0;
+				const range = {
+					startLineNumber: position.lineNumber,
+					endLineNumber: position.lineNumber,
+					startColumn: position.column - wordLength,
+					endColumn: position.column,
+				};
+
 				const suggestions: monaco_editor.languages.CompletionItem[] =
 					keyCompletions[currentKey]().map((value) => ({
 						label: value,
@@ -190,12 +203,7 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 						insertText: value,
 						detail: "Available values",
 						documentation: `Insert the value "${value}"`,
-						range: {
-							startLineNumber: position.lineNumber,
-							endLineNumber: position.lineNumber,
-							startColumn: position.column,
-							endColumn: position.column,
-						},
+						range,
 					}));
 
 				return { suggestions };
