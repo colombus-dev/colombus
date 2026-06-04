@@ -1,8 +1,5 @@
 import ProjectTaxonomyList from "@/components/project-taxonomy-list";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-
 import {
 	Select,
 	SelectContent,
@@ -10,7 +7,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import type { PpmNodesDisplayMode } from "@/configuration";
+import { Switch } from "@/components/ui/switch";
 import { useColombusStore } from "@/store";
 
 const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
@@ -76,43 +73,30 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 								Use weighted nodes
 							</label>
 						</div>
-						<div key="radio-ppm-nodes-display-div">
-							<RadioGroup
-								value={patternCapturedNodesDisplayMode}
-								onValueChange={(v: PpmNodesDisplayMode) =>
-									setPatternCapturedNodesDisplayMode(v)
-								}
-								disabled={!referenceDiffProfile && !currentPattern}
-								className="flex flex-col space-y-2"
+						<div
+							key="switch-ppm-nodes-display-div"
+							className="flex items-center space-x-3 pt-2"
+						>
+							<span
+								className={`text-sm font-medium transition-colors ${patternCapturedNodesDisplayMode === "show-variable" ? "text-slate-900" : "text-slate-400"}`}
 							>
-								<div className="flex items-center space-x-2">
-									<RadioGroupItem value="show-all" id="show-all" />
-									<Label
-										htmlFor="show-all"
-										className="cursor-pointer font-medium text-slate-800"
-									>
-										Show all nodes
-									</Label>
-								</div>
-								<div className="flex items-center space-x-2">
-									<RadioGroupItem value="show-fixed" id="show-fixed" />
-									<Label
-										htmlFor="show-fixed"
-										className="cursor-pointer font-medium text-slate-800"
-									>
-										Show fixed nodes
-									</Label>
-								</div>
-								<div className="flex items-center space-x-2">
-									<RadioGroupItem value="show-variable" id="show-variable" />
-									<Label
-										htmlFor="show-variable"
-										className="cursor-pointer font-medium text-slate-800"
-									>
-										Show variable nodes
-									</Label>
-								</div>
-							</RadioGroup>
+								Show variable nodes
+							</span>
+							<Switch
+								id="mode-switch"
+								disabled={!referenceDiffProfile && !currentPattern}
+								checked={patternCapturedNodesDisplayMode === "show-fixed"}
+								onCheckedChange={(checked) => {
+									setPatternCapturedNodesDisplayMode(
+										checked ? "show-fixed" : "show-variable",
+									);
+								}}
+							/>
+							<span
+								className={`text-sm font-medium transition-colors ${patternCapturedNodesDisplayMode === "show-fixed" ? "text-slate-900" : "text-slate-400"}`}
+							>
+								Show fixed nodes
+							</span>
 						</div>
 					</div>
 				</div>
