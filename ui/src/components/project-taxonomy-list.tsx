@@ -7,12 +7,9 @@ interface ProjectTaxonomyListProps
 
 const ProjectTaxonomyList: React.FunctionComponent<
 	ProjectTaxonomyListProps
-> = ({ colorSize = "w-3.5 h-3.5", ...divProps }) => {
+> = ({ colorSize = "w-3.5 h-3.5", ...props }) => {
 	return (
-		<div
-			{...divProps}
-			className={`border border-[#e2e8f0] rounded-[20px] p-3 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col ${divProps.className ?? ""}`}
-		>
+		<div {...props} className={`flex flex-col ${props.className ?? ""}`}>
 			<p className="font-bold">Legend</p>
 			<ul className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-1 list-none pr-1">
 				{Object.entries(stepsColorsMapping).map(([n, c]) => (
