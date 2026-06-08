@@ -48,7 +48,7 @@ const axiosInstance = axios.create({
 	baseURL,
 	headers: {
 		common: {
-			[API_KEY_HEADER_NAME]: useColombusStore.getState().apiKey,
+			[API_KEY_HEADER_NAME]: useColombusStore.getState().jwtToken,
 		},
 	},
 });
@@ -58,15 +58,15 @@ axiosInstance.interceptors.response.use(
 	(error) => {
 		if (error.response?.status === 401) {
 			delete axiosInstance.defaults.headers.common[API_KEY_HEADER_NAME];
-			useColombusStore.getState().setApiKey(undefined);
+			useColombusStore.getState().setJwtToken(undefined);
 		}
 		return Promise.reject(error);
 	},
 );
 
-export function updateHttpClientApiKey() {
+export function updateHttpClientJwtToken() {
 	axiosInstance.defaults.headers.common[API_KEY_HEADER_NAME] =
-		useColombusStore.getState().apiKey;
+		useColombusStore.getState().jwtToken;
 }
 
 export async function createNewProject(name: string) {
@@ -222,6 +222,6 @@ export async function getAuthConfig(): Promise<string> {
 
 export async function authGoogle(credential: string) {
 	return await axiosInstance
-		.post<{ api_key: string }>("/auth/google", { credential })
+		.post<{ jwt_token: string; exp: number }>("/auth/google", { credential })
 		.then(({ data }) => data);
 }

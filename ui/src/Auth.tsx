@@ -1,23 +1,38 @@
+import { useEffect } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "sonner";
-import { authGoogle, updateHttpClientApiKey } from "@/api/client";
+import { authGoogle } from "@/api/client";
 import { useColombusStore } from "@/store";
 
 export default function Auth({ children }: React.PropsWithChildren) {
-	const apiKey = useColombusStore((state) => state.apiKey);
-	const setApiKey = useColombusStore((state) => state.setApiKey);
+	const jwtToken = useColombusStore((state) => state.jwtToken);
+	const jwtExpiry = useColombusStore((state) => state.jwtExpiry);
+	const setJwtToken = useColombusStore((state) => state.setJwtToken);
+
+	useEffect(() => {
+		if (!jwtToken || !jwtExpiry) return;
+
+		if (Date.now() >= jwtExpiry) {
+			setJwtToken(undefined);
+			return;
+		}
+
+		const timer = setTimeout(() => setJwtToken(undefined), jwtExpiry - Date.now());
+		return () => clearTimeout(timer);
+	}, [jwtToken, jwtExpiry, setJwtToken]);
 
 	const handleSuccess = async (response: any) => {
 		try {
-			const data = await authGoogle(response.credential);
-			setApiKey(data.api_key);
-			updateHttpClientApiKey();
+			const { jwt_token, exp } = await authGoogle(response.credential);
+			setJwtToken(jwt_token, exp);
 		} catch {
-			toast.error(response.data.detail);
+			toast.error("Login Failed");
 		}
 	};
 
-	return apiKey ? (
+	const isAuthenticated = !!jwtToken && !!jwtExpiry && Date.now() < jwtExpiry;
+
+	return isAuthenticated ? (
 		children
 	) : (
 		<div className="grid place-items-center h-screen">

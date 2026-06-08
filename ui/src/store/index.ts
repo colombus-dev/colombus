@@ -1,13 +1,14 @@
 import type { StateCreator } from "zustand";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import { postDiffSort, updateHttpClientApiKey } from "@/api/client";
+import { postDiffSort, updateHttpClientJwtToken } from "@/api/client";
 import type { PpmNodesDisplayMode } from "@/configuration";
 import type { DiffResult, Pattern, PpmResult } from "@/lib/types";
 
 interface AuthSlice {
-	apiKey?: string;
-	setApiKey: (key: string | undefined) => void;
+	jwtToken?: string;
+	jwtExpiry?: number;
+	setJwtToken: (token: string | undefined, expiry?: number) => void;
 }
 
 interface DiffSlice {
@@ -108,10 +109,11 @@ const createPatternSlice: StateCreator<ColombusStore, [], [], PatternSlice> = (
 const createAuthSlice: StateCreator<ColombusStore, [], [], AuthSlice> = (
 	set,
 ) => ({
-	apiKey: undefined,
-	setApiKey: (k) => {
-		set((state) => ({ ...state, apiKey: k }));
-		updateHttpClientApiKey();
+	jwtToken: undefined,
+	jwtExpiry: undefined,
+	setJwtToken: (token, expiry) => {
+		set((state) => ({ ...state, jwtToken: token, jwtExpiry: expiry }));
+		updateHttpClientJwtToken();
 	},
 });
 
