@@ -1,5 +1,5 @@
-import { useEffect } from "react";
 import { GoogleLogin } from "@react-oauth/google";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { authGoogle } from "@/api/client";
 import { useColombusStore } from "@/store";
@@ -17,7 +17,10 @@ export default function Auth({ children }: React.PropsWithChildren) {
 			return;
 		}
 
-		const timer = setTimeout(() => setJwtToken(undefined), jwtExpiry - Date.now());
+		const timer = setTimeout(
+			() => setJwtToken(undefined),
+			jwtExpiry - Date.now(),
+		);
 		return () => clearTimeout(timer);
 	}, [jwtToken, jwtExpiry, setJwtToken]);
 

@@ -21,33 +21,31 @@ export default function App() {
 			<div className="flex flex-col h-screen space-y-2">
 				<header className="border-grid sticky top-0 z-50 w-full border-b bg-white">
 					<div className="flex h-14 items-center px-6 gap-6 w-full">
-							<nav>
-								<NavigationMenu>
-									<NavigationMenuList className="space-x-5">
-										<NavigationMenuItem>
-											<NavigationMenuLink href={PATH.HOME}>
-												Home
-											</NavigationMenuLink>
-										</NavigationMenuItem>
-										<NavigationMenuItem>
-											<NavigationMenuLink href={PATH.EXPLORER}>
-												Explorer
-											</NavigationMenuLink>
-										</NavigationMenuItem>
-									</NavigationMenuList>
-								</NavigationMenu>
-							</nav>
-							{isOnProject && (
-								<p className="font-bold">{projectName}</p>
-							)}
-							<Button
-								variant="ghost"
-								size="sm"
-								className="ml-auto"
-								onClick={() => setJwtToken(undefined)}
-							>
-								Logout
-							</Button>
+						<nav>
+							<NavigationMenu>
+								<NavigationMenuList className="space-x-5">
+									<NavigationMenuItem>
+										<NavigationMenuLink href={PATH.HOME}>
+											Home
+										</NavigationMenuLink>
+									</NavigationMenuItem>
+									<NavigationMenuItem>
+										<NavigationMenuLink href={PATH.EXPLORER}>
+											Explorer
+										</NavigationMenuLink>
+									</NavigationMenuItem>
+								</NavigationMenuList>
+							</NavigationMenu>
+						</nav>
+						{isOnProject && <p className="font-bold">{projectName}</p>}
+						<Button
+							variant="ghost"
+							size="sm"
+							className="ml-auto"
+							onClick={() => setJwtToken(undefined)}
+						>
+							Logout
+						</Button>
 					</div>
 				</header>
 				<main className="flex-1">
