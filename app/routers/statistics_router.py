@@ -98,7 +98,7 @@ async def post_project_stats_patterns(
 
     freq_patterns_matrix = get_frequent_patterns_matrix(profiles_content)
 
-    MAX_NB_PATTERNS = 30
+    MAX_NB_PATTERNS = 10
     matrix_top = freq_patterns_matrix[:MAX_NB_PATTERNS].copy()
 
     full_labels = matrix_top.index.tolist()
@@ -113,10 +113,11 @@ async def post_project_stats_patterns(
         aspect="auto",
         labels=dict(x="Position in the profile (in %)", y="Pattern", color="Frequency"),
         color_continuous_scale=rocket_colors,
+        zmin=0,
     )
     fig.update_traces(
         customdata=[[label] * len(matrix_top.columns) for label in hover_labels],
-        hovertemplate="Pattern: %{customdata}<br>Position: %{x}%<br>Frequency: %{z}<extra></extra>",
+        hovertemplate="Pattern: %{customdata}<br>Position: %{x}<br>Exact frequency: %{z}<extra></extra>",
     )
 
     truncated_labels = [
