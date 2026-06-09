@@ -36,20 +36,7 @@ export default function PatternDslEditor({
 	const { validateGrammarModel } = useCanopusGrammar(monaco);
 	const { themeName } = useCanopusTheme(monaco);
 	useCanopusCompletion(monaco);
-	const handleSubmitted = useCallback(
-		(content: string) => {
-			if (
-				content &&
-				content.trim() !== "" &&
-				content.trim() !== DEFAULT_DSL_CODE.trim()
-			) {
-				onSubmitted?.(content);
-			}
-		},
-		[onSubmitted],
-	);
-
-	useCompletionActions(monaco, handleSubmitted);
+	useCompletionActions(monaco, onSubmitted);
 
 	useEffect(() => {
 		return () => {
@@ -103,7 +90,9 @@ export default function PatternDslEditor({
 						editorRef.current?.getValue() ??
 						currentPatternContent ??
 						DEFAULT_DSL_CODE;
-					handleSubmitted(content);
+					if (content) {
+						onSubmitted?.(content);
+					}
 				}}
 			/>
 			<div className="group relative h-48 w-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] overflow-hidden">
