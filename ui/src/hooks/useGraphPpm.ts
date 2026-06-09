@@ -133,13 +133,8 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 				res.color = "#f6f6f6";
 				res.forceLabel = false;
 			}
-			if (res.forceLabel || data.layerLevel === 2 || data.layerLevel === 0) {
-				// always display root and steps full label
-				res.label = res.fullLabel;
-				res.forceLabel = true;
-			} else {
-				res.label = nodeId === hoveredNode ? res.fullLabel : ""; // res.shortLabel;
-			}
+			res.forceLabel = nodeId === hoveredNode;
+			res.label = nodeId === hoveredNode ? res.fullLabel : "";
 			return res;
 		});
 		graphRenderer?.refresh({

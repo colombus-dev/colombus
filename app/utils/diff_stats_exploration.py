@@ -90,37 +90,37 @@ def get_frequent_patterns_matrix(
 
     PERCENTAGE_TICK = 1
 
-    position_percentages = list(range(0, 100 + PERCENTAGE_TICK, PERCENTAGE_TICK)) + [
-        "TOTAL"
-    ]
+    num_buckets = (100 // PERCENTAGE_TICK) + 1
+    # We create buckets for 0-20, 20-40, ..., 80-100, plus "TOTAL"
     matrix = []
     errors = 0
     for k, v in sorted_matching_matrix.items():
         columns_matches.append(k)
-        k_positions = [0] * len(position_percentages)
+        # Just num_buckets, no TOTAL
+        k_positions = [0] * num_buckets
         matrix.append(k_positions)
         for p in v:
             try:
                 start, size, total = positions_register[f"{k} :: {p}"]
             except:  # noqa: E722
                 errors += 1
-                # TODO: fix these errors
                 continue
             start_percentage, end_percentage = (
                 int(start * 100 / total),
                 int((start + size) * 100 / total),
             )
-            for i in range(
-                int(start_percentage / PERCENTAGE_TICK),
-                int(end_percentage / PERCENTAGE_TICK),
-            ):
+            
+            # which bucket?
+            start_bucket = min(int(start_percentage / PERCENTAGE_TICK), num_buckets - 1)
+            end_bucket = min(int(end_percentage / PERCENTAGE_TICK), num_buckets - 1)
+            
+            for i in range(start_bucket, end_bucket + 1):
                 k_positions[i] += 1
-            k_positions[-1] += 1
 
     print("errors=", errors)
 
     df = pd.DataFrame(matrix, index=columns_matches)
-    df.columns = df.columns.tolist()[:-1] + ["Total"]
+    df.columns = [f"{i*PERCENTAGE_TICK}%" for i in range(num_buckets)]
 
     # returning sorted df by max value per row
     return df.reindex(df.iloc[:, :-1].max(1).sort_values(ascending=False).index)

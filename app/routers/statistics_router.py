@@ -113,7 +113,6 @@ async def post_project_stats_patterns(
         aspect="auto",
         labels=dict(x="Position in the profile (in %)", y="Pattern", color="Frequency"),
         color_continuous_scale=rocket_colors,
-        zmin=0,
     )
     fig.update_traces(
         customdata=[[label] * len(matrix_top.columns) for label in hover_labels],
@@ -128,10 +127,12 @@ async def post_project_stats_patterns(
         margin=dict(l=20, r=20, t=50, b=50),
         yaxis=dict(
             automargin=True,
-            tickmode="array",
-            tickvals=full_labels,
-            ticktext=truncated_labels,
+            showticklabels=False,
         ),
+        xaxis=dict(
+            tickmode="array",
+            tickvals=[f"{i}%" for i in range(0, 101, 20)],
+        )
     )
 
     return Response(content=fig.to_json(), media_type="application/json")
