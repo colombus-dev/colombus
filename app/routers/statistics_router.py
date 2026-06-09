@@ -132,7 +132,7 @@ async def post_project_stats_patterns(
         xaxis=dict(
             tickmode="array",
             tickvals=[f"{i}%" for i in range(0, 101, 20)],
-        )
+        ),
     )
 
     return Response(content=fig.to_json(), media_type="application/json")

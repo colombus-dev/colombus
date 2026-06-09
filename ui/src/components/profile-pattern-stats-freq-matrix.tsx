@@ -81,7 +81,8 @@ const ProfilePatternStatsFreqMatrix: React.FunctionComponent<
 					Frequent patterns matrix (top 10)
 				</h2>
 				<p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
-					Heatmap of patterns occurrences in the selected profiles. Hover over blocks to see exact frequencies.
+					Heatmap of patterns occurrences in the selected profiles. Hover over
+					blocks to see exact frequencies.
 				</p>
 			</div>
 			<div className="flex-1 w-full h-full min-h-[400px] relative">

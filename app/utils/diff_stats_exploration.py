@@ -109,11 +109,11 @@ def get_frequent_patterns_matrix(
                 int(start * 100 / total),
                 int((start + size) * 100 / total),
             )
-            
+
             # which bucket?
             start_bucket = min(int(start_percentage / PERCENTAGE_TICK), num_buckets - 1)
             end_bucket = min(int(end_percentage / PERCENTAGE_TICK), num_buckets - 1)
-            
+
             for i in range(start_bucket, end_bucket + 1):
                 k_positions[i] += 1
 
