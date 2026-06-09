@@ -7,7 +7,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useColombusStore } from "@/store";
 
 const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
@@ -73,31 +73,41 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 								Use weighted nodes
 							</label>
 						</div>
-						<div
-							key="switch-ppm-nodes-display-div"
-							className="flex items-center space-x-3 pt-2"
+						<RadioGroup
+							key="radio-ppm-nodes-display-div"
+							value={patternCapturedNodesDisplayMode}
+							onValueChange={(value) => setPatternCapturedNodesDisplayMode(value as any)}
+							disabled={!referenceDiffProfile && !currentPattern}
+							className="flex flex-col space-y-1 pt-2"
 						>
-							<span
-								className={`text-sm font-medium transition-colors ${patternCapturedNodesDisplayMode === "show-variable" ? "text-slate-900" : "text-slate-400"}`}
-							>
-								Show variable nodes
-							</span>
-							<Switch
-								id="mode-switch"
-								disabled={!referenceDiffProfile && !currentPattern}
-								checked={patternCapturedNodesDisplayMode === "show-fixed"}
-								onCheckedChange={(checked) => {
-									setPatternCapturedNodesDisplayMode(
-										checked ? "show-fixed" : "show-variable",
-									);
-								}}
-							/>
-							<span
-								className={`text-sm font-medium transition-colors ${patternCapturedNodesDisplayMode === "show-fixed" ? "text-slate-900" : "text-slate-400"}`}
-							>
-								Show fixed nodes
-							</span>
-						</div>
+							<div className="flex items-center space-x-2">
+								<RadioGroupItem value="show-all" id="show-all" />
+								<label
+									htmlFor="show-all"
+									className="text-sm font-medium leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+								>
+									Show all nodes
+								</label>
+							</div>
+							<div className="flex items-center space-x-2">
+								<RadioGroupItem value="show-fixed" id="show-fixed" />
+								<label
+									htmlFor="show-fixed"
+									className="text-sm font-medium leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+								>
+									Show fixed nodes
+								</label>
+							</div>
+							<div className="flex items-center space-x-2">
+								<RadioGroupItem value="show-variable" id="show-variable" />
+								<label
+									htmlFor="show-variable"
+									className="text-sm font-medium leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+								>
+									Show variable nodes
+								</label>
+							</div>
+						</RadioGroup>
 					</div>
 				</div>
 			</div>
