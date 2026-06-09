@@ -16,7 +16,7 @@ const shouldHideNodeForModeMapping = {
 		return !allUuids.has(
 			originalUuid
 				.replace(algoNodeSuffix, "")
-				.replace(libraryFunctionNodeSuffix, "")
+				.replace(libraryFunctionNodeSuffix, ""),
 		);
 	},
 	"show-variable": (allUuids, nodeUuid) => {
@@ -25,7 +25,7 @@ const shouldHideNodeForModeMapping = {
 		return allUuids.has(
 			originalUuid
 				.replace(algoNodeSuffix, "")
-				.replace(libraryFunctionNodeSuffix, "")
+				.replace(libraryFunctionNodeSuffix, ""),
 		);
 	},
 } as {

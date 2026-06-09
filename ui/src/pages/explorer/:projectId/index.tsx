@@ -307,20 +307,22 @@ export default function ExplorerProjectIdPage() {
 						<button
 							type="button"
 							onClick={() => setActiveTab("explorer")}
-							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${activeTab === "explorer"
+							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${
+								activeTab === "explorer"
 									? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
 									: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-								}`}
+							}`}
 						>
 							Explorer
 						</button>
 						<button
 							type="button"
 							onClick={() => setActiveTab("statistics")}
-							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${activeTab === "statistics"
+							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${
+								activeTab === "statistics"
 									? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
 									: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-								}`}
+							}`}
 						>
 							Statistics
 						</button>

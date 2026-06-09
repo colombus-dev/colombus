@@ -1,5 +1,6 @@
 import ProjectTaxonomyList from "@/components/project-taxonomy-list";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
 	Select,
 	SelectContent,
@@ -7,7 +8,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useColombusStore } from "@/store";
 
 const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
@@ -76,7 +76,9 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 						<RadioGroup
 							key="radio-ppm-nodes-display-div"
 							value={patternCapturedNodesDisplayMode}
-							onValueChange={(value) => setPatternCapturedNodesDisplayMode(value as any)}
+							onValueChange={(value) =>
+								setPatternCapturedNodesDisplayMode(value as any)
+							}
 							disabled={!referenceDiffProfile && !currentPattern}
 							className="flex flex-col space-y-1 pt-2"
 						>
