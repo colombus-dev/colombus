@@ -116,7 +116,7 @@ async def post_project_stats_patterns(
     )
     fig.update_traces(
         customdata=[[label] * len(matrix_top.columns) for label in hover_labels],
-        hovertemplate="Pattern: %{customdata}<br>Position: %{x}<br>Exact frequency: %{z}<extra></extra>",
+        hovertemplate=f"Pattern: %{{customdata}}<br>Position: %{{x}}<br>Frequency: %{{z}} / {nb_profiles}<extra></extra>",
     )
 
     truncated_labels = [
