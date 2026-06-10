@@ -231,6 +231,16 @@ export default function ExplorerProjectIdPage() {
 			if (!projectId) {
 				return;
 			}
+
+			const hasExecutableCode = content.split("\n").some((line) => {
+				const trimmed = line.trim();
+				return trimmed.length > 0 && !trimmed.startsWith("#");
+			});
+
+			if (!hasExecutableCode) {
+				return;
+			}
+
 			setExecutionError(null);
 			parsePpm(projectId, content)
 				.then((p) => {
@@ -277,7 +287,7 @@ export default function ExplorerProjectIdPage() {
 								id="notebook-or-profile-form"
 								name="notebook-or-profile-form"
 								type="file"
-								accept={NotebookFileExtension + "," + ProfileFileExtension}
+								accept={`${NotebookFileExtension},${ProfileFileExtension}`}
 								multiple
 								required
 							/>
