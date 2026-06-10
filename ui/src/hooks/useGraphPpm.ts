@@ -10,20 +10,24 @@ import { useColombusStore } from "@/store";
 
 const shouldHideNodeForModeMapping = {
 	"show-all": () => false,
-	"show-fixed": (allUuids, nodeUuid) =>
-		nodeUuid &&
-		!allUuids.has(
-			nodeUuid
+	"show-fixed": (allUuids, nodeUuid) => {
+		if (!nodeUuid) return false;
+		const originalUuid = nodeUuid.split("::").pop() || nodeUuid;
+		return !allUuids.has(
+			originalUuid
 				.replace(algoNodeSuffix, "")
 				.replace(libraryFunctionNodeSuffix, ""),
-		),
-	"show-variable": (allUuids, nodeUuid) =>
-		nodeUuid &&
-		allUuids.has(
-			nodeUuid
+		);
+	},
+	"show-variable": (allUuids, nodeUuid) => {
+		if (!nodeUuid) return false;
+		const originalUuid = nodeUuid.split("::").pop() || nodeUuid;
+		return allUuids.has(
+			originalUuid
 				.replace(algoNodeSuffix, "")
 				.replace(libraryFunctionNodeSuffix, ""),
-		),
+		);
+	},
 } as {
 	[mode in PpmNodesDisplayMode]: (
 		allUuids: Set<string>,
@@ -129,13 +133,8 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 				res.color = "#f6f6f6";
 				res.forceLabel = false;
 			}
-			if (res.forceLabel || (hoverShouldDisplayNode && data.layerLevel === 2)) {
-				// always display root and steps full label
-				res.label = res.fullLabel;
-				res.forceLabel = true;
-			} else {
-				res.label = nodeId === hoveredNode ? res.fullLabel : ""; // res.shortLabel;
-			}
+			res.forceLabel = nodeId === hoveredNode;
+			res.label = nodeId === hoveredNode ? res.fullLabel : "";
 			return res;
 		});
 		graphRenderer?.refresh({

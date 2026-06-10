@@ -15,7 +15,6 @@ import {
 	postNotebookOrProfiles,
 } from "@/api/client";
 import GraphContainer from "@/components/graph-container";
-import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
 import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
 import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
@@ -232,6 +231,16 @@ export default function ExplorerProjectIdPage() {
 			if (!projectId) {
 				return;
 			}
+
+			const hasExecutableCode = content.split("\n").some((line) => {
+				const trimmed = line.trim();
+				return trimmed.length > 0 && !trimmed.startsWith("#");
+			});
+
+			if (!hasExecutableCode) {
+				return;
+			}
+
 			setExecutionError(null);
 			parsePpm(projectId, content)
 				.then((p) => {
@@ -278,7 +287,7 @@ export default function ExplorerProjectIdPage() {
 								id="notebook-or-profile-form"
 								name="notebook-or-profile-form"
 								type="file"
-								accept={NotebookFileExtension + "," + ProfileFileExtension}
+								accept={`${NotebookFileExtension},${ProfileFileExtension}`}
 								multiple
 								required
 							/>
@@ -295,8 +304,7 @@ export default function ExplorerProjectIdPage() {
 				<p className="font-bold">Saved patterns</p>
 				<ProfilePatternList />
 			</div>
-			<ProfileExplorerPpmResultsBar className="col-span-1" />
-			<div className="col-span-5 flex flex-col h-full space-y-4 relative">
+			<div className="col-span-6 flex flex-col h-full space-y-4 relative">
 				{projectId && (
 					<PatternDslEditor
 						isExecuting={isLoading}

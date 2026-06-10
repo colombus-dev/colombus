@@ -129,7 +129,7 @@ const createGraphCustomizationSlice: StateCreator<
 	useWeightedNodes: true,
 	setUseWeightedNodes: (uwn) =>
 		set((state) => ({ ...state, useWeightedNodes: uwn })),
-	patternCapturedNodesDisplayMode: "show-all",
+	patternCapturedNodesDisplayMode: "show-variable",
 	setPatternCapturedNodesDisplayMode: (mode) =>
 		set((state) => ({ ...state, patternCapturedNodesDisplayMode: mode })),
 });
