@@ -46,11 +46,14 @@ const baseURL = apiPath
 
 const axiosInstance = axios.create({
 	baseURL,
-	headers: {
-		common: {
-			[API_KEY_HEADER_NAME]: useColombusStore.getState().jwtToken,
-		},
-	},
+});
+
+axiosInstance.interceptors.request.use((config) => {
+	const token = useColombusStore.getState().jwtToken;
+	if (token) {
+		config.headers[API_KEY_HEADER_NAME] = token;
+	}
+	return config;
 });
 
 axiosInstance.interceptors.response.use(

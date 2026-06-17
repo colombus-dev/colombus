@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -20,6 +20,9 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 	);
 	const setFilteredProfilesNames = useColombusStore(
 		(state) => state.setFilteredProfilesNames,
+	);
+	const selectedProfileName = useColombusStore(
+		(state) => state.selectedProfileName,
 	);
 	const profilesScores = useColombusStore((state) => state.profilesScores);
 	const profiles = useMemo(() => {
@@ -78,11 +81,25 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 		}
 	};
 
+	React.useEffect(() => {
+		if (selectedProfileName) {
+			// Small timeout to allow render
+			setTimeout(() => {
+				const element = document.getElementById(
+					`result-item-${selectedProfileName}`,
+				);
+				if (element) {
+					element.scrollIntoView({ behavior: "smooth", block: "nearest" });
+				}
+			}, 50);
+		}
+	}, [selectedProfileName]);
+
 	return (
 		<section
 			{...divProps}
 			className={cn(
-				"flex h-[calc(100vh-76px)] min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)]",
+				"flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)]",
 				divProps.className,
 			)}
 		>
@@ -126,11 +143,13 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 						<div className="space-y-1">
 							{filteredProfiles.map((profile, index) => {
 								const isSelected = selectedProfiles.includes(profile.key);
+								const isFocused = profile.name === selectedProfileName;
 
 								return (
 									<div
 										key={`${profile.key}-${index}`}
-										className="flex w-full items-center gap-2 rounded-md px-1 py-1 text-left transition-colors hover:bg-slate-50"
+										id={`result-item-${profile.name}`}
+										className={`flex w-full items-center gap-2 rounded-md px-1 py-1 text-left transition-colors hover:bg-slate-50 ${isFocused ? "bg-slate-100 ring-1 ring-slate-300" : ""}`}
 									>
 										<Checkbox
 											id={`cb_${profile.key}-${index}`}
