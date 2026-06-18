@@ -1,19 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { useEffect } from "react";
-import { MemoryRouter, Route, Routes } from "react-router";
-import {
-	axiosInstance,
-	type GraphDefinition,
-	type StepNode,
-} from "@/api/client";
+import type { GraphDefinition, StepNode } from "@/api/client";
 import type { PpmResult } from "@/lib/types";
-import { useColombusStore } from "@/store";
 import ProfileCodeViewer from "./profile-code-viewer";
 
 const mockSteps: StepNode[] = [
-	{ id: "step_0", name: "load_data", position: 0, number_children: 0 },
-	{ id: "step_1", name: "process_data", position: 1, number_children: 0 },
-	{ id: "step_2", name: "train_model", position: 2, number_children: 0 },
+	{ id: "step_0", name: "Data Collection", position: 0, number_children: 0 },
+	{ id: "step_1", name: "Data Preparation", position: 1, number_children: 0 },
+	{ id: "step_2", name: "Data Collection", position: 2, number_children: 0 },
+	{ id: "step_3", name: "Data Modeling", position: 3, number_children: 0 },
 ];
 
 const mockNodes: GraphDefinition[] = [
@@ -45,11 +39,21 @@ const mockNodes: GraphDefinition[] = [
 			{
 				id: "meta_2",
 				step_id: "step_2",
-				function: "train",
+				function: "fetch_more",
 				algoFamily: "",
 				algoName: "",
 				library: "",
 				position: 2,
+				number_children: 0,
+			},
+			{
+				id: "meta_3",
+				step_id: "step_3",
+				function: "train",
+				algoFamily: "",
+				algoName: "",
+				library: "",
+				position: 3,
 				number_children: 0,
 			},
 		],
@@ -71,8 +75,15 @@ const mockNodes: GraphDefinition[] = [
 				id: "code_2",
 				meta_instruction_id: "meta_2",
 				content:
-					"from sklearn.linear_model import LinearRegression\n\nmodel = LinearRegression()\nmodel.fit(df[['value']], df['target'])",
+					"extra_data = pd.read_json('more_data.json')\ndf = pd.concat([df, extra_data])",
 				position: 2,
+			},
+			{
+				id: "code_3",
+				meta_instruction_id: "meta_3",
+				content:
+					"from sklearn.linear_model import LinearRegression\n\nmodel = LinearRegression()\nmodel.fit(df[['value']], df['target'])",
+				position: 3,
 			},
 		],
 	},
@@ -81,33 +92,9 @@ const mockNodes: GraphDefinition[] = [
 const mockPpmData: PpmResult[] = [
 	{
 		profile_name: "notebook_1.ipynb",
-		results: [["step_0"], ["step_1"]],
+		results: [["step_0"], ["step_2"]],
 	},
 ];
-
-const ZustandMockDecorator = (Story: any) => {
-	useEffect(() => {
-		useColombusStore.setState({
-			selectedProfileNodeId: "notebook_1",
-			availableProfilesWithPpmData: mockPpmData,
-			currentPattern: {
-				name: "Test Pattern",
-				groups: [{ name: "g1", steps: ["load_data", "process_data"] }],
-			},
-			allSavedPatterns: [
-				{
-					name: "Test Pattern",
-					groups: [{ name: "g1", steps: ["load_data", "process_data"] }],
-				},
-			],
-			jwtToken: "mock-token",
-		});
-
-		axiosInstance.defaults.headers.common["x-api-key"] = "mock-token";
-	}, []);
-
-	return <Story />;
-};
 
 const meta = {
 	title: "Components/ProfileCodeViewer",
@@ -115,25 +102,11 @@ const meta = {
 	parameters: {
 		layout: "fullscreen",
 	},
-	decorators: [
-		ZustandMockDecorator,
-		(Story) => (
-			<MemoryRouter initialEntries={["/project/test-project-123"]}>
-				<Routes>
-					<Route
-						path="/project/:projectId"
-						element={
-							<div className="w-screen h-screen bg-slate-100 p-8 flex items-center justify-center">
-								<div className="w-[1000px] h-[600px]">
-									<Story />
-								</div>
-							</div>
-						}
-					/>
-				</Routes>
-			</MemoryRouter>
-		),
-	],
+	argTypes: {
+		overrideSelectedNodeId: { table: { disable: true } },
+		overridePattern: { table: { disable: true } },
+		overridePpmData: { table: { disable: true } },
+	},
 	tags: ["autodocs"],
 } satisfies Meta<typeof ProfileCodeViewer>;
 
@@ -143,5 +116,27 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
 	args: {
 		nodes: mockNodes,
+		overrideSelectedNodeId: "notebook_1",
+		overridePattern: null,
+		overridePpmData: [],
+	},
+};
+
+export const WithPatternMatched: Story = {
+	args: {
+		nodes: mockNodes,
+		overrideSelectedNodeId: "notebook_1",
+		overridePattern: {
+			name: "Data Collection Pattern",
+			groups: [{ name: "g1", steps: ["Data Collection"] }],
+		},
+		overridePpmData: mockPpmData,
+	},
+};
+
+export const EmptyState: Story = {
+	args: {
+		nodes: [],
+		overrideSelectedNodeId: null,
 	},
 };

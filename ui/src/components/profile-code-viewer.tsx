@@ -1,13 +1,4 @@
-import {
-	Box,
-	Brain,
-	Database,
-	FileCode2,
-	LineChart,
-	Rocket,
-	Save,
-	Wrench,
-} from "lucide-react";
+import { FileCode2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vs } from "react-syntax-highlighter/dist/esm/styles/prism";
@@ -20,35 +11,24 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { stepsColorsMapping, stepsIcons } from "@/configuration";
+import { getStepIcon, stepsColorsMapping } from "@/configuration";
+import type { Pattern, PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
 
 interface ProfileCodeViewerProps {
 	nodes?: GraphDefinition[];
+	overrideSelectedNodeId?: string | null;
+	overridePattern?: Pattern | null;
+	overridePpmData?: PpmResult[];
 }
 
-const getStepIcon = (name: string) => {
-	const iconName = stepsIcons[name];
-	switch (iconName) {
-		case "Database":
-			return <Database className="w-5 h-5" />;
-		case "Wrench":
-			return <Wrench className="w-5 h-5" />;
-		case "Brain":
-			return <Brain className="w-5 h-5" />;
-		case "LineChart":
-			return <LineChart className="w-5 h-5" />;
-		case "Rocket":
-			return <Rocket className="w-5 h-5" />;
-		case "Save":
-			return <Save className="w-5 h-5" />;
-		default:
-			return <Box className="w-5 h-5" />;
-	}
-};
-
-export default function ProfileCodeViewer({ nodes }: ProfileCodeViewerProps) {
-	const selectedNodeId = useColombusStore(
+export default function ProfileCodeViewer({
+	nodes,
+	overrideSelectedNodeId,
+	overridePattern,
+	overridePpmData,
+}: ProfileCodeViewerProps) {
+	const storeSelectedNodeId = useColombusStore(
 		(state) => state.selectedProfileNodeId,
 	);
 	const setSelectedProfileNodeId = useColombusStore(
@@ -57,6 +37,11 @@ export default function ProfileCodeViewer({ nodes }: ProfileCodeViewerProps) {
 	const setSelectedProfileName = useColombusStore(
 		(state) => state.setSelectedProfileName,
 	);
+
+	const selectedNodeId =
+		overrideSelectedNodeId !== undefined
+			? overrideSelectedNodeId
+			: storeSelectedNodeId;
 
 	const handleNodeSelect = useCallback(
 		(id: string | null) => {
@@ -76,10 +61,17 @@ export default function ProfileCodeViewer({ nodes }: ProfileCodeViewerProps) {
 	);
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-	const currentPattern = useColombusStore((state) => state.currentPattern);
-	const availableProfilesWithPpmData = useColombusStore(
+	const storePattern = useColombusStore((state) => state.currentPattern);
+	const currentPattern =
+		overridePattern !== undefined ? overridePattern : storePattern;
+
+	const storeAvailableProfilesWithPpmData = useColombusStore(
 		(state) => state.availableProfilesWithPpmData,
 	);
+	const availableProfilesWithPpmData =
+		overridePpmData !== undefined
+			? overridePpmData
+			: storeAvailableProfilesWithPpmData;
 
 	useEffect(() => {
 		if (!nodes || nodes.length === 0) {
