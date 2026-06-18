@@ -44,16 +44,13 @@ const baseURL = apiPath
 	? `${apiPath}${apiPort ? `:${apiPort}` : ""}/api`
 	: "/api";
 
-const axiosInstance = axios.create({
+export const axiosInstance = axios.create({
 	baseURL,
-});
-
-axiosInstance.interceptors.request.use((config) => {
-	const token = useColombusStore.getState().jwtToken;
-	if (token) {
-		config.headers[API_KEY_HEADER_NAME] = token;
-	}
-	return config;
+	headers: {
+		common: {
+			[API_KEY_HEADER_NAME]: useColombusStore.getState().jwtToken,
+		},
+	},
 });
 
 axiosInstance.interceptors.response.use(

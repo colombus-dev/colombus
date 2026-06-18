@@ -1,7 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useEffect } from "react";
 import { MemoryRouter, Route, Routes } from "react-router";
-import type { GraphDefinition, StepNode } from "@/api/client";
+import {
+	axiosInstance,
+	type GraphDefinition,
+	type StepNode,
+} from "@/api/client";
 import type { PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
 import ProfileCodeViewer from "./profile-code-viewer";
@@ -96,7 +100,10 @@ const ZustandMockDecorator = (Story: any) => {
 					groups: [{ name: "g1", steps: ["load_data", "process_data"] }],
 				},
 			],
+			jwtToken: "mock-token",
 		});
+
+		axiosInstance.defaults.headers.common["x-api-key"] = "mock-token";
 	}, []);
 
 	return <Story />;
