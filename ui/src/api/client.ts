@@ -44,7 +44,7 @@ const baseURL = apiPath
 	? `${apiPath}${apiPort ? `:${apiPort}` : ""}/api`
 	: "/api";
 
-export const axiosInstance = axios.create({
+const axiosInstance = axios.create({
 	baseURL,
 	headers: {
 		common: {
