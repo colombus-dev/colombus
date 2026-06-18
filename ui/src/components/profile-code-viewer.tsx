@@ -185,7 +185,7 @@ export default function ProfileCodeViewer({
 
 	if (!nodes || nodes.length === 0) {
 		return (
-			<div className="flex flex-col items-center justify-center h-full p-8 text-slate-500">
+			<div className="flex flex-col items-center justify-center h-full min-h-[350px] p-8 text-slate-500">
 				<FileCode2 className="w-12 h-12 mb-4 text-slate-300 dark:text-slate-700" />
 				<p>No notebooks or profiles selected.</p>
 			</div>
@@ -193,7 +193,7 @@ export default function ProfileCodeViewer({
 	}
 
 	return (
-		<div className="flex w-full h-full bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden font-sans text-slate-700">
+		<div className="flex w-full h-full min-h-[350px] bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden font-sans text-slate-700">
 			<div className="w-72 bg-slate-50/50 border-r border-slate-200 flex flex-col z-10 shrink-0 min-h-0">
 				<div className="p-4 border-b border-slate-200">
 					<Select

@@ -140,3 +140,12 @@ export const EmptyState: Story = {
 		overrideSelectedNodeId: null,
 	},
 };
+
+export const NoProfileSelected: Story = {
+	args: {
+		nodes: mockNodes,
+		overrideSelectedNodeId: null,
+		overridePattern: null,
+		overridePpmData: [],
+	},
+};
