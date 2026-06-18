@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router";
 import type { GraphDefinition, StepNode } from "@/api/client";
 import type { PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
-import ProfileCodeViewerV3 from "./profile-code-viewer";
+import ProfileCodeViewer from "./profile-code-viewer";
 
 const mockSteps: StepNode[] = [
 	{ id: "step_0", name: "load_data", position: 0, number_children: 0 },
@@ -103,8 +103,8 @@ const ZustandMockDecorator = (Story: any) => {
 };
 
 const meta = {
-	title: "Components/ProfileCodeViewerV3",
-	component: ProfileCodeViewerV3,
+	title: "Components/ProfileCodeViewer",
+	component: ProfileCodeViewer,
 	parameters: {
 		layout: "fullscreen",
 	},
@@ -128,7 +128,7 @@ const meta = {
 		),
 	],
 	tags: ["autodocs"],
-} satisfies Meta<typeof ProfileCodeViewerV3>;
+} satisfies Meta<typeof ProfileCodeViewer>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

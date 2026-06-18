@@ -15,7 +15,7 @@ import {
 	postNotebookOrProfiles,
 } from "@/api/client";
 import GraphContainer from "@/components/graph-container";
-import ProfileCodeViewerV3 from "@/components/profile-code-viewer-v3";
+import ProfileCodeViewer from "@/components/profile-code-viewer";
 import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
 import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
@@ -402,10 +402,9 @@ export default function ExplorerProjectIdPage() {
 					</div>
 				</div>
 
-				{/* Code tabs: only render the active one to avoid SyntaxHighlighter crashing the browser */}
 				{activeTab === "code" && (
 					<div className="flex-1 min-h-0 py-2 h-full">
-						<ProfileCodeViewerV3 nodes={filteredWorkflowsNodes} />
+						<ProfileCodeViewer nodes={filteredWorkflowsNodes} />
 					</div>
 				)}
 			</div>

@@ -47,7 +47,7 @@ const getStepIcon = (name: string) => {
 	}
 };
 
-export default function ProfileCodeViewerV3({ nodes }: ProfileCodeViewerProps) {
+export default function ProfileCodeViewer({ nodes }: ProfileCodeViewerProps) {
 	const selectedNodeId = useColombusStore(
 		(state) => state.selectedProfileNodeId,
 	);
