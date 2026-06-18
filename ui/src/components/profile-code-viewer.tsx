@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { getStepIcon, stepsColorsMapping } from "@/configuration";
 import type { Pattern, PpmResult } from "@/lib/types";
+import { hexToRgba } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 
 interface ProfileCodeViewerProps {
@@ -141,13 +142,6 @@ export default function ProfileCodeViewer({
 		}
 		return { fullCode: codes.join("\n\n"), stepLineRanges: ranges };
 	}, [activeNode, displayedSteps, getStepCode]);
-
-	const hexToRgba = (hex: string, alpha: number) => {
-		const r = parseInt(hex.slice(1, 3), 16) || 0;
-		const g = parseInt(hex.slice(3, 5), 16) || 0;
-		const b = parseInt(hex.slice(5, 7), 16) || 0;
-		return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-	};
 
 	const scrollToLine = useCallback((startLine: number) => {
 		if (!scrollContainerRef.current) return;
