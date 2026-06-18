@@ -40,3 +40,12 @@ export const stepsColorsMapping: { [stepName: string]: string } = {
 	"Model Evaluation": "#af8d00",
 	"Save Results": "#8dd3c7",
 };
+
+export const stepsIcons: { [stepName: string]: string } = {
+	"Data Collection": "Database",
+	"Data Preparation": "Wrench",
+	"Data Modeling": "Brain",
+	"Model Evaluation": "LineChart",
+	"Model Deployment": "Rocket",
+	"Save Results": "Save",
+};
