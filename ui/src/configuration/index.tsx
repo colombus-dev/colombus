@@ -1,4 +1,14 @@
 // Profile/PPM stages-related configuration
+import {
+	Box,
+	Brain,
+	Database,
+	LineChart,
+	type LucideIcon,
+	Rocket,
+	Save,
+	Wrench,
+} from "lucide-react";
 
 export type PpmNodesDisplayMode = "show-all" | "show-fixed" | "show-variable";
 
@@ -39,4 +49,18 @@ export const stepsColorsMapping: { [stepName: string]: string } = {
 	"Model Deployment": "#80b1d3",
 	"Model Evaluation": "#af8d00",
 	"Save Results": "#8dd3c7",
+};
+
+const stepsIcons: { [stepName: string]: LucideIcon } = {
+	"Data Collection": Database,
+	"Data Preparation": Wrench,
+	"Data Modeling": Brain,
+	"Model Evaluation": LineChart,
+	"Model Deployment": Rocket,
+	"Save Results": Save,
+};
+
+export const getStepIcon = (name: string) => {
+	const Icon = stepsIcons[name] || Box;
+	return <Icon className="w-5 h-5" />;
 };

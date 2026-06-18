@@ -51,3 +51,10 @@ export function scoreToBandColor(score: number | null | undefined) {
 	if (score <= 0.8) return "#a7f3d0";
 	return "#22c55e";
 }
+
+export const hexToRgba = (hex: string, alpha: number) => {
+	const r = parseInt(hex.slice(1, 3), 16) || 0;
+	const g = parseInt(hex.slice(3, 5), 16) || 0;
+	const b = parseInt(hex.slice(5, 7), 16) || 0;
+	return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};

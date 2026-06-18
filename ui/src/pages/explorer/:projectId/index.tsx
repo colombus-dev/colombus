@@ -15,6 +15,8 @@ import {
 	postNotebookOrProfiles,
 } from "@/api/client";
 import GraphContainer from "@/components/graph-container";
+import ProfileCodeViewer from "@/components/profile-code-viewer";
+import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
 import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
 import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
@@ -33,9 +35,9 @@ import { useColombusStore } from "@/store";
 const GRAPH_CONTAINER_ID = "graph-container";
 
 export default function ExplorerProjectIdPage() {
-	const [activeTab, setActiveTab] = useState<"explorer" | "statistics">(
-		"explorer",
-	);
+	const [activeTab, setActiveTab] = useState<
+		"explorer" | "statistics" | "code"
+	>("explorer");
 	const [graphContainerId, setGraphContainerId] = useState<
 		string | undefined
 	>();
@@ -274,37 +276,44 @@ export default function ExplorerProjectIdPage() {
 	}
 
 	return projectValidity === "valid" ? (
-		<section className="grid grid-cols-7 gap-4 px-4 h-full">
-			<div className="col-span-1 space-y-4 p-2">
-				<p className="font-bold">Upload</p>
-				<div className="row-span-1">
-					<form ref={formRef} action={handleNotebookOrProfileFormSubmit}>
-						<div className="grid w-full max-w-sm items-center gap-1.5">
-							<Label htmlFor="notebook-or-profile-form">
-								Notebooks or profiles
-							</Label>
-							<Input
-								id="notebook-or-profile-form"
-								name="notebook-or-profile-form"
-								type="file"
-								accept={`${NotebookFileExtension},${ProfileFileExtension}`}
-								multiple
-								required
-							/>
-							<Button type="submit" disabled={isImporting}>
-								{isImporting && (
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-								)}
-								Submit Profile
-							</Button>
-						</div>
-					</form>
+		<section className="grid grid-cols-7 gap-4 px-4 h-[calc(100vh-76px)] pb-4">
+			<div className="col-span-1 flex flex-col h-full space-y-4 p-2 min-h-0">
+				<div>
+					<p className="font-bold">Upload</p>
+					<div className="row-span-1">
+						<form ref={formRef} action={handleNotebookOrProfileFormSubmit}>
+							<div className="grid w-full max-w-sm items-center gap-1.5">
+								<Label htmlFor="notebook-or-profile-form">
+									Notebooks or profiles
+								</Label>
+								<Input
+									id="notebook-or-profile-form"
+									name="notebook-or-profile-form"
+									type="file"
+									accept={`${NotebookFileExtension},${ProfileFileExtension}`}
+									multiple
+									required
+								/>
+								<Button type="submit" disabled={isImporting}>
+									{isImporting && (
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									)}
+									Submit Profile
+								</Button>
+							</div>
+						</form>
+					</div>
 				</div>
 
-				<p className="font-bold">Saved patterns</p>
-				<ProfilePatternList />
+				<div className="flex flex-col flex-1 min-h-0">
+					<p className="font-bold shrink-0">Saved patterns</p>
+					<div className="flex-1 min-h-0 mt-2">
+						<ProfilePatternList />
+					</div>
+				</div>
 			</div>
-			<div className="col-span-6 flex flex-col h-full space-y-4 relative">
+			<ProfileExplorerPpmResultsBar className="col-span-1" />
+			<div className="col-span-5 flex flex-col h-full space-y-4 relative min-h-0">
 				{projectId && (
 					<PatternDslEditor
 						isExecuting={isLoading}
@@ -314,6 +323,17 @@ export default function ExplorerProjectIdPage() {
 
 				<div className="flex items-center justify-start py-2 border-b border-slate-100 dark:border-slate-800">
 					<div className="flex items-center space-x-2">
+						<button
+							type="button"
+							onClick={() => setActiveTab("code")}
+							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${
+								activeTab === "code"
+									? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
+									: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+							}`}
+						>
+							Code
+						</button>
 						<button
 							type="button"
 							onClick={() => setActiveTab("explorer")}
@@ -347,7 +367,7 @@ export default function ExplorerProjectIdPage() {
 					}
 				>
 					<GraphContainer
-						className="group relative row-span-10 h-[692px]"
+						className="group relative row-span-10 h-full w-full"
 						containerId={GRAPH_CONTAINER_ID}
 						isLoading={isLoading}
 						graphRenderer={renderer.current}
@@ -362,7 +382,7 @@ export default function ExplorerProjectIdPage() {
 							: "absolute left-[-9999px] top-[-9999px] invisible pointer-events-none w-full h-full py-2"
 					}
 				>
-					<div className="group relative row-span-10 h-[692px]">
+					<div className="group relative row-span-10 h-full w-full">
 						<div className="w-full h-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] p-6 overflow-y-auto relative">
 							{executionError && !isLoading && (
 								<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 font-bold text-xl bg-white p-4 rounded-lg shadow-lg border border-red-200 z-50">
@@ -381,6 +401,12 @@ export default function ExplorerProjectIdPage() {
 						</div>
 					</div>
 				</div>
+
+				{activeTab === "code" && (
+					<div className="flex-1 min-h-0 py-2 h-full">
+						<ProfileCodeViewer nodes={filteredWorkflowsNodes} />
+					</div>
+				)}
 			</div>
 		</section>
 	) : (

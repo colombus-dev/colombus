@@ -46,6 +46,10 @@ interface ProfilesSlice {
 	setProfilesScores: (
 		scores: Record<string, number | null | undefined>,
 	) => void;
+	selectedProfileNodeId: string | null;
+	setSelectedProfileNodeId: (id: string | null) => void;
+	selectedProfileName: string | null;
+	setSelectedProfileName: (name: string | null) => void;
 }
 
 interface ProjectSlice {
@@ -152,6 +156,12 @@ const createProfilesSlice: StateCreator<
 	profilesScores: {},
 	setProfilesScores: (scores) =>
 		set((state) => ({ ...state, profilesScores: scores })),
+	selectedProfileNodeId: null,
+	setSelectedProfileNodeId: (id) =>
+		set((state) => ({ ...state, selectedProfileNodeId: id })),
+	selectedProfileName: null,
+	setSelectedProfileName: (name) =>
+		set((state) => ({ ...state, selectedProfileName: name })),
 });
 
 const createProjectSlice: StateCreator<ColombusStore, [], [], ProjectSlice> = (
