@@ -4,6 +4,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vs } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 import type { GraphDefinition, StepNode } from "@/api/client";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Select,
 	SelectContent,
@@ -214,9 +215,41 @@ export default function ProfileCodeViewer({
 				</div>
 
 				<div className="flex-1 overflow-y-auto p-3 space-y-2">
-					{displayedSteps.length === 0 && (
+					{displayedSteps.length === 0 ? (
 						<div className="p-4 text-sm text-slate-500 italic text-center">
 							No steps available.
+						</div>
+					) : (
+						<div className="flex items-center justify-between px-2 pb-2 mb-2 border-b border-slate-200/60">
+							<span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+								Steps
+							</span>
+							<button
+								type="button"
+								onClick={() => {
+									if (selectedStepIds.size === displayedSteps.length) {
+										setSelectedStepIds(new Set());
+									} else {
+										setSelectedStepIds(
+											new Set(displayedSteps.map((s) => s.id)),
+										);
+									}
+								}}
+								className="flex items-center space-x-2 text-xs text-slate-500 hover:text-slate-800 font-medium transition-colors cursor-pointer"
+							>
+								<Checkbox
+									checked={
+										selectedStepIds.size === displayedSteps.length &&
+										displayedSteps.length > 0
+									}
+									className="border-slate-300 pointer-events-none"
+								/>
+								<span>
+									{selectedStepIds.size === displayedSteps.length
+										? "Hide all"
+										: "Show all"}
+								</span>
+							</button>
 						</div>
 					)}
 					{displayedSteps.map((step) => {
