@@ -99,6 +99,11 @@ export default function ExplorerProjectIdPage() {
 			workflowsNames: string[],
 			workflowsPpmData?: PpmResult[],
 		) => {
+			const currentSelected = useColombusStore.getState().selectedProfileName;
+			if (currentSelected && !workflowsNames.includes(currentSelected)) {
+				workflowsNames = [...workflowsNames, currentSelected];
+			}
+
 			setAvailableProfilesNames(workflowsNames);
 			// we prioritize newly posted profiles
 			const reducedWorkflows = new Set(
@@ -193,12 +198,6 @@ export default function ExplorerProjectIdPage() {
 		setAvailableProfilesWithPpmData,
 		setProfilesScores,
 	]);
-
-	useEffect(() => {
-		if (isLoading) {
-			setFilteredWorkflowsNodes([]);
-		}
-	}, [isLoading]);
 
 	const handleNotebookOrProfileFormSubmit = useCallback(
 		async (formData: FormData) => {

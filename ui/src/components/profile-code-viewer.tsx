@@ -1,9 +1,10 @@
-import { FileCode2 } from "lucide-react";
+import { FileCode2, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vs } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 import type { GraphDefinition, StepNode } from "@/api/client";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Select,
 	SelectContent,
@@ -60,6 +61,7 @@ export default function ProfileCodeViewer({
 	const [selectedStepIds, setSelectedStepIds] = useState<Set<string>>(
 		new Set(),
 	);
+	const [isRenderingCode, setIsRenderingCode] = useState(true);
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
 
 	const storePattern = useColombusStore((state) => state.currentPattern);
@@ -143,6 +145,16 @@ export default function ProfileCodeViewer({
 		return { fullCode: codes.join("\n\n"), stepLineRanges: ranges };
 	}, [activeNode, displayedSteps, getStepCode]);
 
+	useEffect(() => {
+		if (fullCode !== null) {
+			setIsRenderingCode(true);
+			const timer = setTimeout(() => {
+				setIsRenderingCode(false);
+			}, 50);
+			return () => clearTimeout(timer);
+		}
+	}, [fullCode]);
+
 	const scrollToLine = useCallback((startLine: number) => {
 		if (!scrollContainerRef.current) return;
 		const lineEl = scrollContainerRef.current.querySelector(
@@ -183,6 +195,128 @@ export default function ProfileCodeViewer({
 		}
 	}, [currentPattern, matchedStepIds, stepLineRanges, scrollToLine]);
 
+	const dynamicStyles = useMemo(() => {
+		let css = "";
+		for (const step of displayedSteps) {
+			const stepColor = stepsColorsMapping[step.name] || "#22d3ee";
+			const isSelected = selectedStepIds.has(step.id);
+			const isMatched = currentPattern ? matchedStepIds.has(step.id) : true;
+
+			if (isSelected) {
+				css += `
+					.step-line-${step.id} {
+						background-color: ${hexToRgba(stepColor, 0.25)} !important;
+						border-left: 4px solid #0f172a !important;
+					}
+				`;
+			} else if (isMatched && currentPattern) {
+				css += `
+					.step-line-${step.id} {
+						background-color: ${hexToRgba(stepColor, 0.12)} !important;
+						border-left: 4px solid #334155 !important;
+					}
+				`;
+			} else {
+				css += `
+					.step-line-${step.id} {
+						border-left: 3px solid transparent !important;
+					}
+				`;
+			}
+
+			if (isSelected) {
+				css += `
+					.step-first-line-${step.id} {
+						border-top: 1px solid #334155 !important;
+					}
+					.step-last-line-${step.id} {
+						border-bottom: 1px solid #334155 !important;
+					}
+				`;
+			}
+		}
+		return css;
+	}, [displayedSteps, selectedStepIds, currentPattern, matchedStepIds]);
+
+	const memoizedHighlighter = useMemo(() => {
+		if (isRenderingCode) {
+			return (
+				<div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-3">
+					<Loader2 className="w-8 h-8 animate-spin text-slate-300" />
+					<span className="text-sm">Coloration syntaxique en cours...</span>
+				</div>
+			);
+		}
+
+		if (!fullCode) {
+			return (
+				<div className="flex items-center justify-center h-full text-slate-500 italic">
+					No code available for this profile.
+				</div>
+			);
+		}
+
+		return (
+			<SyntaxHighlighter
+				language="python"
+				style={vs}
+				showLineNumbers
+				lineNumberStyle={{
+					color: "#94a3b8",
+					minWidth: "3em",
+					paddingRight: "1.5em",
+					textAlign: "right",
+					display: "inline-block",
+					userSelect: "none",
+				}}
+				wrapLines={true}
+				customStyle={{
+					margin: 0,
+					padding: "1rem",
+					backgroundColor: "transparent",
+					fontSize: "14px",
+					lineHeight: "1.6",
+				}}
+				lineProps={(lineNumber) => {
+					const baseStyle: React.CSSProperties = {
+						display: "flex",
+						flexDirection: "row",
+						borderLeft: "3px solid transparent",
+						backgroundColor: "transparent",
+					};
+
+					const matchingStepRange = stepLineRanges.find(
+						(r) => lineNumber >= r.startLine && lineNumber <= r.endLine,
+					);
+
+					if (!matchingStepRange) {
+						return {
+							id: `code-line-${lineNumber}`,
+							style: baseStyle,
+							className: "code-line",
+						};
+					}
+
+					let className = `code-line step-line-${matchingStepRange.stepId}`;
+					if (lineNumber === matchingStepRange.startLine) {
+						className += ` step-first-line-${matchingStepRange.stepId}`;
+					}
+					if (lineNumber === matchingStepRange.endLine) {
+						className += ` step-last-line-${matchingStepRange.stepId}`;
+					}
+
+					return {
+						id: `code-line-${lineNumber}`,
+						style: baseStyle,
+						className,
+					};
+				}}
+			>
+				{fullCode}
+			</SyntaxHighlighter>
+		);
+	}, [fullCode, stepLineRanges, isRenderingCode]);
+
 	if (!nodes || nodes.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center h-full min-h-[350px] p-8 text-slate-500">
@@ -214,9 +348,41 @@ export default function ProfileCodeViewer({
 				</div>
 
 				<div className="flex-1 overflow-y-auto p-3 space-y-2">
-					{displayedSteps.length === 0 && (
+					{displayedSteps.length === 0 ? (
 						<div className="p-4 text-sm text-slate-500 italic text-center">
 							No steps available.
+						</div>
+					) : (
+						<div className="flex items-center justify-between px-2 pb-2 mb-2 border-b border-slate-200/60">
+							<span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+								Steps
+							</span>
+							<button
+								type="button"
+								onClick={() => {
+									if (selectedStepIds.size === displayedSteps.length) {
+										setSelectedStepIds(new Set());
+									} else {
+										setSelectedStepIds(
+											new Set(displayedSteps.map((s) => s.id)),
+										);
+									}
+								}}
+								className="flex items-center space-x-2 text-xs text-slate-500 hover:text-slate-800 font-medium transition-colors cursor-pointer"
+							>
+								<Checkbox
+									checked={
+										selectedStepIds.size === displayedSteps.length &&
+										displayedSteps.length > 0
+									}
+									className="border-slate-300 pointer-events-none"
+								/>
+								<span>
+									{selectedStepIds.size === displayedSteps.length
+										? "Deselect all"
+										: "Select all"}
+								</span>
+							</button>
 						</div>
 					)}
 					{displayedSteps.map((step) => {
@@ -303,81 +469,8 @@ export default function ProfileCodeViewer({
 							ref={scrollContainerRef}
 							className="flex-1 w-full bg-white border-t border-slate-100 relative overflow-auto"
 						>
-							{fullCode ? (
-								<SyntaxHighlighter
-									language="python"
-									style={vs}
-									showLineNumbers
-									lineNumberStyle={{
-										color: "#94a3b8",
-										minWidth: "3em",
-										paddingRight: "1.5em",
-										textAlign: "right",
-										display: "inline-block",
-										userSelect: "none",
-									}}
-									wrapLines={true}
-									customStyle={{
-										margin: 0,
-										padding: "1rem",
-										backgroundColor: "transparent",
-										fontSize: "14px",
-										lineHeight: "1.6",
-									}}
-									lineProps={(lineNumber) => {
-										const baseStyle: React.CSSProperties = {
-											display: "flex",
-											flexDirection: "row",
-											borderLeft: "3px solid transparent",
-											backgroundColor: "transparent",
-										};
-
-										const matchingStepRange = stepLineRanges.find(
-											(r) =>
-												lineNumber >= r.startLine && lineNumber <= r.endLine,
-										);
-
-										if (!matchingStepRange) {
-											return {
-												id: `code-line-${lineNumber}`,
-												style: baseStyle,
-											};
-										}
-
-										const step = displayedSteps.find(
-											(s) => s.id === matchingStepRange.stepId,
-										);
-										const stepColor = step
-											? stepsColorsMapping[step.name] || "#22d3ee"
-											: "#22d3ee";
-										const isSelected = selectedStepIds.has(
-											matchingStepRange.stepId,
-										);
-										const isMatched =
-											currentPattern &&
-											matchedStepIds.has(matchingStepRange.stepId);
-
-										if (isSelected) {
-											baseStyle.backgroundColor = hexToRgba(stepColor, 0.25);
-											baseStyle.borderLeft = `3px solid ${stepColor}`;
-										} else if (isMatched) {
-											baseStyle.backgroundColor = hexToRgba(stepColor, 0.12);
-											baseStyle.borderLeft = `3px solid ${hexToRgba(stepColor, 0.6)}`;
-										}
-
-										return {
-											id: `code-line-${lineNumber}`,
-											style: baseStyle,
-										};
-									}}
-								>
-									{fullCode}
-								</SyntaxHighlighter>
-							) : (
-								<div className="flex items-center justify-center h-full text-slate-500 italic">
-									No code available for this profile.
-								</div>
-							)}
+							<style>{dynamicStyles}</style>
+							{memoizedHighlighter}
 						</div>
 					</div>
 				</div>
