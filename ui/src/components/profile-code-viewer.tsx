@@ -379,8 +379,8 @@ export default function ProfileCodeViewer({
 								/>
 								<span>
 									{selectedStepIds.size === displayedSteps.length
-										? "Deselect all"
-										: "Select all"}
+										? "Hide all"
+										: "Show all"}
 								</span>
 							</button>
 						</div>
