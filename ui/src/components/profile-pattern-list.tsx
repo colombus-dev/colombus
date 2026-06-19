@@ -1,8 +1,18 @@
+import Editor, { useMonaco } from "@monaco-editor/react";
 import { Trash } from "lucide-react";
 import { useEffect } from "react";
 import { useParams } from "react-router";
 import { getAllPatterns } from "@/api/client";
 import { Button } from "@/components/ui/button";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
+import useCanopusGrammar from "@/hooks/editor/useCanopusGrammar";
+import useCanopusTheme from "@/hooks/editor/useCanopusTheme";
+import { EDITOR_LANGUAGE_ID } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 import DeletePatternDialog from "./delete-pattern-dialog";
@@ -19,6 +29,10 @@ const ProfilePatternList: React.FunctionComponent<
 	);
 	const { projectId } = useParams<{ projectId: string }>();
 
+	const monaco = useMonaco();
+	const { themeName } = useCanopusTheme(monaco);
+	useCanopusGrammar(monaco);
+
 	useEffect(() => {
 		if (!projectId) {
 			return;
@@ -28,33 +42,71 @@ const ProfilePatternList: React.FunctionComponent<
 
 	return (
 		<div {...divProps} className={cn("space-x-1", divProps.className)}>
-			<ul className="list-none space-y-1">
-				{availablePatterns.map(({ name, groups, dsl_content }) => (
-					<li key={name} className="grid grid-cols-6 space-x-1">
-						<Button
-							className="col-span-5"
-							key={name}
-							onClick={() => {
-								setCurrentPattern({
-									name,
-									groups,
-									dsl_content,
-								});
-							}}
-						>
-							{name}
-						</Button>
-						<DeletePatternDialog patternName={name}>
-							<Button key={`delete-${name}`} className="col-span-1">
-								<Trash />
-							</Button>
-						</DeletePatternDialog>
-					</li>
-				))}
-				{availablePatterns.length === 0 && (
-					<p>Saved patterns will be listed here...</p>
-				)}
-			</ul>
+			<TooltipProvider>
+				<ul className="list-none space-y-1">
+					{availablePatterns.map(({ name, groups, dsl_content }) => (
+						<li key={name} className="grid grid-cols-6 space-x-1">
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<Button
+										className="col-span-5 truncate justify-start"
+										key={name}
+										onClick={() => {
+											setCurrentPattern({
+												name,
+												groups,
+												dsl_content,
+											});
+										}}
+									>
+										{name}
+									</Button>
+								</TooltipTrigger>
+								<TooltipContent
+									side="right"
+									className="bg-white text-slate-900 border border-slate-200 shadow-md p-1 overflow-hidden z-[100]"
+								>
+									<div className="w-[350px] h-[150px] relative">
+										{themeName && (
+											<Editor
+												theme={themeName}
+												defaultLanguage={EDITOR_LANGUAGE_ID}
+												value={dsl_content}
+												options={{
+													readOnly: true,
+													minimap: { enabled: false },
+													lineNumbers: "on",
+													scrollBeyondLastLine: false,
+													wordWrap: "on",
+													overviewRulerLanes: 0,
+													hideCursorInOverviewRuler: true,
+													scrollbar: {
+														vertical: "hidden",
+														horizontal: "hidden",
+													},
+													folding: false,
+													renderLineHighlight: "none",
+													contextmenu: false,
+												}}
+											/>
+										)}
+									</div>
+								</TooltipContent>
+							</Tooltip>
+							<DeletePatternDialog patternName={name}>
+								<Button key={`delete-${name}`} className="col-span-1">
+									<Trash />
+								</Button>
+							</DeletePatternDialog>
+						</li>
+					))}
+					{availablePatterns.length === 0 && (
+						<p className="text-sm text-slate-500">
+							Saved patterns will be listed here...
+						</p>
+					)}
+				</ul>
+			</TooltipProvider>
 		</div>
 	);
 };
