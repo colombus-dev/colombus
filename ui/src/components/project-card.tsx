@@ -2,7 +2,7 @@ import { useNavigate } from "react-router";
 import { PATH } from "@/lib/constants";
 
 interface ProjectCardProps {
-	project: { id: string; name: string };
+	project: { id: string; name: string; description?: string | null };
 	isActive?: boolean;
 }
 
@@ -24,12 +24,6 @@ export const ProjectCard = ({ project, isActive }: ProjectCardProps) => {
 						Active
 					</span>
 				)}
-			</div>
-			<div className="space-y-1 mt-4">
-				<p className="text-xs text-slate-400">main</p>
-				<p className="text-xs text-slate-500 line-clamp-1">
-					Project configuration
-				</p>
 			</div>
 		</button>
 	);

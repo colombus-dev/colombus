@@ -1,7 +1,6 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { createNewProject } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PATH } from "@/lib/constants";
@@ -20,13 +19,34 @@ export const ProjectCreateForm: React.FunctionComponent<
 			if (!jwtToken || !newProjectName) {
 				return;
 			}
-			await createNewProject(newProjectName)
+
+			const apiPath = import.meta.env.VITE_API_HOST;
+			const apiPort = import.meta.env.VITE_API_PORT;
+			const baseURL = apiPath
+				? `${apiPath}${apiPort ? `:${apiPort}` : ""}/api`
+				: "/api";
+
+			fetch(`${baseURL}/project`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"x-api-key": jwtToken,
+				},
+				body: JSON.stringify({ name: newProjectName }),
+			})
+				.then(async (res) => {
+					if (!res.ok) {
+						const errorData = await res.json().catch(() => ({}));
+						throw new Error(errorData.detail || "Failed to create project");
+					}
+					return res.json();
+				})
 				.then((projectId) => {
 					toast.success("Project successfully created.");
 					navigate(`${PATH.EXPLORER}/${projectId}`);
 				})
-				.catch((r) => {
-					toast.error(r?.response?.data?.detail || "Failed to create project");
+				.catch((err) => {
+					toast.error(err.message || "Failed to create project");
 				});
 		},
 		[jwtToken, navigate],
