@@ -10,18 +10,18 @@ import { useColombusStore } from "@/store";
 const ProjectSearchForm: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
 > = ({ ...divProps }) => {
-	const apiKey = useColombusStore((state) => state.apiKey);
+	const jwtToken = useColombusStore((state) => state.jwtToken);
 	const navigate = useNavigate();
 
 	const handleProfileFormSubmit = useCallback(
 		async (formData: FormData) => {
 			const projectId = formData.get("project-name-form");
-			if (!apiKey || !projectId) {
+			if (!jwtToken || !projectId) {
 				return;
 			}
 			navigate(`${PATH.EXPLORER}/${projectId}`);
 		},
-		[apiKey, navigate],
+		[jwtToken, navigate],
 	);
 
 	return (

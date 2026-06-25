@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     ui_host: str = Field()
     ui_port: int = Field()
     environment: Literal["development", "staging", "production"] = "development"
+    root_path: str = ""
 
     allowed_origins: list[str] = []
 

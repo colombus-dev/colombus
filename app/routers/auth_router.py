@@ -41,18 +41,18 @@ def auth_google(body: GoogleAuthRequest):
     if info["email"] not in settings.allowed_google_emails_list:
         raise AuthException(name="Google")
 
+    exp = datetime.now(timezone.utc) + timedelta(hours=settings.jwt_expire_hours)
     token = jwt.encode(
         {
             "sub": info["email"],
             "email": info["email"],
             "name": info.get("name", ""),
-            "exp": datetime.now(timezone.utc)
-            + timedelta(hours=settings.jwt_expire_hours),
+            "exp": exp,
         },
         settings.jwt_secret,
         algorithm=settings.jwt_algorithm,
     )
-    return {"api_key": token}
+    return {"jwt_token": token, "exp": int(exp.timestamp() * 1000)}
 
 
 api_key_header = APIKeyHeader(name=settings.jwt_header_field)

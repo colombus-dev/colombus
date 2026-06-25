@@ -12,13 +12,13 @@ import { useColombusStore } from "@/store";
 const ProjectCreateForm: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
 > = ({ ...divProps }) => {
-	const apiKey = useColombusStore((state) => state.apiKey);
+	const jwtToken = useColombusStore((state) => state.jwtToken);
 	const navigate = useNavigate();
 
 	const handleProfileFormSubmit = useCallback(
 		async (formData: FormData) => {
 			const newProjectName = formData.get("project-name-form")?.toString();
-			if (!apiKey || !newProjectName) {
+			if (!jwtToken || !newProjectName) {
 				return;
 			}
 			await createNewProject(newProjectName)
@@ -30,7 +30,7 @@ const ProjectCreateForm: React.FunctionComponent<
 					toast.error(r.response.data.detail);
 				});
 		},
-		[apiKey, navigate],
+		[jwtToken, navigate],
 	);
 
 	return (

@@ -1,8 +1,6 @@
 import ProjectTaxonomyList from "@/components/project-taxonomy-list";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-
 import {
 	Select,
 	SelectContent,
@@ -10,7 +8,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import type { PpmNodesDisplayMode } from "@/configuration";
 import { useColombusStore } from "@/store";
 
 const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
@@ -76,44 +73,43 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 								Use weighted nodes
 							</label>
 						</div>
-						<div key="radio-ppm-nodes-display-div">
-							<RadioGroup
-								value={patternCapturedNodesDisplayMode}
-								onValueChange={(v: PpmNodesDisplayMode) =>
-									setPatternCapturedNodesDisplayMode(v)
-								}
-								disabled={!referenceDiffProfile && !currentPattern}
-								className="flex flex-col space-y-2"
-							>
-								<div className="flex items-center space-x-2">
-									<RadioGroupItem value="show-all" id="show-all" />
-									<Label
-										htmlFor="show-all"
-										className="cursor-pointer font-medium text-slate-800"
-									>
-										Show all nodes
-									</Label>
-								</div>
-								<div className="flex items-center space-x-2">
-									<RadioGroupItem value="show-fixed" id="show-fixed" />
-									<Label
-										htmlFor="show-fixed"
-										className="cursor-pointer font-medium text-slate-800"
-									>
-										Show fixed nodes
-									</Label>
-								</div>
-								<div className="flex items-center space-x-2">
-									<RadioGroupItem value="show-variable" id="show-variable" />
-									<Label
-										htmlFor="show-variable"
-										className="cursor-pointer font-medium text-slate-800"
-									>
-										Show variable nodes
-									</Label>
-								</div>
-							</RadioGroup>
-						</div>
+						<RadioGroup
+							key="radio-ppm-nodes-display-div"
+							value={patternCapturedNodesDisplayMode}
+							onValueChange={(value) =>
+								setPatternCapturedNodesDisplayMode(value as any)
+							}
+							disabled={!referenceDiffProfile && !currentPattern}
+							className="flex flex-col space-y-1 pt-2"
+						>
+							<div className="flex items-center space-x-2">
+								<RadioGroupItem value="show-all" id="show-all" />
+								<label
+									htmlFor="show-all"
+									className="text-sm font-medium leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+								>
+									Show all nodes
+								</label>
+							</div>
+							<div className="flex items-center space-x-2">
+								<RadioGroupItem value="show-fixed" id="show-fixed" />
+								<label
+									htmlFor="show-fixed"
+									className="text-sm font-medium leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+								>
+									Show fixed nodes
+								</label>
+							</div>
+							<div className="flex items-center space-x-2">
+								<RadioGroupItem value="show-variable" id="show-variable" />
+								<label
+									htmlFor="show-variable"
+									className="text-sm font-medium leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+								>
+									Show variable nodes
+								</label>
+							</div>
+						</RadioGroup>
 					</div>
 				</div>
 			</div>

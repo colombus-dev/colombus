@@ -35,20 +35,16 @@ export type GraphDefinition = {
 export const ProfileFileExtension = ".json";
 export const NotebookFileExtension = ".ipynb";
 
-const apiPath = import.meta.env.VITE_API_HOST;
-const apiPort = import.meta.env.VITE_API_PORT;
-
 const API_KEY_HEADER_NAME = "x-api-key";
 
-const baseURL = apiPath
-	? `${apiPath}${apiPort ? `:${apiPort}` : ""}/api`
-	: "/api";
+const basePath = window.location.pathname.replace(/\/+$/, "");
+const baseURL = `${basePath}/api`;
 
 const axiosInstance = axios.create({
 	baseURL,
 	headers: {
 		common: {
-			[API_KEY_HEADER_NAME]: useColombusStore.getState().apiKey,
+			[API_KEY_HEADER_NAME]: useColombusStore.getState().jwtToken,
 		},
 	},
 });
@@ -58,15 +54,15 @@ axiosInstance.interceptors.response.use(
 	(error) => {
 		if (error.response?.status === 401) {
 			delete axiosInstance.defaults.headers.common[API_KEY_HEADER_NAME];
-			useColombusStore.getState().setApiKey(undefined);
+			useColombusStore.getState().setJwtToken(undefined);
 		}
 		return Promise.reject(error);
 	},
 );
 
-export function updateHttpClientApiKey() {
+export function updateHttpClientJwtToken() {
 	axiosInstance.defaults.headers.common[API_KEY_HEADER_NAME] =
-		useColombusStore.getState().apiKey;
+		useColombusStore.getState().jwtToken;
 }
 
 export async function createNewProject(name: string) {
@@ -192,31 +188,15 @@ export async function postDiffSort(profiles: string[]) {
 		.then(({ data }) => data);
 }
 
-export async function postFrequentPatternsMatrixImage(
+export async function postFrequentPatternsMatrixPlotly(
 	projectId: string,
 	profilesNames?: string[],
 ) {
 	return await axiosInstance
-		.post(
-			`/project/${projectId}/stats/patterns`,
-			{
-				profiles_names: profilesNames,
-			},
-			{
-				responseType: "arraybuffer",
-			},
-		)
-		.then(({ data }) =>
-			btoa(
-				// TODO: to improve
-				// @ts-expect-error: to improve
-				[].reduce.call(
-					new Uint8Array(data),
-					(p, c) => p + String.fromCharCode(c),
-					"",
-				),
-			),
-		);
+		.post<any>(`/project/${projectId}/stats/patterns`, {
+			profiles_names: profilesNames,
+		})
+		.then(({ data }) => data);
 }
 
 export async function postFrequentStepsData(
@@ -238,6 +218,6 @@ export async function getAuthConfig(): Promise<string> {
 
 export async function authGoogle(credential: string) {
 	return await axiosInstance
-		.post<{ api_key: string }>("/auth/google", { credential })
+		.post<{ jwt_token: string; exp: number }>("/auth/google", { credential })
 		.then(({ data }) => data);
 }

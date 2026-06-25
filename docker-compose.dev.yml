@@ -7,6 +7,7 @@ services:
         - colombus-dev_network
       volumes:
         - ./ui/:/app:rw
+        - ui_node_modules:/app/node_modules
       environment:
         VITE_API_HOST: "http://localhost"
         VITE_API_PORT: 8180
@@ -82,7 +83,9 @@ services:
 
 networks:
   colombus-dev_network:
+    external: true
     name: colombus-dev_network
 
 volumes:
   postgres_data:
+  ui_node_modules:

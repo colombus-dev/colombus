@@ -1,23 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import BounceLoader from "react-spinners/BounceLoader";
 import { Legend, PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
 import { postFrequentStepsData } from "@/api/client";
-import { Button } from "@/components/ui/button";
 import {
 	type ChartConfig,
 	ChartContainer,
 	ChartTooltip,
 	ChartTooltipContent,
 } from "@/components/ui/chart";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
 import { useColombusStore } from "@/store";
 
 const chartConfig = {
@@ -37,73 +28,56 @@ const ProfileStepsFrequencyChart: React.FunctionComponent<
 		(state) => state.availableProfilesNames,
 	);
 
-	if (!projectId) {
-		return;
+	useEffect(() => {
+		if (projectId && availableProfilesNames.length > 0) {
+			setIsLoading(true);
+			postFrequentStepsData(projectId, availableProfilesNames).then((res) => {
+				setFrequentStepsData(res);
+				setIsLoading(false);
+			});
+		}
+	}, [projectId, availableProfilesNames]);
+
+	if (!projectId || availableProfilesNames.length === 0) {
+		return null;
 	}
 
 	return (
-		<Dialog
-			onOpenChange={(isOpen) => {
-				if (isOpen) {
-					setIsLoading(true);
-					postFrequentStepsData(projectId, availableProfilesNames).then(
-						(res) => {
-							setFrequentStepsData(res);
-							setIsLoading(false);
-						},
-					);
-				} else {
-					setIsLoading(false);
-				}
-			}}
-		>
-			<DialogTrigger asChild>
-				<Button className="w-full" disabled={!availableProfilesNames.length}>
-					View Steps Frequency
-				</Button>
-			</DialogTrigger>
-			<DialogContent className="min-w-[1200px]">
-				<DialogHeader>
-					<DialogTitle>Steps Frequency</DialogTitle>
-					<DialogDescription>
-						{isLoading ? (
-							<BounceLoader
-								className="absolute top-1/2 right-1/2"
-								color="green"
-								cssOverride={{ position: "sticky" }}
-								loading={isLoading}
+		<div className="w-full h-full flex flex-col">
+			<div className="mb-6 text-center w-full shrink-0">
+				<h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-1">
+					Steps frequency
+				</h2>
+				<p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+					Global steps distribution
+				</p>
+			</div>
+			<div className="flex-1 flex items-center justify-center w-full">
+				{isLoading ? (
+					<BounceLoader color="green" loading={isLoading} />
+				) : (
+					<ChartContainer config={chartConfig} className="w-full max-h-[500px]">
+						<RadarChart data={frequentStepsData}>
+							<ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+							<PolarGrid />
+							<PolarAngleAxis dataKey="step" />
+							<Radar
+								name="Steps"
+								dataKey="frequency"
+								stroke="#8884d8"
+								fill="#8884d8"
+								fillOpacity={0.6}
+								dot={{
+									r: 2,
+									fillOpacity: 1,
+								}}
 							/>
-						) : (
-							<ChartContainer
-								config={chartConfig}
-								className="mx-auto max-h-[500px]"
-							>
-								<RadarChart data={frequentStepsData}>
-									<ChartTooltip
-										cursor={false}
-										content={<ChartTooltipContent />}
-									/>
-									<PolarGrid />
-									<PolarAngleAxis dataKey="step" />
-									<Radar
-										name="Steps"
-										dataKey="frequency"
-										stroke="#8884d8"
-										fill="#8884d8"
-										fillOpacity={0.6}
-										dot={{
-											r: 2,
-											fillOpacity: 1,
-										}}
-									/>
-									<Legend />
-								</RadarChart>
-							</ChartContainer>
-						)}
-					</DialogDescription>
-				</DialogHeader>
-			</DialogContent>
-		</Dialog>
+							<Legend />
+						</RadarChart>
+					</ChartContainer>
+				)}
+			</div>
+		</div>
 	);
 };
 

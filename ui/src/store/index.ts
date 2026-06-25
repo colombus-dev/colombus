@@ -1,13 +1,14 @@
 import type { StateCreator } from "zustand";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import { postDiffSort, updateHttpClientApiKey } from "@/api/client";
+import { postDiffSort, updateHttpClientJwtToken } from "@/api/client";
 import type { PpmNodesDisplayMode } from "@/configuration";
 import type { DiffResult, Pattern, PpmResult } from "@/lib/types";
 
 interface AuthSlice {
-	apiKey?: string;
-	setApiKey: (key: string | undefined) => void;
+	jwtToken?: string;
+	jwtExpiry?: number;
+	setJwtToken: (token: string | undefined, expiry?: number) => void;
 }
 
 interface DiffSlice {
@@ -45,6 +46,10 @@ interface ProfilesSlice {
 	setProfilesScores: (
 		scores: Record<string, number | null | undefined>,
 	) => void;
+	selectedProfileNodeId: string | null;
+	setSelectedProfileNodeId: (id: string | null) => void;
+	selectedProfileName: string | null;
+	setSelectedProfileName: (name: string | null) => void;
 }
 
 interface ProjectSlice {
@@ -108,10 +113,11 @@ const createPatternSlice: StateCreator<ColombusStore, [], [], PatternSlice> = (
 const createAuthSlice: StateCreator<ColombusStore, [], [], AuthSlice> = (
 	set,
 ) => ({
-	apiKey: undefined,
-	setApiKey: (k) => {
-		set((state) => ({ ...state, apiKey: k }));
-		updateHttpClientApiKey();
+	jwtToken: undefined,
+	jwtExpiry: undefined,
+	setJwtToken: (token, expiry) => {
+		set((state) => ({ ...state, jwtToken: token, jwtExpiry: expiry }));
+		updateHttpClientJwtToken();
 	},
 });
 
@@ -127,7 +133,7 @@ const createGraphCustomizationSlice: StateCreator<
 	useWeightedNodes: true,
 	setUseWeightedNodes: (uwn) =>
 		set((state) => ({ ...state, useWeightedNodes: uwn })),
-	patternCapturedNodesDisplayMode: "show-all",
+	patternCapturedNodesDisplayMode: "show-variable",
 	setPatternCapturedNodesDisplayMode: (mode) =>
 		set((state) => ({ ...state, patternCapturedNodesDisplayMode: mode })),
 });
@@ -150,6 +156,12 @@ const createProfilesSlice: StateCreator<
 	profilesScores: {},
 	setProfilesScores: (scores) =>
 		set((state) => ({ ...state, profilesScores: scores })),
+	selectedProfileNodeId: null,
+	setSelectedProfileNodeId: (id) =>
+		set((state) => ({ ...state, selectedProfileNodeId: id })),
+	selectedProfileName: null,
+	setSelectedProfileName: (name) =>
+		set((state) => ({ ...state, selectedProfileName: name })),
 });
 
 const createProjectSlice: StateCreator<ColombusStore, [], [], ProjectSlice> = (
