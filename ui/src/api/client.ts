@@ -35,14 +35,10 @@ export type GraphDefinition = {
 export const ProfileFileExtension = ".json";
 export const NotebookFileExtension = ".ipynb";
 
-const apiPath = import.meta.env.VITE_API_HOST;
-const apiPort = import.meta.env.VITE_API_PORT;
-
 const API_KEY_HEADER_NAME = "x-api-key";
 
-const baseURL = apiPath
-	? `${apiPath}${apiPort ? `:${apiPort}` : ""}/api`
-	: "/api";
+const basePath = window.location.pathname.replace(/\/+$/, "");
+const baseURL = `${basePath}/api`;
 
 const axiosInstance = axios.create({
 	baseURL,

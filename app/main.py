@@ -32,6 +32,7 @@ def create_app() -> FastAPI:
         title=settings.app_name,
         description="API for the Colombus exploration platform",
         version=settings.app_version,
+        root_path=settings.root_path,
         lifespan=lifespan,
     )
 
