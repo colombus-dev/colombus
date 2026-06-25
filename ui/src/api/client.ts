@@ -77,12 +77,6 @@ export async function createNewProject(name: string) {
 		.then(({ data }) => data);
 }
 
-export async function getAllProjects() {
-	return await axiosInstance
-		.get<{ id: string; name: string }[]>("/project")
-		.then(({ data }) => data);
-}
-
 export async function postRetrieveProjectName(projectId: string) {
 	return await axiosInstance
 		.post<string>(`/project/${projectId}/details`)
