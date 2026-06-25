@@ -24,6 +24,7 @@ export default function Home() {
 
 			fetch(`${baseURL}/project`, {
 				headers: { "x-api-key": jwtToken },
+				cache: "no-store",
 			})
 				.then((res) => {
 					if (!res.ok) throw new Error("Failed to fetch projects");
