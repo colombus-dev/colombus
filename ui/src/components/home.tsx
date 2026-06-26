@@ -1,39 +1,18 @@
 import { useEffect, useState } from "react";
-import { updateHttpClientJwtToken } from "@/api/client";
-import { useColombusStore } from "@/store";
+import { getAllProjects } from "@/api/client";
 import { ProjectCard } from "./project-card";
 import { ProjectCreateForm } from "./project-create-form";
 import { ProjectSearchInput } from "./project-search-input";
 
 export default function Home() {
-	const jwtToken = useColombusStore((state) => state.jwtToken);
 	const [projects, setProjects] = useState<
 		{ id: string; name: string; description?: string | null }[]
 	>([]);
 	const [search, setSearch] = useState("");
 
 	useEffect(() => {
-		if (jwtToken) {
-			updateHttpClientJwtToken();
-
-			const apiPath = import.meta.env.VITE_API_HOST;
-			const apiPort = import.meta.env.VITE_API_PORT;
-			const baseURL = apiPath
-				? `${apiPath}${apiPort ? `:${apiPort}` : ""}/api`
-				: "/api";
-
-			fetch(`${baseURL}/project`, {
-				headers: { "x-api-key": jwtToken },
-				cache: "no-store",
-			})
-				.then((res) => {
-					if (!res.ok) throw new Error("Failed to fetch projects");
-					return res.json();
-				})
-				.then(setProjects)
-				.catch(console.error);
-		}
-	}, [jwtToken]);
+		getAllProjects().then(setProjects).catch(console.error);
+	}, []);
 
 	const filteredProjects = projects.filter((p) =>
 		p.name.toLowerCase().includes(search.toLowerCase()),

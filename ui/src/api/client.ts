@@ -35,29 +35,31 @@ export type GraphDefinition = {
 export const ProfileFileExtension = ".json";
 export const NotebookFileExtension = ".ipynb";
 
-const apiPath = import.meta.env.VITE_API_HOST;
-const apiPort = import.meta.env.VITE_API_PORT;
-
 const API_KEY_HEADER_NAME = "x-api-key";
 
-const baseURL = apiPath
-	? `${apiPath}${apiPort ? `:${apiPort}` : ""}/api`
-	: "/api";
+const basePath = window.location.pathname.replace(/\/+$/, "");
+/* const baseURL = `${basePath}/api`; */
+const baseURL =
+	import.meta.env.VITE_API_HOST && import.meta.env.VITE_API_PORT
+		? `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`
+		: `${basePath}/api`;
 
 const axiosInstance = axios.create({
 	baseURL,
-	headers: {
-		common: {
-			[API_KEY_HEADER_NAME]: useColombusStore.getState().jwtToken,
-		},
-	},
+});
+
+axiosInstance.interceptors.request.use((config) => {
+	const token = useColombusStore.getState().jwtToken;
+	if (token) {
+		config.headers[API_KEY_HEADER_NAME] = token;
+	}
+	return config;
 });
 
 axiosInstance.interceptors.response.use(
 	(r) => r,
 	(error) => {
 		if (error.response?.status === 401) {
-			delete axiosInstance.defaults.headers.common[API_KEY_HEADER_NAME];
 			useColombusStore.getState().setJwtToken(undefined);
 		}
 		return Promise.reject(error);
@@ -65,8 +67,7 @@ axiosInstance.interceptors.response.use(
 );
 
 export function updateHttpClientJwtToken() {
-	axiosInstance.defaults.headers.common[API_KEY_HEADER_NAME] =
-		useColombusStore.getState().jwtToken;
+	// Kept for backward compatibility if used elsewhere, but no longer needed.
 }
 
 export async function createNewProject(name: string) {
@@ -74,6 +75,12 @@ export async function createNewProject(name: string) {
 		.post<string>("/project", {
 			name,
 		})
+		.then(({ data }) => data);
+}
+
+export async function getAllProjects() {
+	return await axiosInstance
+		.get<{ id: string; name: string }[]>("/project")
 		.then(({ data }) => data);
 }
 
