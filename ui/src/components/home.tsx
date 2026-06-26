@@ -44,12 +44,8 @@ export default function Home() {
 					</div>
 
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-						{displayProjects.map((project, index) => (
-							<ProjectCard
-								key={project.id}
-								project={project}
-								isActive={index === 0 && search.trim() === ""}
-							/>
+						{displayProjects.map((project) => (
+							<ProjectCard key={project.id} project={project} />
 						))}
 						{displayProjects.length === 0 && (
 							<div className="col-span-3 text-center py-12 text-slate-500 bg-white rounded-2xl border border-dashed border-slate-200">

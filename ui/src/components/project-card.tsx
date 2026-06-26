@@ -3,10 +3,9 @@ import { PATH } from "@/lib/constants";
 
 interface ProjectCardProps {
 	project: { id: string; name: string; description?: string | null };
-	isActive?: boolean;
 }
 
-export const ProjectCard = ({ project, isActive }: ProjectCardProps) => {
+export const ProjectCard = ({ project }: ProjectCardProps) => {
 	const navigate = useNavigate();
 
 	return (
@@ -19,11 +18,6 @@ export const ProjectCard = ({ project, isActive }: ProjectCardProps) => {
 				<h3 className="font-semibold text-slate-900 leading-tight">
 					{project.name}
 				</h3>
-				{isActive && (
-					<span className="text-[10px] font-bold bg-slate-900 text-white px-2 py-0.5 rounded-full uppercase tracking-wider">
-						Active
-					</span>
-				)}
 			</div>
 		</button>
 	);

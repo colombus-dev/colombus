@@ -19,16 +19,8 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Active: Story = {
+export const Default: Story = {
 	args: {
 		project: { id: "1", name: "Reusable workspace" },
-		isActive: true,
-	},
-};
-
-export const Inactive: Story = {
-	args: {
-		project: { id: "2", name: "Notebook audit" },
-		isActive: false,
 	},
 };
