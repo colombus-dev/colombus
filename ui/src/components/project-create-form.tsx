@@ -1,55 +1,40 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { createNewProject } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PATH } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { useColombusStore } from "@/store";
 
 export const ProjectCreateForm: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
 > = ({ ...divProps }) => {
-	const jwtToken = useColombusStore((state) => state.jwtToken);
 	const navigate = useNavigate();
 
 	const handleCreateProject = useCallback(
 		async (formData: FormData) => {
 			const newProjectName = formData.get("project-name-form")?.toString();
-			if (!jwtToken || !newProjectName) {
+			if (!newProjectName) {
 				return;
 			}
 
-			const apiPath = import.meta.env.VITE_API_HOST;
-			const apiPort = import.meta.env.VITE_API_PORT;
-			const baseURL = apiPath
-				? `${apiPath}${apiPort ? `:${apiPort}` : ""}/api`
-				: "/api";
-
-			fetch(`${baseURL}/project`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"x-api-key": jwtToken,
-				},
-				body: JSON.stringify({ name: newProjectName }),
-			})
-				.then(async (res) => {
-					if (!res.ok) {
-						const errorData = await res.json().catch(() => ({}));
-						throw new Error(errorData.detail || "Failed to create project");
-					}
-					return res.json();
-				})
+			createNewProject(newProjectName)
 				.then((projectId) => {
 					toast.success("Project successfully created.");
 					navigate(`${PATH.EXPLORER}/${projectId}`);
 				})
-				.catch((err) => {
-					toast.error(err.message || "Failed to create project");
+				// biome-ignore lint/suspicious/noExplicitAny: ignore
+				.catch((err: any) => {
+					const detail = err.response?.data?.detail;
+					toast.error(
+						typeof detail === "string"
+							? detail
+							: err.message || "Failed to create project",
+					);
 				});
 		},
-		[jwtToken, navigate],
+		[navigate],
 	);
 
 	return (
