@@ -32,3 +32,23 @@ API → http://localhost:8180
 ```bash
 uv run --with pre-commit pre-commit install
 ```
+
+## Cite
+
+```
+@article{JOT:issue_2026_03/a10,
+  author = {Nicolas Lacroix and Mireille Blay-Fornarino and Philippe Collet and Frédéric Precioso and Sébastien Mosser},
+  title = {A Model-Driven Approach To Support The Understanding Of Machine Learning Pipelines},
+  journal = {Journal of Object Technology},
+  volume = {25},
+  number = {3},
+  issn = {1660-1769},
+  year = {2026},
+  month = march,
+  editor = {},
+  note = {ECMFA 2026 Journal First},
+  pages = {3:127-140},
+  doi = {10.5381/jot.2026.25.3.a10},
+  url = {http://www.jot.fm/contents/issue_2026_03/a10.html}
+}
+```
