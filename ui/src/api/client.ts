@@ -37,12 +37,7 @@ export const NotebookFileExtension = ".ipynb";
 
 const API_KEY_HEADER_NAME = "x-api-key";
 
-const basePath = window.location.pathname.replace(/\/+$/, "");
-/* const baseURL = `${basePath}/api`; */
-const baseURL =
-	import.meta.env.VITE_API_HOST && import.meta.env.VITE_API_PORT
-		? `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`
-		: `${basePath}/api`;
+const baseURL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`;
 
 const axiosInstance = axios.create({
 	baseURL,
@@ -65,10 +60,6 @@ axiosInstance.interceptors.response.use(
 		return Promise.reject(error);
 	},
 );
-
-export function updateHttpClientJwtToken() {
-	// Kept for backward compatibility if used elsewhere, but no longer needed.
-}
 
 export async function createNewProject(name: string) {
 	return await axiosInstance
