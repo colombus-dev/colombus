@@ -1,7 +1,7 @@
 import type { StateCreator } from "zustand";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import { postDiffSort, updateHttpClientJwtToken } from "@/api/client";
+import { postDiffSort } from "@/api/client";
 import type { PpmNodesDisplayMode } from "@/configuration";
 import type { DiffResult, Pattern, PpmResult } from "@/lib/types";
 
@@ -117,7 +117,6 @@ const createAuthSlice: StateCreator<ColombusStore, [], [], AuthSlice> = (
 	jwtExpiry: undefined,
 	setJwtToken: (token, expiry) => {
 		set((state) => ({ ...state, jwtToken: token, jwtExpiry: expiry }));
-		updateHttpClientJwtToken();
 	},
 });
 

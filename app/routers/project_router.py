@@ -59,3 +59,13 @@ async def post_notebooks(
             f.write(file_content)
 
     return "ok"
+
+
+class ProjectResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+
+
+@router.get("/api/project", response_model=list[ProjectResponse])
+async def get_all_projects(session: DatabaseSession):
+    return session.exec(select(Project)).all()

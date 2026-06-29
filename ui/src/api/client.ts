@@ -37,39 +37,41 @@ export const NotebookFileExtension = ".ipynb";
 
 const API_KEY_HEADER_NAME = "x-api-key";
 
-const basePath = window.location.pathname.replace(/\/+$/, "");
-const baseURL = `${basePath}/api`;
+const baseURL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`;
 
 const axiosInstance = axios.create({
 	baseURL,
-	headers: {
-		common: {
-			[API_KEY_HEADER_NAME]: useColombusStore.getState().jwtToken,
-		},
-	},
+});
+
+axiosInstance.interceptors.request.use((config) => {
+	const token = useColombusStore.getState().jwtToken;
+	if (token) {
+		config.headers[API_KEY_HEADER_NAME] = token;
+	}
+	return config;
 });
 
 axiosInstance.interceptors.response.use(
 	(r) => r,
 	(error) => {
 		if (error.response?.status === 401) {
-			delete axiosInstance.defaults.headers.common[API_KEY_HEADER_NAME];
 			useColombusStore.getState().setJwtToken(undefined);
 		}
 		return Promise.reject(error);
 	},
 );
 
-export function updateHttpClientJwtToken() {
-	axiosInstance.defaults.headers.common[API_KEY_HEADER_NAME] =
-		useColombusStore.getState().jwtToken;
-}
-
 export async function createNewProject(name: string) {
 	return await axiosInstance
 		.post<string>("/project", {
 			name,
 		})
+		.then(({ data }) => data);
+}
+
+export async function getAllProjects() {
+	return await axiosInstance
+		.get<{ id: string; name: string }[]>("/project")
 		.then(({ data }) => data);
 }
 
