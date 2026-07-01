@@ -4,48 +4,64 @@ import { toast } from "sonner";
 import { createNewProject } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { PATH } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { useColombusStore } from "@/store";
 
-const ProjectCreateForm: React.FunctionComponent<
+export const ProjectCreateForm: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
 > = ({ ...divProps }) => {
-	const jwtToken = useColombusStore((state) => state.jwtToken);
 	const navigate = useNavigate();
 
-	const handleProfileFormSubmit = useCallback(
+	const handleCreateProject = useCallback(
 		async (formData: FormData) => {
 			const newProjectName = formData.get("project-name-form")?.toString();
-			if (!jwtToken || !newProjectName) {
+			if (!newProjectName) {
 				return;
 			}
-			await createNewProject(newProjectName)
+
+			createNewProject(newProjectName)
 				.then((projectId) => {
-					toast.success("Project successfuly created.");
+					toast.success("Project successfully created.");
 					navigate(`${PATH.EXPLORER}/${projectId}`);
 				})
-				.catch((r) => {
-					toast.error(r.response.data.detail);
+				// biome-ignore lint/suspicious/noExplicitAny: ignore
+				.catch((err: any) => {
+					const detail = err.response?.data?.detail;
+					toast.error(
+						typeof detail === "string"
+							? detail
+							: err.message || "Failed to create project",
+					);
 				});
 		},
-		[jwtToken, navigate],
+		[navigate],
 	);
 
 	return (
-		<div {...divProps} className={cn("space-x-1", divProps.className)}>
-			<form action={handleProfileFormSubmit}>
-				<div className="grid w-full max-w-sm items-center gap-1.5">
-					<Label htmlFor="project-form">Create a new project</Label>
-					<Input
-						id="project-form"
-						name="project-name-form"
-						required
-						placeholder="Enter project name"
-					/>
-					<Button type="submit">Create project</Button>
-				</div>
+		<div
+			{...divProps}
+			className={cn(
+				"bg-white rounded-2xl p-6 shadow-sm border border-slate-200",
+				divProps.className,
+			)}
+		>
+			<h2 className="text-xl font-bold text-slate-900">Create project</h2>
+			<p className="text-sm text-slate-500 mt-1 mb-6">
+				Enter a project name, then create it directly from here.
+			</p>
+			<form action={handleCreateProject} className="flex gap-4 w-full">
+				<Input
+					name="project-name-form"
+					required
+					placeholder="Type a project name"
+					className="flex-1 bg-slate-50/50 border-slate-200 rounded-xl h-11"
+				/>
+				<Button
+					type="submit"
+					className="rounded-xl px-6 h-11 bg-slate-900 hover:bg-slate-800 text-white font-medium"
+				>
+					Create project
+				</Button>
 			</form>
 		</div>
 	);
