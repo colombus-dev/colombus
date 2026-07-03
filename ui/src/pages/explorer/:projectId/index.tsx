@@ -1,5 +1,4 @@
-import { Loader2 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import type { GraphDefinition } from "@/api/client";
@@ -7,14 +6,13 @@ import {
 	getAllProfiles,
 	getGraphNodes,
 	getProfilesScores,
-	NotebookFileExtension,
-	ProfileFileExtension,
 	parsePpm,
 	postApplyPpmFilter,
 	postApplyPpmFilterByName,
 	postNotebookOrProfiles,
 } from "@/api/client";
 import GraphContainer from "@/components/graph-container";
+import ImportModal from "@/components/import-modal";
 import ProfileCodeViewer from "@/components/profile-code-viewer";
 import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
 import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
@@ -23,8 +21,7 @@ import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-fr
 import ProfileScoreDistributionChart from "@/components/profile-score-distribution-chart";
 import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
@@ -48,7 +45,6 @@ export default function ExplorerProjectIdPage() {
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [executionError, setExecutionError] = useState<string | null>(null);
 	const [isImporting, setIsImporting] = useState<boolean>(false);
-	const formRef = useRef<HTMLFormElement>(null);
 
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const setAvailableProfilesWithPpmData = useColombusStore(
@@ -96,14 +92,16 @@ export default function ExplorerProjectIdPage() {
 			return;
 		}
 		const updateAndMergeWithPosted = async (
-			workflowsNames: string[],
+			rawWorkflowsNames: string[],
 			workflowsPpmData?: PpmResult[],
 		) => {
+			const workflowsNames = [...new Set(rawWorkflowsNames)];
 			setAvailableProfilesNames(workflowsNames);
 			// we prioritize newly posted profiles
-			const reducedWorkflows = new Set(
-				workflowsNames.filter(([w]) => postedProfiles?.includes(w)),
-			).union(new Set(workflowsNames));
+			const reducedWorkflows = new Set([
+				...workflowsNames.filter((w) => postedProfiles?.includes(w)),
+				...workflowsNames,
+			]);
 			setFilteredProfilesNames([...reducedWorkflows]);
 			setAvailableProfilesWithPpmData(workflowsPpmData ?? []);
 			// Detect which profiles need to be fetched by comparing how many copies of each name exist
@@ -200,30 +198,26 @@ export default function ExplorerProjectIdPage() {
 		}
 	}, [isLoading]);
 
-	const handleNotebookOrProfileFormSubmit = useCallback(
-		async (formData: FormData) => {
-			const files =
-				(formData.getAll("notebook-or-profile-form") as File[]) || null;
-			if (!files || !projectId) {
+	const handleFilesImport = useCallback(
+		async (files: File[]) => {
+			if (!files || files.length === 0 || !projectId) {
 				return;
 			}
 			setIsImporting(true);
-			const promise = postNotebookOrProfiles(projectId, files).finally(() => {
+			try {
+				const r = await postNotebookOrProfiles(projectId, files);
+				setPostedProfiles(r);
+			} catch (error: any) {
+				console.error("Failed to import profile(s)", error);
+				const detail = error?.response?.data?.detail;
+				throw new Error(
+					typeof detail === "string"
+						? detail
+						: "Failed to import file(s). Please check the file format.",
+				);
+			} finally {
 				setIsImporting(false);
-			});
-			toast.promise(promise, {
-				loading: "Loading...",
-				success: (r) => {
-					setPostedProfiles(r);
-					formRef.current?.reset();
-					return "Profiles successfully imported.";
-				},
-				error: ({
-					response: {
-						data: { detail },
-					},
-				}) => `Failed to import profile(s). ${detail}`,
-			});
+			}
 		},
 		[projectId],
 	);
@@ -271,6 +265,31 @@ export default function ExplorerProjectIdPage() {
 		}
 	}, [projectValidity]);
 
+	const handleKaggleImport = useCallback(
+		async (payload: { competition?: string; slugs?: string[] }) => {
+			if (!projectId) {
+				return;
+			}
+			setIsImporting(true);
+			try {
+				const { postImportKaggle } = await import("@/api/client");
+				const r = await postImportKaggle(projectId, payload);
+				setPostedProfiles(r);
+			} catch (error: any) {
+				console.error("Failed to import Kaggle competition", error);
+				const detail = error?.response?.data?.detail;
+				throw new Error(
+					typeof detail === "string"
+						? detail
+						: "Failed to import Kaggle competition. Please check the inputs and ensure your backend has Kaggle credentials.",
+				);
+			} finally {
+				setIsImporting(false);
+			}
+		},
+		[projectId],
+	);
+
 	if (projectValidity === "pending") {
 		return <section className="grid grid-cols-7 space-x-2 h-full" />;
 	}
@@ -278,31 +297,15 @@ export default function ExplorerProjectIdPage() {
 	return projectValidity === "valid" ? (
 		<section className="grid grid-cols-7 gap-4 px-4 h-[calc(100vh-76px)] pb-4">
 			<div className="col-span-1 flex flex-col h-full space-y-4 p-2 min-h-0">
-				<div>
-					<p className="font-bold">Upload</p>
-					<div className="row-span-1">
-						<form ref={formRef} action={handleNotebookOrProfileFormSubmit}>
-							<div className="grid w-full max-w-sm items-center gap-1.5">
-								<Label htmlFor="notebook-or-profile-form">
-									Notebooks or profiles
-								</Label>
-								<Input
-									id="notebook-or-profile-form"
-									name="notebook-or-profile-form"
-									type="file"
-									accept={`${NotebookFileExtension},${ProfileFileExtension}`}
-									multiple
-									required
-								/>
-								<Button type="submit" disabled={isImporting}>
-									{isImporting && (
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									)}
-									Submit Profile
-								</Button>
-							</div>
-						</form>
-					</div>
+				<div className="mb-4">
+					<p className="font-bold mb-2">Upload</p>
+					<ImportModal
+						onImport={handleFilesImport}
+						onImportKaggle={handleKaggleImport}
+						isImporting={isImporting}
+					>
+						<Button className="w-full">Import profiles</Button>
+					</ImportModal>
 				</div>
 
 				<div className="flex flex-col flex-1 min-h-0">

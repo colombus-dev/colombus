@@ -40,7 +40,17 @@ const ProjectTaxonomyForm: React.FunctionComponent<
 							{selectedFile ? selectedFile.name : "No file chosen"}
 						</span>
 					</div>
-					<Button type="submit">Submit Taxonomy (list of strings)</Button>
+					<Button
+						type="submit"
+						disabled={!selectedFile}
+						className={
+							selectedFile
+								? ""
+								: "bg-slate-100 text-slate-400 hover:bg-slate-100"
+						}
+					>
+						Submit Taxonomy (list of strings)
+					</Button>
 				</div>
 			</form>
 		</div>
