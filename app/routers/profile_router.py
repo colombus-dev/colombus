@@ -4,7 +4,11 @@ from typing import Sequence
 from fastapi import APIRouter, File, Query, UploadFile
 from sqlmodel import col, select
 
-from app.constants import NOTEBOOK_FILE_EXTENSION, PROFILE_FILE_EXTENSION
+from app.constants import (
+    __TMP_ENCODING_MAPPING,
+    NOTEBOOK_FILE_EXTENSION,
+    PROFILE_FILE_EXTENSION,
+)
 from app.dependencies import DatabaseSession
 from app.exceptions import (
     ElementNotFoundException,
@@ -84,7 +88,7 @@ async def get_all_nodes(
     ]
 
 
-@router.post("/api/project/{project_id}/profile/import/multiple")
+@router.post("/api/project/{project_id}/profile/import")
 async def import_multiple_profile(
     project_id: uuid.UUID,
     session: DatabaseSession,
@@ -100,7 +104,9 @@ async def import_multiple_profile(
     for profile_file_content in profile_file_contents:
         profile = JsonProfile.model_validate_json(profile_file_content)
         if not is_steps_taxonomy_supported(profile):
-            raise UnsupportedTaxonomyException()
+            raise UnsupportedTaxonomyException(
+                allowed_taxonomies=list(__TMP_ENCODING_MAPPING.keys())
+            )
         all_profiles_to_import.append(profile)
 
     for profile in all_profiles_to_import:

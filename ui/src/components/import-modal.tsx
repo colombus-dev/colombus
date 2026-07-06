@@ -235,7 +235,7 @@ export default function ImportModal({
 										/>
 									</div>
 									<p
-										className={`text-sm font-medium mb-1 ${dropError || serverError ? "text-red-500" : "text-slate-900 dark:text-slate-100"}`}
+										className={`text-sm font-medium mb-1 whitespace-pre-line ${dropError || serverError ? "text-red-500" : "text-slate-900 dark:text-slate-100"}`}
 									>
 										{isDragActive
 											? "Drop files here..."
