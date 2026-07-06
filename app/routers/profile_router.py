@@ -88,7 +88,7 @@ async def get_all_nodes(
     ]
 
 
-@router.post("/api/project/{project_id}/profile/import")
+@router.post("/api/project/{project_id}/profile/import/multiple")
 async def import_multiple_profile(
     project_id: uuid.UUID,
     session: DatabaseSession,

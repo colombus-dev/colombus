@@ -122,7 +122,7 @@ export async function postNotebookOrProfiles(projectId: string, files: File[]) {
 				? formData.append("notebook_files", file)
 				: console.assert("Failed to upload unknown file type {file.name}");
 	return await axiosInstance
-		.post<string[]>(`/project/${projectId}/profile/import`, formData, {
+		.post<string[]>(`/project/${projectId}/profile/import/multiple`, formData, {
 			headers: {
 				accept: "application/json",
 				"Content-Type": "multipart/form-data",
