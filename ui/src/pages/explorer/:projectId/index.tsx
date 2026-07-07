@@ -1,18 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import type { GraphDefinition } from "@/api/client";
-import {
-	getAllPatterns,
-	getAllProfiles,
-	getGraphNodes,
-	getProfilesScores,
-	parsePpm,
-	postApplyPpmFilter,
-	postApplyPpmFilterByName,
-	postNotebookOrProfiles,
-	postSavePpm,
-} from "@/api/client";
 import GraphContainer from "@/components/graph-container";
 import ImportModal from "@/components/import-modal";
 import ProfileCodeViewer from "@/components/profile-code-viewer";
@@ -24,12 +13,13 @@ import ProfileScoreDistributionChart from "@/components/profile-score-distributi
 import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
 import { Button } from "@/components/ui/button";
 
+import usePatternActions from "@/hooks/explorer/usePatternActions";
+import useProfileImport from "@/hooks/explorer/useProfileImport";
+import useProfileNodesFetcher from "@/hooks/explorer/useProfileNodesFetcher";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
 import { PATH } from "@/lib/constants";
-import type { PpmResult } from "@/lib/types";
-import { useColombusStore } from "@/store";
 
 const GRAPH_CONTAINER_ID = "graph-container";
 
@@ -43,31 +33,8 @@ export default function ExplorerProjectIdPage() {
 	const [filteredWorkflowsNodes, setFilteredWorkflowsNodes] = useState<
 		GraphDefinition[] | undefined
 	>();
-	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const [isImporting, setIsImporting] = useState<boolean>(false);
 	const [backendError, setBackendError] = useState<string | null>(null);
-
-	const currentPattern = useColombusStore((state) => state.currentPattern);
-	const setAvailableProfilesWithPpmData = useColombusStore(
-		(state) => state.setAvailableProfilesWithPpmData,
-	);
-	const setAvailableProfilesNames = useColombusStore(
-		(state) => state.setAvailableProfilesNames,
-	);
-	const setFilteredProfilesNames = useColombusStore(
-		(state) => state.setFilteredProfilesNames,
-	);
-	const setProfilesScores = useColombusStore(
-		(state) => state.setProfilesScores,
-	);
-
-	const setCurrentPattern = useColombusStore(
-		(state) => state.setCurrentPattern,
-	);
-	const setAllSavedPatterns = useColombusStore(
-		(state) => state.setAllSavedPatterns,
-	);
 
 	const { validity: projectValidity, projectId } = useValidProject();
 
@@ -90,236 +57,31 @@ export default function ExplorerProjectIdPage() {
 		}
 	}, [projectValidity, navigate]);
 
-	// TODO
-	// biome-ignore lint/correctness/useExhaustiveDependencies: we should refactor this file
-	useEffect(() => {
-		if (!projectId || projectValidity !== "valid") {
-			return;
-		}
-		const updateAndMergeWithPosted = async (
-			rawWorkflowsNames: string[],
-			workflowsPpmData?: PpmResult[],
-		) => {
-			const workflowsNames = [...new Set(rawWorkflowsNames)];
-			setAvailableProfilesNames(workflowsNames);
-			// we prioritize newly posted profiles
-			const reducedWorkflows = new Set([
-				...workflowsNames.filter((w) => postedProfiles?.includes(w)),
-				...workflowsNames,
-			]);
-			setFilteredProfilesNames([...reducedWorkflows]);
-			setAvailableProfilesWithPpmData(workflowsPpmData ?? []);
-			// Detect which profiles need to be fetched by comparing how many copies of each name exist
-			// in workflowsNames vs how many are already loaded in filteredWorkflowsNodes.
-			const countInWorkflows = (name: string) =>
-				workflowsNames.filter((n) => n === name).length;
-			const countInNodes = (name: string) =>
-				filteredWorkflowsNodes?.filter((n) => n.name === name).length ?? 0;
+	const { handleFilesImport, isImporting, postedProfiles } = useProfileImport({
+		projectId,
+	});
 
-			const namesToFetch = [...new Set(workflowsNames)].filter(
-				(name) => countInWorkflows(name) > countInNodes(name),
-			);
-
-			// Keep existing nodes that are still in the workflows list AND not being re-fetched.
-			const graphNodesToKeep =
-				filteredWorkflowsNodes?.filter(
-					({ name }) =>
-						workflowsNames.includes(name) && !namesToFetch.includes(name),
-				) ?? [];
-
-			await getGraphNodes(projectId, namesToFetch).then((r) => {
-				setFilteredWorkflowsNodes([...graphNodesToKeep, ...r]);
-				setIsLoading(false);
-			});
-		};
-		setIsLoading(true);
-
-		getProfilesScores(projectId).then((scores) => {
-			setProfilesScores(scores);
-		});
-
-		// biome-ignore lint/suspicious/noExplicitAny: error handling
-		const handleError = (error: any) => {
-			console.error("Pattern execution error:", error);
-			setIsLoading(false);
-			let detail = error?.response?.data?.detail;
-			if (Array.isArray(detail)) {
-				// biome-ignore lint/suspicious/noExplicitAny: error handling
-				detail = detail.map((d: any) => d.msg || JSON.stringify(d)).join(", ");
-			} else if (typeof detail === "object" && detail !== null) {
-				detail = JSON.stringify(detail);
-			}
-			setBackendError(
-				detail || "Execution error: Please check the pattern syntax",
-			);
-		};
-
-		if (currentPattern?.groups?.length) {
-			postApplyPpmFilter(projectId, currentPattern.groups)
-				.then((workflowsWithData) =>
-					updateAndMergeWithPosted(
-						[
-							...new Set(
-								workflowsWithData.map(({ profile_name }) => profile_name),
-							),
-						],
-						workflowsWithData,
-					),
-				)
-				.catch(handleError);
-		} else if (currentPattern?.name) {
-			postApplyPpmFilterByName(projectId, currentPattern.name)
-				.then((workflowsWithData) =>
-					updateAndMergeWithPosted(
-						[
-							...new Set(
-								workflowsWithData.map(({ profile_name }) => profile_name),
-							),
-						],
-						workflowsWithData,
-					),
-				)
-				.catch(handleError);
-		} else {
-			getAllProfiles(projectId)
-				.then((wfs) => updateAndMergeWithPosted(wfs, undefined))
-				.catch(handleError);
-		}
-	}, [
+	useProfileNodesFetcher({
 		projectId,
 		projectValidity,
-		currentPattern,
 		postedProfiles,
-		setFilteredProfilesNames,
-		setAvailableProfilesNames,
-		setAvailableProfilesWithPpmData,
-		setProfilesScores,
-	]);
+		filteredWorkflowsNodes,
+		setFilteredWorkflowsNodes,
+		setIsLoading,
+		setBackendError,
+	});
+
+	const { handleExecuteCodeSubmit, handleSaveCodeSubmit } = usePatternActions({
+		projectId,
+		setIsLoading,
+		setBackendError,
+	});
 
 	useEffect(() => {
 		if (isLoading) {
 			setFilteredWorkflowsNodes([]);
 		}
 	}, [isLoading]);
-
-	const handleFilesImport = useCallback(
-		async (files: File[]) => {
-			if (!files || files.length === 0 || !projectId) {
-				return;
-			}
-			setIsImporting(true);
-			try {
-				const r = await postNotebookOrProfiles(projectId, files);
-				setPostedProfiles(r);
-			} catch (error: any) {
-				console.error("Failed to import profile(s)", error);
-				const detail = error?.response?.data?.detail;
-				throw new Error(
-					typeof detail === "string"
-						? detail
-						: "Failed to import file(s). Please check the file format.",
-				);
-			} finally {
-				setIsImporting(false);
-			}
-		},
-		[projectId],
-	);
-
-	const handleExecuteCodeSubmit = useCallback(
-		(content: string) => {
-			if (!projectId) {
-				return;
-			}
-
-			const hasExecutableCode = content.split("\n").some((line) => {
-				const trimmed = line.trim();
-				return trimmed.length > 0 && !trimmed.startsWith("#");
-			});
-
-			if (!hasExecutableCode) {
-				return;
-			}
-
-			setIsLoading(true);
-			setBackendError(null);
-			parsePpm(projectId, content)
-				.then((p) => {
-					// TODO: check sync here
-					setCurrentPattern({ ...p, dsl_content: content });
-				})
-				// biome-ignore lint/suspicious/noExplicitAny: error handling
-				.catch((error: any) => {
-					console.error("Parse pattern error:", error);
-					let detail = error?.response?.data?.detail;
-					if (typeof detail === "object" && detail !== null) {
-						detail = JSON.stringify(detail);
-					}
-					setBackendError(
-						detail || "Failed to execute pattern. Please check the logic.",
-					);
-				})
-				.finally(() => {
-					setIsLoading(false);
-				});
-		},
-		[projectId, setCurrentPattern],
-	);
-
-	const handleSaveCodeSubmit = useCallback(
-		(content: string) => {
-			if (!projectId) {
-				return;
-			}
-
-			const hasExecutableCode = content.split("\n").some((line) => {
-				const trimmed = line.trim();
-				return trimmed.length > 0 && !trimmed.startsWith("#");
-			});
-
-			if (!hasExecutableCode) {
-				return;
-			}
-
-			setIsLoading(true);
-			setBackendError(null);
-			parsePpm(projectId, content)
-				.then(async (p) => {
-					// Execute to validate semantics before saving
-					if (p.groups?.length) {
-						await postApplyPpmFilter(projectId, p.groups);
-					} else if (p.name) {
-						await postApplyPpmFilterByName(projectId, p.name);
-					}
-					const newPattern = { ...p, dsl_content: content };
-					setCurrentPattern(newPattern);
-					await postSavePpm(projectId, newPattern);
-					const all = await getAllPatterns(projectId);
-					setAllSavedPatterns(all);
-					toast.success("Pattern saved successfully!");
-				})
-				// biome-ignore lint/suspicious/noExplicitAny: error handling
-				.catch((error: any) => {
-					console.error("Parse pattern error:", error);
-					let detail = error?.response?.data?.detail;
-					if (Array.isArray(detail)) {
-						// biome-ignore lint/suspicious/noExplicitAny: error handling
-						detail = detail
-							.map((d: any) => d.msg || JSON.stringify(d))
-							.join(", ");
-					} else if (typeof detail === "object" && detail !== null) {
-						detail = JSON.stringify(detail);
-					}
-					setBackendError(
-						detail || "Execution error: Please check the pattern semantics.",
-					);
-				})
-				.finally(() => {
-					setIsLoading(false);
-				});
-		},
-		[projectId, setCurrentPattern, setAllSavedPatterns],
-	);
 
 	useEffect(() => {
 		if (projectValidity === "valid") {
