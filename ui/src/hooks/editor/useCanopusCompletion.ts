@@ -19,9 +19,8 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 			return;
 		}
 		// register new pattern creation completion
-		const provider1 = monaco.languages.registerCompletionItemProvider(
-			EDITOR_LANGUAGE_ID,
-			{
+		const patternCreationCompletionProvider =
+			monaco.languages.registerCompletionItemProvider(EDITOR_LANGUAGE_ID, {
 				provideCompletionItems(
 					model,
 					position,
@@ -71,12 +70,10 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 					];
 					return { suggestions };
 				},
-			},
-		);
+			});
 		// register import completion
-		const provider2 = monaco.languages.registerCompletionItemProvider(
-			EDITOR_LANGUAGE_ID,
-			{
+		const importCompletionProvider =
+			monaco.languages.registerCompletionItemProvider(EDITOR_LANGUAGE_ID, {
 				triggerCharacters: [" "],
 				provideCompletionItems(
 					model,
@@ -118,12 +115,10 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 
 					return { suggestions };
 				},
-			},
-		);
+			});
 		// register keys completion
-		const provider3 = monaco.languages.registerCompletionItemProvider(
-			EDITOR_LANGUAGE_ID,
-			{
+		const keysCompletionProvider =
+			monaco.languages.registerCompletionItemProvider(EDITOR_LANGUAGE_ID, {
 				triggerCharacters: ["[", ","],
 				provideCompletionItems(
 					model,
@@ -166,12 +161,10 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 
 					return { suggestions };
 				},
-			},
-		);
+			});
 		// register values completion
-		const provider4 = monaco.languages.registerCompletionItemProvider(
-			EDITOR_LANGUAGE_ID,
-			{
+		const valuesCompletionProvider =
+			monaco.languages.registerCompletionItemProvider(EDITOR_LANGUAGE_ID, {
 				triggerCharacters: ['"'],
 				provideCompletionItems(
 					model,
@@ -231,14 +224,13 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 
 					return { suggestions };
 				},
-			},
-		);
+			});
 
 		return () => {
-			provider1.dispose();
-			provider2.dispose();
-			provider3.dispose();
-			provider4.dispose();
+			patternCreationCompletionProvider.dispose();
+			importCompletionProvider.dispose();
+			keysCompletionProvider.dispose();
+			valuesCompletionProvider.dispose();
 		};
 	}, [monaco, allSavedPatterns]);
 }
