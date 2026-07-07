@@ -9,6 +9,8 @@ import useCanopusCompletion from "@/hooks/editor/useCanopusCompletion";
 import useCanopusGrammar from "@/hooks/editor/useCanopusGrammar";
 import useCanopusTheme from "@/hooks/editor/useCanopusTheme";
 import useCompletionActions from "@/hooks/editor/useCompletionActions";
+import useEditorErrorHandling from "@/hooks/editor/useEditorErrorHandling";
+import useEditorResizer from "@/hooks/editor/useEditorResizer";
 import { DEFAULT_DSL_CODE, EDITOR_LANGUAGE_ID } from "@/lib/constants";
 import type { MonacoEditor } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -42,44 +44,15 @@ export default function PatternDslEditor({
 	useCanopusCompletion(monaco);
 	useCompletionActions(monaco, onSubmitted);
 
+	const { validateBeforeSubmit } = useEditorErrorHandling({
+		monaco,
+		editorRef,
+		backendError,
+	});
+
+	const { editorHeight, onMouseDown } = useEditorResizer(192, editorRef);
+
 	const [isDirty, setIsDirty] = useState(false);
-	const [editorHeight, setEditorHeight] = useState(192);
-	const isDraggingRef = useRef(false);
-	const startYRef = useRef(0);
-	const startHeightRef = useRef(0);
-
-	const onMouseDown = useCallback(
-		(e: React.MouseEvent) => {
-			isDraggingRef.current = true;
-			startYRef.current = e.clientY;
-			startHeightRef.current = editorHeight;
-			document.body.style.cursor = "row-resize";
-			document.body.style.userSelect = "none";
-		},
-		[editorHeight],
-	);
-
-	useEffect(() => {
-		const onMouseMove = (e: MouseEvent) => {
-			if (!isDraggingRef.current) return;
-			const delta = e.clientY - startYRef.current;
-			setEditorHeight(Math.max(100, startHeightRef.current + delta));
-		};
-		const onMouseUp = () => {
-			if (isDraggingRef.current) {
-				isDraggingRef.current = false;
-				document.body.style.cursor = "";
-				document.body.style.userSelect = "";
-				editorRef.current?.layout();
-			}
-		};
-		document.addEventListener("mousemove", onMouseMove);
-		document.addEventListener("mouseup", onMouseUp);
-		return () => {
-			document.removeEventListener("mousemove", onMouseMove);
-			document.removeEventListener("mouseup", onMouseUp);
-		};
-	}, []);
 
 	useEffect(() => {
 		return () => {
@@ -105,39 +78,6 @@ export default function PatternDslEditor({
 		},
 		[validateGrammarModel, backendError, monaco, currentPatternContent],
 	);
-
-	useEffect(() => {
-		if (backendError && editorRef.current && monaco) {
-			const model = editorRef.current.getModel();
-			if (model) {
-				let startLine = 1;
-				while (
-					startLine <= model.getLineCount() &&
-					model.getLineContent(startLine).trim().startsWith("#")
-				) {
-					startLine++;
-				}
-				if (startLine > model.getLineCount()) {
-					startLine = model.getLineCount();
-				}
-				const marker: monaco_editor.editor.IMarkerData = {
-					severity: monaco.MarkerSeverity.Error,
-					message: backendError,
-					startLineNumber: startLine,
-					startColumn: 1,
-					endLineNumber: model.getLineCount(),
-					endColumn: model.getLineMaxColumn(model.getLineCount()),
-				};
-				monaco.editor.setModelMarkers(model, "backend", [marker]);
-				editorRef.current.trigger("keyboard", "editor.action.marker.next", {});
-			}
-		} else if (!backendError && editorRef.current && monaco) {
-			const model = editorRef.current.getModel();
-			if (model) {
-				monaco.editor.setModelMarkers(model, "backend", []);
-			}
-		}
-	}, [backendError, monaco]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: validateGrammarModel is used inside _.debounce, which biome cannot statically analyse
 	const handleEditorDidMount: OnMount = useCallback(
@@ -173,23 +113,7 @@ export default function PatternDslEditor({
 						editorRef.current?.getValue() ??
 						currentPatternContent ??
 						DEFAULT_DSL_CODE;
-					if (content) {
-						if (editorRef.current && monaco) {
-							const model = editorRef.current.getModel();
-							if (model) {
-								const markers = monaco.editor.getModelMarkers({
-									owner: "antlr",
-								});
-								if (markers.length > 0) {
-									editorRef.current.trigger(
-										"keyboard",
-										"editor.action.marker.next",
-										{},
-									);
-									return;
-								}
-							}
-						}
+					if (content && validateBeforeSubmit()) {
 						onSubmitted?.(content);
 					}
 				}}
@@ -198,23 +122,7 @@ export default function PatternDslEditor({
 						editorRef.current?.getValue() ??
 						currentPatternContent ??
 						DEFAULT_DSL_CODE;
-					if (content) {
-						if (editorRef.current && monaco) {
-							const model = editorRef.current.getModel();
-							if (model) {
-								const markers = monaco.editor.getModelMarkers({
-									owner: "antlr",
-								});
-								if (markers.length > 0) {
-									editorRef.current.trigger(
-										"keyboard",
-										"editor.action.marker.next",
-										{},
-									);
-									return;
-								}
-							}
-						}
+					if (content && validateBeforeSubmit()) {
 						onSave?.(content);
 					}
 				}}
