@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import type { GraphDefinition } from "@/api/client";
 import {
+	getAllPatterns,
 	getAllProfiles,
 	getGraphNodes,
 	getProfilesScores,
@@ -10,6 +11,7 @@ import {
 	postApplyPpmFilter,
 	postApplyPpmFilterByName,
 	postNotebookOrProfiles,
+	postSavePpm,
 } from "@/api/client";
 import GraphContainer from "@/components/graph-container";
 import ImportModal from "@/components/import-modal";
@@ -43,8 +45,8 @@ export default function ExplorerProjectIdPage() {
 	>();
 	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const [executionError, setExecutionError] = useState<string | null>(null);
 	const [isImporting, setIsImporting] = useState<boolean>(false);
+	const [backendError, setBackendError] = useState<string | null>(null);
 
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const setAvailableProfilesWithPpmData = useColombusStore(
@@ -62,6 +64,9 @@ export default function ExplorerProjectIdPage() {
 
 	const setCurrentPattern = useColombusStore(
 		(state) => state.setCurrentPattern,
+	);
+	const setAllSavedPatterns = useColombusStore(
+		(state) => state.setAllSavedPatterns,
 	);
 
 	const { validity: projectValidity, projectId } = useValidProject();
@@ -128,25 +133,24 @@ export default function ExplorerProjectIdPage() {
 			});
 		};
 		setIsLoading(true);
-		setExecutionError(null);
 
 		getProfilesScores(projectId).then((scores) => {
 			setProfilesScores(scores);
 		});
 
+		// biome-ignore lint/suspicious/noExplicitAny: error handling
 		const handleError = (error: any) => {
 			console.error("Pattern execution error:", error);
 			setIsLoading(false);
 			let detail = error?.response?.data?.detail;
 			if (Array.isArray(detail)) {
+				// biome-ignore lint/suspicious/noExplicitAny: error handling
 				detail = detail.map((d: any) => d.msg || JSON.stringify(d)).join(", ");
 			} else if (typeof detail === "object" && detail !== null) {
 				detail = JSON.stringify(detail);
 			}
-			setExecutionError(
-				detail
-					? `Execution failed: ${detail}`
-					: "Execution error: Please check the pattern syntax",
+			setBackendError(
+				detail || "Execution error: Please check the pattern syntax",
 			);
 		};
 
@@ -237,26 +241,84 @@ export default function ExplorerProjectIdPage() {
 				return;
 			}
 
-			setExecutionError(null);
+			setIsLoading(true);
+			setBackendError(null);
 			parsePpm(projectId, content)
 				.then((p) => {
 					// TODO: check sync here
 					setCurrentPattern({ ...p, dsl_content: content });
 				})
+				// biome-ignore lint/suspicious/noExplicitAny: error handling
 				.catch((error: any) => {
 					console.error("Parse pattern error:", error);
 					let detail = error?.response?.data?.detail;
 					if (typeof detail === "object" && detail !== null) {
 						detail = JSON.stringify(detail);
 					}
-					setExecutionError(
-						detail
-							? `Failed to parse pattern: ${detail}`
-							: "Failed to parse pattern.",
+					setBackendError(
+						detail || "Failed to execute pattern. Please check the logic.",
 					);
+				})
+				.finally(() => {
+					setIsLoading(false);
 				});
 		},
 		[projectId, setCurrentPattern],
+	);
+
+	const handleSaveCodeSubmit = useCallback(
+		(content: string) => {
+			if (!projectId) {
+				return;
+			}
+
+			const hasExecutableCode = content.split("\n").some((line) => {
+				const trimmed = line.trim();
+				return trimmed.length > 0 && !trimmed.startsWith("#");
+			});
+
+			if (!hasExecutableCode) {
+				return;
+			}
+
+			setIsLoading(true);
+			setBackendError(null);
+			parsePpm(projectId, content)
+				.then(async (p) => {
+					// Execute to validate semantics before saving
+					if (p.groups?.length) {
+						await postApplyPpmFilter(projectId, p.groups);
+					} else if (p.name) {
+						await postApplyPpmFilterByName(projectId, p.name);
+					}
+					const newPattern = { ...p, dsl_content: content };
+					setCurrentPattern(newPattern);
+					await postSavePpm(projectId, newPattern);
+					const all = await getAllPatterns(projectId);
+					setAllSavedPatterns(all);
+					toast.success("Pattern saved successfully!");
+				})
+				// biome-ignore lint/suspicious/noExplicitAny: error handling
+				.catch((error: any) => {
+					console.error("Parse pattern error:", error);
+					let detail = error?.response?.data?.detail;
+					if (Array.isArray(detail)) {
+						// biome-ignore lint/suspicious/noExplicitAny: error handling
+						detail = detail
+							.map((d: any) => d.msg || JSON.stringify(d))
+							.join(", ");
+					} else if (typeof detail === "object" && detail !== null) {
+						detail = JSON.stringify(detail);
+					}
+					setBackendError(
+						detail || "Execution error: Please check the pattern semantics.",
+					);
+				})
+				.finally(() => {
+					setIsLoading(false);
+				});
+		},
+		[projectId, setCurrentPattern, setAllSavedPatterns],
 	);
 
 	useEffect(() => {
@@ -321,6 +383,8 @@ export default function ExplorerProjectIdPage() {
 					<PatternDslEditor
 						isExecuting={isLoading}
 						onSubmitted={handleExecuteCodeSubmit}
+						onSave={handleSaveCodeSubmit}
+						backendError={backendError}
 					/>
 				)}
 
@@ -374,7 +438,6 @@ export default function ExplorerProjectIdPage() {
 						containerId={GRAPH_CONTAINER_ID}
 						isLoading={isLoading}
 						graphRenderer={renderer.current}
-						errorMessage={executionError}
 					/>
 				</div>
 
@@ -387,20 +450,13 @@ export default function ExplorerProjectIdPage() {
 				>
 					<div className="group relative row-span-10 h-full w-full">
 						<div className="w-full h-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] p-6 overflow-y-auto relative">
-							{executionError && !isLoading && (
-								<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 font-bold text-xl bg-white p-4 rounded-lg shadow-lg border border-red-200 z-50">
-									{executionError}
+							<div className="grid grid-cols-2 gap-4 h-full items-center">
+								<ProfileScoreDistributionChart />
+								<div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] w-full h-full">
+									<ProfileStepsFrequencyChart />
 								</div>
-							)}
-							{!executionError && (
-								<div className="grid grid-cols-2 gap-4 h-full items-center">
-									<ProfileScoreDistributionChart />
-									<div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] w-full h-full">
-										<ProfileStepsFrequencyChart />
-									</div>
-									<ProfilePatternStatsFreqMatrix className="col-span-2" />
-								</div>
-							)}
+								<ProfilePatternStatsFreqMatrix className="col-span-2" />
+							</div>
 						</div>
 					</div>
 				</div>

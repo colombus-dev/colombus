@@ -2,7 +2,7 @@ import type { OnMount } from "@monaco-editor/react";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import _ from "lodash";
 import type * as monaco_editor from "monaco-editor";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import BounceLoader from "react-spinners/BounceLoader";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
 import useCanopusCompletion from "@/hooks/editor/useCanopusCompletion";
@@ -16,12 +16,16 @@ import { useColombusStore } from "@/store";
 
 interface PatternDslEditorProps {
 	onSubmitted?: (content: string) => void;
+	onSave?: (content: string) => void;
 	isExecuting?: boolean;
+	backendError?: string | null;
 }
 
 export default function PatternDslEditor({
 	onSubmitted,
+	onSave,
 	isExecuting,
+	backendError,
 	...props
 }: PatternDslEditorProps &
 	React.HTMLAttributes<HTMLDivElement> &
@@ -38,6 +42,45 @@ export default function PatternDslEditor({
 	useCanopusCompletion(monaco);
 	useCompletionActions(monaco, onSubmitted);
 
+	const [isDirty, setIsDirty] = useState(false);
+	const [editorHeight, setEditorHeight] = useState(192);
+	const isDraggingRef = useRef(false);
+	const startYRef = useRef(0);
+	const startHeightRef = useRef(0);
+
+	const onMouseDown = useCallback(
+		(e: React.MouseEvent) => {
+			isDraggingRef.current = true;
+			startYRef.current = e.clientY;
+			startHeightRef.current = editorHeight;
+			document.body.style.cursor = "row-resize";
+			document.body.style.userSelect = "none";
+		},
+		[editorHeight],
+	);
+
+	useEffect(() => {
+		const onMouseMove = (e: MouseEvent) => {
+			if (!isDraggingRef.current) return;
+			const delta = e.clientY - startYRef.current;
+			setEditorHeight(Math.max(100, startHeightRef.current + delta));
+		};
+		const onMouseUp = () => {
+			if (isDraggingRef.current) {
+				isDraggingRef.current = false;
+				document.body.style.cursor = "";
+				document.body.style.userSelect = "";
+				editorRef.current?.layout();
+			}
+		};
+		document.addEventListener("mousemove", onMouseMove);
+		document.addEventListener("mouseup", onMouseUp);
+		return () => {
+			document.removeEventListener("mousemove", onMouseMove);
+			document.removeEventListener("mouseup", onMouseUp);
+		};
+	}, []);
+
 	useEffect(() => {
 		return () => {
 			editorRef.current?.dispose();
@@ -46,17 +89,55 @@ export default function PatternDslEditor({
 
 	useEffect(() => {
 		editorRef.current?.setValue(currentPatternContent ?? DEFAULT_DSL_CODE);
+		setIsDirty(false);
 	}, [currentPatternContent]);
 
 	const onModelContentChange = useCallback(
 		(newContent: string | undefined) => {
+			setIsDirty(newContent !== (currentPatternContent ?? DEFAULT_DSL_CODE));
 			const model = editorRef.current?.getModel();
 			if (model && newContent) {
 				validateGrammarModel(model);
+				if (backendError) {
+					monaco?.editor.setModelMarkers(model, "backend", []);
+				}
 			}
 		},
-		[validateGrammarModel],
+		[validateGrammarModel, backendError, monaco, currentPatternContent],
 	);
+
+	useEffect(() => {
+		if (backendError && editorRef.current && monaco) {
+			const model = editorRef.current.getModel();
+			if (model) {
+				let startLine = 1;
+				while (
+					startLine <= model.getLineCount() &&
+					model.getLineContent(startLine).trim().startsWith("#")
+				) {
+					startLine++;
+				}
+				if (startLine > model.getLineCount()) {
+					startLine = model.getLineCount();
+				}
+				const marker: monaco_editor.editor.IMarkerData = {
+					severity: monaco.MarkerSeverity.Error,
+					message: backendError,
+					startLineNumber: startLine,
+					startColumn: 1,
+					endLineNumber: model.getLineCount(),
+					endColumn: model.getLineMaxColumn(model.getLineCount()),
+				};
+				monaco.editor.setModelMarkers(model, "backend", [marker]);
+				editorRef.current.trigger("keyboard", "editor.action.marker.next", {});
+			}
+		} else if (!backendError && editorRef.current && monaco) {
+			const model = editorRef.current.getModel();
+			if (model) {
+				monaco.editor.setModelMarkers(model, "backend", []);
+			}
+		}
+	}, [backendError, monaco]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: validateGrammarModel is used inside _.debounce, which biome cannot statically analyse
 	const handleEditorDidMount: OnMount = useCallback(
@@ -84,31 +165,92 @@ export default function PatternDslEditor({
 	return (
 		<div {...props} className={cn("flex flex-col space-y-4", props.className)}>
 			<ProfilePatternActions
+				className="mb-4"
 				isExecuting={isExecuting}
+				isDirty={isDirty}
 				onExecute={() => {
 					const content =
 						editorRef.current?.getValue() ??
 						currentPatternContent ??
 						DEFAULT_DSL_CODE;
 					if (content) {
+						if (editorRef.current && monaco) {
+							const model = editorRef.current.getModel();
+							if (model) {
+								const markers = monaco.editor.getModelMarkers({
+									owner: "antlr",
+								});
+								if (markers.length > 0) {
+									editorRef.current.trigger(
+										"keyboard",
+										"editor.action.marker.next",
+										{},
+									);
+									return;
+								}
+							}
+						}
 						onSubmitted?.(content);
 					}
 				}}
+				onSave={() => {
+					const content =
+						editorRef.current?.getValue() ??
+						currentPatternContent ??
+						DEFAULT_DSL_CODE;
+					if (content) {
+						if (editorRef.current && monaco) {
+							const model = editorRef.current.getModel();
+							if (model) {
+								const markers = monaco.editor.getModelMarkers({
+									owner: "antlr",
+								});
+								if (markers.length > 0) {
+									editorRef.current.trigger(
+										"keyboard",
+										"editor.action.marker.next",
+										{},
+									);
+									return;
+								}
+							}
+						}
+						onSave?.(content);
+					}
+				}}
 			/>
-			<div className="group relative h-48 w-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] overflow-hidden">
-				<Editor
-					theme={themeName}
-					defaultLanguage={EDITOR_LANGUAGE_ID}
-					defaultValue={currentPatternContent ?? DEFAULT_DSL_CODE}
-					onChange={onModelContentChange}
-					onMount={handleEditorDidMount}
-					options={{
-						minimap: { enabled: false },
-						fontSize: 14,
-						wordWrap: "on",
-						automaticLayout: true,
-					}}
-				/>
+			<div
+				className="group relative w-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] overflow-hidden"
+				style={{ height: editorHeight }}
+			>
+				<div className="absolute inset-0 pb-3">
+					<Editor
+						theme={themeName}
+						defaultLanguage={EDITOR_LANGUAGE_ID}
+						defaultValue={currentPatternContent ?? DEFAULT_DSL_CODE}
+						onChange={onModelContentChange}
+						onMount={handleEditorDidMount}
+						options={{
+							minimap: { enabled: false },
+							fontSize: 14,
+							wordWrap: "on",
+							automaticLayout: true,
+							wordBasedSuggestions: "off",
+							scrollBeyondLastLine: false,
+						}}
+					/>
+				</div>
+				{/* biome-ignore lint/a11y/noStaticElementInteractions: this is a resizer handle */}
+				<div
+					className="absolute bottom-0 left-0 right-0 h-3 cursor-row-resize flex items-center justify-center bg-slate-50 hover:bg-slate-100 transition-colors z-10 border-t border-slate-100"
+					onMouseDown={onMouseDown}
+				>
+					<div className="flex gap-1">
+						<div className="w-1 h-1 rounded-full bg-slate-300" />
+						<div className="w-1 h-1 rounded-full bg-slate-300" />
+						<div className="w-1 h-1 rounded-full bg-slate-300" />
+					</div>
+				</div>
 			</div>
 		</div>
 	);
