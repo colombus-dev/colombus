@@ -163,15 +163,6 @@ export async function postApplyPpmFilterByName(
 		.then(({ data }) => data);
 }
 
-export async function postImportKaggle(
-	projectId: string,
-	payload: { competition?: string; slugs?: string[] },
-) {
-	return await axiosInstance
-		.post<string[]>(`/project/${projectId}/profile/import/kaggle`, payload)
-		.then(({ data }) => data);
-}
-
 export async function postSavePpm(projectId: string, pattern: Pattern) {
 	return await axiosInstance
 		.post<string>(`/project/${projectId}/ppm/save`, pattern)

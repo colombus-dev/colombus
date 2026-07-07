@@ -327,31 +327,6 @@ export default function ExplorerProjectIdPage() {
 		}
 	}, [projectValidity]);
 
-	const handleKaggleImport = useCallback(
-		async (payload: { competition?: string; slugs?: string[] }) => {
-			if (!projectId) {
-				return;
-			}
-			setIsImporting(true);
-			try {
-				const { postImportKaggle } = await import("@/api/client");
-				const r = await postImportKaggle(projectId, payload);
-				setPostedProfiles(r);
-			} catch (error: any) {
-				console.error("Failed to import Kaggle competition", error);
-				const detail = error?.response?.data?.detail;
-				throw new Error(
-					typeof detail === "string"
-						? detail
-						: "Failed to import Kaggle competition. Please check the inputs and ensure your backend has Kaggle credentials.",
-				);
-			} finally {
-				setIsImporting(false);
-			}
-		},
-		[projectId],
-	);
-
 	if (projectValidity === "pending") {
 		return <section className="grid grid-cols-7 space-x-2 h-full" />;
 	}
@@ -361,11 +336,7 @@ export default function ExplorerProjectIdPage() {
 			<div className="col-span-1 flex flex-col h-full space-y-4 p-2 min-h-0">
 				<div className="mb-4">
 					<p className="font-bold mb-2">Upload</p>
-					<ImportModal
-						onImport={handleFilesImport}
-						onImportKaggle={handleKaggleImport}
-						isImporting={isImporting}
-					>
+					<ImportModal onImport={handleFilesImport} isImporting={isImporting}>
 						<Button className="w-full">Import profiles</Button>
 					</ImportModal>
 				</div>
