@@ -2,7 +2,7 @@ import { FileJson, Loader2, Upload, X } from "lucide-react";
 import type React from "react";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { NotebookFileExtension, ProfileFileExtension } from "@/api/client";
+import { NotebookFileExtension } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -36,11 +36,7 @@ export default function ImportModal({
 		) => {
 			const manuallyAccepted = fileRejections
 				.map((r) => r.file)
-				.filter(
-					(f) =>
-						f.name.toLowerCase().endsWith(NotebookFileExtension) ||
-						f.name.toLowerCase().endsWith(ProfileFileExtension),
-				);
+				.filter((f) => f.name.toLowerCase().endsWith(NotebookFileExtension));
 
 			const allValidFiles = [...acceptedFiles, ...manuallyAccepted];
 
@@ -63,10 +59,8 @@ export default function ImportModal({
 
 	const onDropRejected = useCallback(
 		(fileRejections: import("react-dropzone").FileRejection[]) => {
-			const hasValidExtension = fileRejections.some(
-				(r) =>
-					r.file.name.toLowerCase().endsWith(NotebookFileExtension) ||
-					r.file.name.toLowerCase().endsWith(ProfileFileExtension),
+			const hasValidExtension = fileRejections.some((r) =>
+				r.file.name.toLowerCase().endsWith(NotebookFileExtension),
 			);
 			if (!hasValidExtension) {
 				setDropError(true);
@@ -85,10 +79,10 @@ export default function ImportModal({
 		onDropRejected,
 		onDragEnter,
 		accept: {
-			"application/json": [NotebookFileExtension, ProfileFileExtension],
+			"application/json": [NotebookFileExtension],
 			"application/x-ipynb+json": [NotebookFileExtension],
-			"text/plain": [NotebookFileExtension, ProfileFileExtension],
-			"*/*": [NotebookFileExtension, ProfileFileExtension],
+			"text/plain": [NotebookFileExtension],
+			"*/*": [NotebookFileExtension],
 		},
 	});
 
@@ -96,20 +90,21 @@ export default function ImportModal({
 		setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
 	};
 
-	const handleImportClick = async () => {
+	const handleImportClick = () => {
 		if (selectedFiles.length === 0) return;
-		try {
-			await onImport(selectedFiles);
-			setOpen(false);
-			setSelectedFiles([]);
-			setServerError(null);
-		} catch (error: unknown) {
-			if (error instanceof Error) {
-				setServerError(error.message);
-			} else {
-				setServerError(String(error));
-			}
-		}
+		onImport(selectedFiles)
+			.then(() => {
+				setOpen(false);
+				setSelectedFiles([]);
+				setServerError(null);
+			})
+			.catch((error: unknown) => {
+				if (error instanceof Error) {
+					setServerError(error.message);
+				} else {
+					setServerError(String(error));
+				}
+			});
 	};
 
 	const handleOpenChange = (newOpen: boolean) => {
@@ -128,7 +123,7 @@ export default function ImportModal({
 			<DialogTrigger asChild>{children}</DialogTrigger>
 			<DialogContent className="max-w-[90vw] w-full max-h-[90vh] h-[90vh] flex flex-col">
 				<DialogHeader>
-					<DialogTitle>Import Notebooks & Profiles</DialogTitle>
+					<DialogTitle>Import Notebooks</DialogTitle>
 					<DialogDescription>
 						Drag and drop your JSON files here, or click to browse.
 					</DialogDescription>
@@ -175,8 +170,7 @@ export default function ImportModal({
 							<p
 								className={`text-xs ${dropError || serverError ? "text-red-500/80" : "text-slate-500"}`}
 							>
-								Supported formats: {NotebookFileExtension},{" "}
-								{ProfileFileExtension}
+								Supported formats: {NotebookFileExtension}
 							</p>
 						</div>
 
