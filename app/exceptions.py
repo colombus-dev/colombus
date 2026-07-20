@@ -25,10 +25,14 @@ class UnsupportedFilesException(HTTPException):
 
 
 class UnsupportedTaxonomyException(HTTPException):
-    def __init__(self) -> None:
+    def __init__(self, allowed_taxonomies: list[str] | None = None) -> None:
+        detail = "Unsupported taxonomy."
+        if allowed_taxonomies:
+            formatted_taxonomies = "\n".join(f"• {t}" for t in allowed_taxonomies)
+            detail += f"\n\nExpected values:\n{formatted_taxonomies}"
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unsupported taxonomy.",
+            detail=detail,
         )
 
 

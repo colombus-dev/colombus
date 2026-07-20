@@ -54,7 +54,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 			return (
 				<div
 					className={cn(
-						"flex items-center gap-2 h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-within:ring-1 focus-within:ring-ring md:text-sm",
+						"flex items-center gap-2 h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-within:ring-1 focus-within:ring-ring md:text-sm overflow-hidden",
 						className,
 					)}
 				>
@@ -72,7 +72,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 					>
 						{fileButtonText}
 					</button>
-					<span className="text-xs text-muted-foreground truncate flex-1 text-left">
+					<span className="text-xs text-muted-foreground truncate flex-1 text-left min-w-0">
 						{fileLabel}
 					</span>
 				</div>

@@ -2,6 +2,7 @@ import { CommonTokenStream, InputStream } from "antlr4";
 import type * as monaco_editor from "monaco-editor";
 import { MarkerSeverity } from "monaco-editor";
 import { useCallback, useEffect } from "react";
+import { supportedSteps } from "@/configuration";
 import CanopusDSLLexer from "@/hooks/editor/CanopusDSLLexer.js";
 import CanopusDSLParser from "@/hooks/editor/CanopusDSLParser.js";
 import { EDITOR_LANGUAGE_ID } from "@/lib/constants";
@@ -92,6 +93,31 @@ export default function useCanopusGrammar(monaco: MonacoEditor | null) {
 			} catch (e) {
 				console.error("Parse error:", e);
 			}
+
+			// Semantic checks
+			const lines = code.split("\n");
+			lines.forEach((line, i) => {
+				// Skip comments
+				if (line.trim().startsWith("#")) return;
+
+				const regex = /step\s*=\s*"([^"]+)"/g;
+				let match = regex.exec(line);
+				while (match !== null) {
+					const stepValue = match[1];
+					if (!supportedSteps.includes(stepValue)) {
+						const startCol = match.index + match[0].indexOf(`"${stepValue}"`);
+						markers.push({
+							severity: MarkerSeverity.Error,
+							message: `Execution error: Unknown step "${stepValue}"`,
+							startLineNumber: i + 1,
+							startColumn: startCol + 1,
+							endLineNumber: i + 1,
+							endColumn: startCol + 1 + stepValue.length + 2,
+						});
+					}
+					match = regex.exec(line);
+				}
+			});
 
 			// Apply markers to Monaco
 			monaco.editor.setModelMarkers(model, "antlr", markers);
