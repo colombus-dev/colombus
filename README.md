@@ -27,6 +27,18 @@ docker compose -f docker-compose.dev.yml up --build
 UI → http://localhost:5173
 API → http://localhost:8180
 
+## Kaggle Integration
+
+To import notebooks from Kaggle competitions, you must provide your Kaggle API credentials.
+Add the following to your `.env` file:
+
+```env
+KAGGLE_USERNAME=your_kaggle_username
+KAGGLE_KEY=your_kaggle_api_key
+```
+
+*(You can generate these credentials by going to your Kaggle account settings and clicking "Create New Token".)*
+
 ## Contributing
 
 ```bash
