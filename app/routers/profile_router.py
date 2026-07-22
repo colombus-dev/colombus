@@ -29,20 +29,16 @@ router = APIRouter()
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
-try:
-    from kagglesdk.search.types.search_api_service import (
-        DocumentType,
-        ListEntitiesFilters,
-        ListEntitiesRequest,
-    )
-except ImportError:
-    pass
+from kaggle.api.kaggle_api_extended import KaggleApi
+from kagglesdk.search.types.search_api_service import (
+    DocumentType,
+    ListEntitiesFilters,
+    ListEntitiesRequest,
+)
 
 
 def _get_kaggle_api_and_client():
     try:
-        from kaggle.api.kaggle_api_extended import KaggleApi
-
         api = KaggleApi()
         api.authenticate()
         client = api.build_kaggle_client()
