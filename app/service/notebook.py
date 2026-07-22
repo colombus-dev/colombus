@@ -6,7 +6,7 @@ import httpx
 from app.models.api_model import Profile
 from app.settings import get_settings
 
-ML_PROFILER_API_TIMEOUT = None
+ML_PROFILER_API_TIMEOUT = 5 * 60
 settings = get_settings()
 
 

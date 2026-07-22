@@ -5,6 +5,7 @@ import type { GraphDefinition } from "@/api/client";
 import {
 	getAllProfiles,
 	getGraphNodes,
+	getKaggleStatus,
 	getProfilesScores,
 	postApplyPpmFilter,
 	postApplyPpmFilterByName,
@@ -41,7 +42,8 @@ export default function ExplorerProjectIdPage() {
 	const [filteredWorkflowsNodes, setFilteredWorkflowsNodes] = useState<
 		GraphDefinition[] | undefined
 	>();
-	const [postedProfiles, setPostedProfiles] = useState<string[] | undefined>();
+	const [postedProfiles, setPostedProfiles] = useState<string[]>([]);
+	const [isKaggleAvailable, setIsKaggleAvailable] = useState(false);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [backendError, setBackendError] = useState<string | null>(null);
 	const [isImporting, setIsImporting] = useState<boolean>(false);
@@ -99,15 +101,13 @@ export default function ExplorerProjectIdPage() {
 		) => {
 			const workflowsNames = [...new Set(rawWorkflowsNames)];
 			setAvailableProfilesNames(workflowsNames);
-			// we prioritize newly posted profiles
 			const reducedWorkflows = new Set([
 				...workflowsNames.filter((w) => postedProfiles?.includes(w)),
 				...workflowsNames,
 			]);
 			setFilteredProfilesNames([...reducedWorkflows]);
 			setAvailableProfilesWithPpmData(workflowsPpmData ?? []);
-			// Detect which profiles need to be fetched by comparing how many copies of each name exist
-			// in workflowsNames vs how many are already loaded in filteredWorkflowsNodes.
+
 			const countInWorkflows = (name: string) =>
 				workflowsNames.filter((n) => n === name).length;
 			const countInNodes = (name: string) =>
@@ -117,7 +117,6 @@ export default function ExplorerProjectIdPage() {
 				(name) => countInWorkflows(name) > countInNodes(name),
 			);
 
-			// Keep existing nodes that are still in the workflows list AND not being re-fetched.
 			const graphNodesToKeep =
 				filteredWorkflowsNodes?.filter(
 					({ name }) =>
@@ -239,6 +238,12 @@ export default function ExplorerProjectIdPage() {
 	);
 
 	useEffect(() => {
+		getKaggleStatus()
+			.then(setIsKaggleAvailable)
+			.catch(() => setIsKaggleAvailable(false));
+	}, []);
+
+	useEffect(() => {
 		if (projectValidity === "valid") {
 			setGraphContainerId(GRAPH_CONTAINER_ID);
 		}
@@ -358,9 +363,11 @@ export default function ExplorerProjectIdPage() {
 					<p className="font-bold mb-2">Upload</p>
 					<ImportModal
 						onImport={handleFilesImport}
-						onImportKaggle={handleKaggleImport}
-						onSearchKaggle={handleKaggleSearch}
-						onSearchKaggleCompetitions={handleKaggleCompetitionsSearch}
+						onImportKaggle={isKaggleAvailable ? handleKaggleImport : undefined}
+						onSearchKaggle={isKaggleAvailable ? handleKaggleSearch : undefined}
+						onSearchKaggleCompetitions={
+							isKaggleAvailable ? handleKaggleCompetitionsSearch : undefined
+						}
 						isImporting={isImporting}
 					>
 						<Button className="w-full">Import profiles</Button>

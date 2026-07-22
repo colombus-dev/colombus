@@ -29,6 +29,9 @@ class Settings(BaseSettings):
 
     allowed_google_emails: str = Field()
 
+    kaggle_username: str | None = None
+    kaggle_key: str | None = None
+
     @property
     def allowed_google_emails_list(self) -> list[str]:
         return [e.strip() for e in self.allowed_google_emails.split(",") if e.strip()]
@@ -36,6 +39,10 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.environment == "production"
+
+    @property
+    def is_kaggle_token_set(self) -> bool:
+        return bool(self.kaggle_username and self.kaggle_key)
 
     @model_validator(mode="after")
     def set_allowed_origins(self) -> "Settings":

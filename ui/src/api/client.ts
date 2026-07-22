@@ -175,6 +175,12 @@ export async function searchKaggleCompetitions(
 		.then(({ data }) => data);
 }
 
+export async function getKaggleStatus() {
+	return await axiosInstance
+		.get<{ available: boolean }>("/kaggle/status")
+		.then(({ data }) => data.available);
+}
+
 export async function getKaggleCompetitionNotebooks(
 	projectId: string,
 	competition: string,
