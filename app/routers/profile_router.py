@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 from app.service.kaggle_service import (
     ImportKagglePayload,
     get_kaggle_api_and_client,
-    is_kaggle_token_set,
+    is_kaggle_available,
     list_kaggle_competition_notebooks,
     pull_kaggle_notebooks,
 )
@@ -163,7 +163,7 @@ async def delete_profile(
 
 @router.get("/api/kaggle/status")
 async def get_kaggle_status():
-    return {"available": is_kaggle_token_set()}
+    return {"available": is_kaggle_available()}
 
 
 @router.get("/api/project/{project_id}/profile/kaggle/competitions")
@@ -175,6 +175,7 @@ async def search_kaggle_competitions(
         raise HTTPException(status_code=400, detail="Missing search keyword")
 
     _, client = get_kaggle_api_and_client()
+
     from kagglesdk.search.types.search_api_service import (
         DocumentType,
         ListEntitiesFilters,
@@ -192,7 +193,7 @@ async def search_kaggle_competitions(
         client._http_client._init_session()
         client._http_client._session.timeout = 5.0
         resp = client.search.search_api_client.list_entities(req)
-    except (ValueError, OSError) as e:
+    except Exception as e:
         error_msg = str(e)
         raise HTTPException(
             status_code=400,
