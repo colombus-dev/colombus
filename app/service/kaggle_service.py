@@ -24,12 +24,10 @@ from kagglesdk.search.types.search_api_service import (
 
 try:
     from kaggle.api.kaggle_api_extended import KaggleApi
-    from kaggle.rest import ApiException as KaggleApiException
 
     kaggle_import_error = None
 except (Exception, SystemExit) as e:
     KaggleApi = None
-    KaggleApiException = Exception
     kaggle_import_error = str(e)
 
 
@@ -84,9 +82,8 @@ def download_kaggle_notebooks(
         logger.info(f"Pulling kaggle notebook {slug}")
         try:
             api.kernels_pull(slug, path=tmp_dir)
-        except (KaggleApiException, ValueError, OSError) as e:
+        except (ValueError, OSError, RuntimeError) as e:
             traceback.print_exc()
-            print(f"ERROR: Failed to pull {slug}: {str(e)}", flush=True)
             logger.warning(f"Failed to pull {slug}: {str(e)}")
             continue
 
