@@ -41,7 +41,7 @@ KAGGLE_USERNAME=your_kaggle_username
 KAGGLE_KEY=your_kaggle_api_key
 ```
 
-*(You can generate these credentials by going to your Kaggle account settings and clicking "Create New Token".)*
+*(You can generate these credentials by going to your [Kaggle account settings](https://www.kaggle.com/settings/api) and clicking "Create New Token".)*
 
 ## Contributing
 
