@@ -31,6 +31,10 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       ALLOWED_GOOGLE_EMAILS: ${ALLOWED_GOOGLE_EMAILS}
       JWT_SECRET: ${JWT_SECRET}
+      KAGGLE_KEY: ${KAGGLE_KEY:-}
+      KAGGLE_USERNAME: ${KAGGLE_USERNAME:-}
+    tty: true
+    stdin_open: true
     healthcheck:
       test: curl -f http://localhost:8180/health || exit 1
       interval: 5m

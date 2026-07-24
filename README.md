@@ -27,6 +27,22 @@ docker compose -f docker-compose.dev.yml up --build
 UI → http://localhost:5173
 API → http://localhost:8180
 
+## Configuration (.env)
+
+The application works out-of-the-box with the default settings provided in `.env.sample`.
+If you do not configure optional external services, their corresponding features will simply be disabled in the UI.
+
+### Kaggle Integration (Optional)
+
+To enable importing notebooks directly from Kaggle competitions, provide your Kaggle API credentials in your `.env` file:
+
+```env
+KAGGLE_USERNAME=your_kaggle_username
+KAGGLE_KEY=your_kaggle_api_key
+```
+
+*(You can generate these credentials by going to your [Kaggle account settings](https://www.kaggle.com/settings/api) and clicking "Create New Token".)*
+
 ## Contributing
 
 ```bash

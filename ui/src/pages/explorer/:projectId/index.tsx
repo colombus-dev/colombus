@@ -1,7 +1,16 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import type { GraphDefinition } from "@/api/client";
+import {
+	getAllProfiles,
+	getGraphNodes,
+	getKaggleStatus,
+	getProfilesScores,
+	postApplyPpmFilter,
+	postApplyPpmFilterByName,
+	postNotebookOrProfiles,
+} from "@/api/client";
 import GraphContainer from "@/components/graph-container";
 import ImportModal from "@/components/import-modal";
 import ProfileCodeViewer from "@/components/profile-code-viewer";
@@ -14,12 +23,12 @@ import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-cha
 import { Button } from "@/components/ui/button";
 
 import usePatternActions from "@/hooks/explorer/usePatternActions";
-import useProfileImport from "@/hooks/explorer/useProfileImport";
-import useProfileNodesFetcher from "@/hooks/explorer/useProfileNodesFetcher";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
 import { PATH } from "@/lib/constants";
+import type { PpmResult } from "@/lib/types";
+import { useColombusStore } from "@/store";
 
 const GRAPH_CONTAINER_ID = "graph-container";
 
@@ -33,14 +42,37 @@ export default function ExplorerProjectIdPage() {
 	const [filteredWorkflowsNodes, setFilteredWorkflowsNodes] = useState<
 		GraphDefinition[] | undefined
 	>();
+	const [postedProfiles, setPostedProfiles] = useState<string[]>([]);
+	const [isKaggleAvailable, setIsKaggleAvailable] = useState(false);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [backendError, setBackendError] = useState<string | null>(null);
+	const [isImporting, setIsImporting] = useState<boolean>(false);
+
+	const currentPattern = useColombusStore((state) => state.currentPattern);
+	const setAvailableProfilesWithPpmData = useColombusStore(
+		(state) => state.setAvailableProfilesWithPpmData,
+	);
+	const setAvailableProfilesNames = useColombusStore(
+		(state) => state.setAvailableProfilesNames,
+	);
+	const setFilteredProfilesNames = useColombusStore(
+		(state) => state.setFilteredProfilesNames,
+	);
+	const setProfilesScores = useColombusStore(
+		(state) => state.setProfilesScores,
+	);
 
 	const { validity: projectValidity, projectId } = useValidProject();
 
 	const { renderer } = useGraph(graphContainerId, filteredWorkflowsNodes);
 
 	useGraphPpm(renderer.current);
+
+	const { handleExecuteCodeSubmit, handleSaveCodeSubmit } = usePatternActions({
+		projectId,
+		setIsLoading,
+		setBackendError,
+	});
 
 	useEffect(() => {
 		if (activeTab === "explorer" && renderer.current) {
@@ -57,25 +89,109 @@ export default function ExplorerProjectIdPage() {
 		}
 	}, [projectValidity, navigate]);
 
-	const { handleFilesImport, isImporting, postedProfiles } = useProfileImport({
-		projectId,
-	});
+	// TODO
+	// biome-ignore lint/correctness/useExhaustiveDependencies: we should refactor this file
+	useEffect(() => {
+		if (!projectId || projectValidity !== "valid") {
+			return;
+		}
+		const updateAndMergeWithPosted = async (
+			rawWorkflowsNames: string[],
+			workflowsPpmData?: PpmResult[],
+		) => {
+			const workflowsNames = [...new Set(rawWorkflowsNames)];
+			setAvailableProfilesNames(workflowsNames);
+			const reducedWorkflows = new Set([
+				...workflowsNames.filter((w) => postedProfiles?.includes(w)),
+				...workflowsNames,
+			]);
+			setFilteredProfilesNames([...reducedWorkflows]);
+			setAvailableProfilesWithPpmData(workflowsPpmData ?? []);
 
-	useProfileNodesFetcher({
+			const countInWorkflows = (name: string) =>
+				workflowsNames.filter((n) => n === name).length;
+			const countInNodes = (name: string) =>
+				filteredWorkflowsNodes?.filter((n) => n.name === name).length ?? 0;
+
+			const namesToFetch = [...new Set(workflowsNames)].filter(
+				(name) => countInWorkflows(name) > countInNodes(name),
+			);
+
+			const graphNodesToKeep =
+				filteredWorkflowsNodes?.filter(
+					({ name }) =>
+						workflowsNames.includes(name) && !namesToFetch.includes(name),
+				) ?? [];
+
+			await getGraphNodes(projectId, namesToFetch).then((r) => {
+				setFilteredWorkflowsNodes([...graphNodesToKeep, ...r]);
+				setIsLoading(false);
+			});
+		};
+		setIsLoading(true);
+		setBackendError(null);
+
+		getProfilesScores(projectId).then((scores) => {
+			setProfilesScores(scores);
+		});
+
+		const handleError = (error: any) => {
+			console.error("Pattern execution error:", error);
+			setIsLoading(false);
+			let detail = error?.response?.data?.detail;
+			if (Array.isArray(detail)) {
+				detail = detail.map((d: any) => d.msg || JSON.stringify(d)).join(", ");
+			} else if (typeof detail === "object" && detail !== null) {
+				detail = JSON.stringify(detail);
+			}
+			setBackendError(
+				detail
+					? `Execution failed: ${detail}`
+					: "Execution error: Please check the pattern syntax",
+			);
+		};
+
+		if (currentPattern?.groups?.length) {
+			postApplyPpmFilter(projectId, currentPattern.groups)
+				.then((workflowsWithData) =>
+					updateAndMergeWithPosted(
+						[
+							...new Set(
+								workflowsWithData.map(({ profile_name }) => profile_name),
+							),
+						],
+						workflowsWithData,
+					),
+				)
+				.catch(handleError);
+		} else if (currentPattern?.name) {
+			postApplyPpmFilterByName(projectId, currentPattern.name)
+				.then((workflowsWithData) =>
+					updateAndMergeWithPosted(
+						[
+							...new Set(
+								workflowsWithData.map(({ profile_name }) => profile_name),
+							),
+						],
+						workflowsWithData,
+					),
+				)
+				.catch(handleError);
+		} else {
+			getAllProfiles(projectId)
+				.then((wfs) => updateAndMergeWithPosted(wfs, undefined))
+				.catch(handleError);
+		}
+	}, [
 		projectId,
 		projectValidity,
+		currentPattern,
 		postedProfiles,
-		filteredWorkflowsNodes,
-		setFilteredWorkflowsNodes,
-		setIsLoading,
-		setBackendError,
-	});
-
-	const { handleExecuteCodeSubmit, handleSaveCodeSubmit } = usePatternActions({
-		projectId,
-		setIsLoading,
-		setBackendError,
-	});
+		setFilteredProfilesNames,
+		setAvailableProfilesNames,
+		setAvailableProfilesWithPpmData,
+		setProfilesScores,
+	]);
 
 	useEffect(() => {
 		if (isLoading) {
@@ -83,11 +199,158 @@ export default function ExplorerProjectIdPage() {
 		}
 	}, [isLoading]);
 
+	const handleFilesImport = useCallback(
+		(files: File[]) => {
+			if (!files || files.length === 0 || !projectId) {
+				return Promise.resolve();
+			}
+			setIsImporting(true);
+
+			let allPosted: string[] = [];
+			let promiseChain = Promise.resolve();
+
+			for (let i = 0; i < files.length; i++) {
+				promiseChain = promiseChain.then(() =>
+					postNotebookOrProfiles(projectId, [files[i]]).then((r) => {
+						allPosted = [...allPosted, ...r];
+					}),
+				);
+			}
+
+			return promiseChain
+				.then(() => {
+					setPostedProfiles(allPosted);
+				})
+				.catch((error: any) => {
+					console.error("Failed to import profile(s)", error);
+					const detail = error?.response?.data?.detail;
+					throw new Error(
+						typeof detail === "string"
+							? detail
+							: "Failed to import file(s). Please check the file format.",
+					);
+				})
+				.finally(() => {
+					setIsImporting(false);
+				});
+		},
+		[projectId],
+	);
+
+	useEffect(() => {
+		getKaggleStatus()
+			.then(setIsKaggleAvailable)
+			.catch(() => setIsKaggleAvailable(false));
+	}, []);
+
 	useEffect(() => {
 		if (projectValidity === "valid") {
 			setGraphContainerId(GRAPH_CONTAINER_ID);
 		}
 	}, [projectValidity]);
+
+	const handleKaggleSearch = useCallback(
+		(competition: string) => {
+			if (!projectId) {
+				return Promise.resolve([]);
+			}
+			return import("@/api/client")
+				.then(({ getKaggleCompetitionNotebooks }) =>
+					getKaggleCompetitionNotebooks(projectId, competition),
+				)
+				.catch((error: any) => {
+					console.error("Failed to search Kaggle competition", error);
+					const detail = error?.response?.data?.detail;
+					throw new Error(
+						typeof detail === "string"
+							? detail
+							: "Failed to search Kaggle competition. Please check the inputs.",
+					);
+				});
+		},
+		[projectId],
+	);
+
+	const handleKaggleImport = useCallback(
+		(payload: {
+			competition?: string;
+			slugs?: string[];
+			scores?: Record<string, number>;
+		}) => {
+			if (!projectId) {
+				return Promise.resolve();
+			}
+			setIsImporting(true);
+
+			let slugsPromise = Promise.resolve<string[]>([]);
+			if (payload.slugs) {
+				slugsPromise = Promise.resolve(payload.slugs);
+			} else if (payload.competition) {
+				slugsPromise = handleKaggleSearch(payload.competition).then(
+					(notebooks) => notebooks.slice(0, 10).map((nb) => nb.ref),
+				);
+			}
+
+			return slugsPromise
+				.then((slugsToImport: string[]) => {
+					if (slugsToImport.length === 0) return Promise.resolve();
+
+					let allPosted: string[] = [];
+					let promiseChain = Promise.resolve();
+
+					return import("@/api/client").then(({ postImportKaggle }) => {
+						for (let i = 0; i < slugsToImport.length; i++) {
+							promiseChain = promiseChain.then(() =>
+								postImportKaggle(projectId, {
+									slugs: [slugsToImport[i]],
+									scores: payload.scores,
+								}).then((r) => {
+									allPosted = [...allPosted, ...r];
+								}),
+							);
+						}
+						return promiseChain.then(() => {
+							setPostedProfiles(allPosted);
+						});
+					});
+				})
+				.catch((error: any) => {
+					console.error("Failed to import Kaggle competition", error);
+					const detail = error?.response?.data?.detail;
+					throw new Error(
+						typeof detail === "string"
+							? detail
+							: "Failed to import Kaggle competition. Please check the inputs and ensure your backend has Kaggle credentials.",
+					);
+				})
+				.finally(() => {
+					setIsImporting(false);
+				});
+		},
+		[projectId, handleKaggleSearch],
+	);
+
+	const handleKaggleCompetitionsSearch = useCallback(
+		(search: string) => {
+			if (!projectId) {
+				return Promise.resolve([]);
+			}
+			return import("@/api/client")
+				.then(({ searchKaggleCompetitions }) =>
+					searchKaggleCompetitions(projectId, search),
+				)
+				.catch((error: any) => {
+					console.error("Failed to search Kaggle competitions", error);
+					const detail = error?.response?.data?.detail;
+					throw new Error(
+						typeof detail === "string"
+							? detail
+							: "Failed to search Kaggle competitions. Please check the inputs.",
+					);
+				});
+		},
+		[projectId],
+	);
 
 	if (projectValidity === "pending") {
 		return <section className="grid grid-cols-7 space-x-2 h-full" />;
@@ -98,7 +361,15 @@ export default function ExplorerProjectIdPage() {
 			<div className="col-span-1 flex flex-col h-full space-y-4 p-2 min-h-0">
 				<div className="mb-4">
 					<p className="font-bold mb-2">Upload</p>
-					<ImportModal onImport={handleFilesImport} isImporting={isImporting}>
+					<ImportModal
+						onImport={handleFilesImport}
+						onImportKaggle={isKaggleAvailable ? handleKaggleImport : undefined}
+						onSearchKaggle={isKaggleAvailable ? handleKaggleSearch : undefined}
+						onSearchKaggleCompetitions={
+							isKaggleAvailable ? handleKaggleCompetitionsSearch : undefined
+						}
+						isImporting={isImporting}
+					>
 						<Button className="w-full">Import profiles</Button>
 					</ImportModal>
 				</div>
