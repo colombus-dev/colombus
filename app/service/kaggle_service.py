@@ -183,12 +183,22 @@ async def list_kaggle_competition_notebooks(competition: str) -> list[dict[str, 
     filters.query = competition
     filters.document_types = [DocumentType.KERNEL]
     req.filters = filters
-    req.page_size = 50
+    req.page_size = 100
 
+    all_documents = []
     try:
         client._http_client._init_session()
         client._http_client._session.timeout = 5.0
-        resp = client.search.search_api_client.list_entities(req)
+        while True:
+            resp = client.search.search_api_client.list_entities(req)
+            if resp and resp.documents:
+                all_documents.extend(resp.documents)
+                if getattr(resp, "next_page_token", None):
+                    req.page_token = resp.next_page_token
+                else:
+                    break
+            else:
+                break
     except (ValueError, OSError, RuntimeError) as e:
         error_msg = str(e)
         raise HTTPException(
@@ -203,20 +213,23 @@ async def list_kaggle_competition_notebooks(competition: str) -> list[dict[str, 
         scores = {}
 
     notebooks = []
-    if resp and resp.documents:
-        for doc in resp.documents:
+    seen_refs = set()
+    if all_documents:
+        for doc in all_documents:
             author = doc.owner_user.user_name if doc.owner_user else None
             ref = f"{author}/{doc.slug}" if author else getattr(doc, "slug", "")
             title = getattr(doc, "title", getattr(doc, "slug", ""))
 
-            notebooks.append(
-                {
-                    "ref": ref,
-                    "title": title,
-                    "author": author or "",
-                    "score": scores.get(ref),
-                }
-            )
+            if ref and ref not in seen_refs:
+                seen_refs.add(ref)
+                notebooks.append(
+                    {
+                        "ref": ref,
+                        "title": title,
+                        "author": author or "",
+                        "score": scores.get(ref),
+                    }
+                )
 
     if not notebooks:
         raise HTTPException(
