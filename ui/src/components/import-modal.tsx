@@ -4,11 +4,12 @@ import {
 	Link,
 	Loader2,
 	Monitor,
+	Search,
 	Upload,
 	X,
 } from "lucide-react";
 import type React from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { NotebookFileExtension } from "@/api/client";
 import { Button } from "@/components/ui/button";
@@ -70,6 +71,20 @@ export default function ImportModal({
 		[],
 	);
 	const [isSearching, setIsSearching] = useState(false);
+	const [displayLimit, setDisplayLimit] = useState(20);
+	const [notebookSearch, setNotebookSearch] = useState("");
+
+	const filteredNotebooks = useMemo(() => {
+		if (!searchedNotebooks) return null;
+		if (!notebookSearch.trim()) return searchedNotebooks;
+		const lowerSearch = notebookSearch.toLowerCase();
+		return searchedNotebooks.filter(
+			(nb) =>
+				nb.title.toLowerCase().includes(lowerSearch) ||
+				nb.author.toLowerCase().includes(lowerSearch) ||
+				nb.ref.toLowerCase().includes(lowerSearch),
+		);
+	}, [searchedNotebooks, notebookSearch]);
 
 	const handleSearchCompetitionsClick = () => {
 		if (!onSearchKaggleCompetitions || !competition) return;
@@ -77,6 +92,8 @@ export default function ImportModal({
 		setServerError(null);
 		setSearchedNotebooks(null);
 		setSelectedCompetition(null);
+		setDisplayLimit(20);
+		setNotebookSearch("");
 
 		const compSlug = competition.match(/kaggle\.com\/competitions\/([^/?#]+)/);
 		const finalComp = compSlug ? compSlug[1] : competition.trim();
@@ -102,6 +119,8 @@ export default function ImportModal({
 		setSearchedCompetitions(null);
 		setIsSearching(true);
 		setServerError(null);
+		setDisplayLimit(20);
+		setNotebookSearch("");
 
 		onSearchKaggle(comp.ref)
 			.then((notebooks) => {
@@ -400,6 +419,8 @@ export default function ImportModal({
 												setSearchedNotebooks(null);
 												setSelectedCompetition(null);
 												setSelectedNotebookSlugs([]);
+												setDisplayLimit(20);
+												setNotebookSearch("");
 											}}
 											className="w-full"
 										/>
@@ -479,34 +500,62 @@ export default function ImportModal({
 											className="mt-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950 flex flex-col min-h-0"
 											style={{ maxHeight: "400px" }}
 										>
-											<div className="sticky top-0 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 py-2 flex justify-between items-center z-10 shrink-0">
-												<p className="text-xs font-medium text-slate-600 dark:text-slate-400">
-													Found {searchedNotebooks.length} notebooks
-												</p>
-												<label className="flex items-center space-x-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
-													<input
-														type="checkbox"
-														className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
-														checked={
-															searchedNotebooks.length > 0 &&
-															selectedNotebookSlugs.length ===
-																searchedNotebooks.length
-														}
-														onChange={(e) => {
-															if (e.target.checked) {
-																setSelectedNotebookSlugs(
-																	searchedNotebooks.map((nb) => nb.ref),
-																);
-															} else {
-																setSelectedNotebookSlugs([]);
+											<div className="sticky top-0 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-3 flex flex-col space-y-3 z-10 shrink-0">
+												<div className="flex justify-between items-center">
+													<p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+														Found {filteredNotebooks?.length || 0} notebooks
+													</p>
+													<label className="flex items-center space-x-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+														<input
+															type="checkbox"
+															className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+															checked={
+																(filteredNotebooks?.length || 0) > 0 &&
+																selectedNotebookSlugs.length ===
+																	filteredNotebooks?.length
 															}
+															onChange={(e) => {
+																if (e.target.checked && filteredNotebooks) {
+																	setSelectedNotebookSlugs(
+																		filteredNotebooks.map((nb) => nb.ref),
+																	);
+																} else {
+																	setSelectedNotebookSlugs([]);
+																}
+															}}
+														/>
+														<span>Select All</span>
+													</label>
+												</div>
+												<div className="relative">
+													<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+													<Input
+														placeholder="Search notebooks by title, author, or id..."
+														value={notebookSearch}
+														onChange={(e) => {
+															setNotebookSearch(e.target.value);
+															setDisplayLimit(20); // Reset scroll limit on search
 														}}
+														className="h-9 pl-9 text-sm bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-700 shadow-sm focus-visible:ring-blue-500"
 													/>
-													<span>Select All</span>
-												</label>
+												</div>
 											</div>
-											<div className="divide-y divide-slate-100 dark:divide-slate-800 overflow-y-auto flex-1">
-												{searchedNotebooks.map((nb) => (
+											<div
+												className="divide-y divide-slate-100 dark:divide-slate-800 overflow-y-auto flex-1"
+												onScroll={(e) => {
+													const { scrollTop, scrollHeight, clientHeight } =
+														e.currentTarget;
+													if (scrollHeight - scrollTop <= clientHeight + 50) {
+														setDisplayLimit((prev) =>
+															Math.min(
+																prev + 20,
+																filteredNotebooks?.length || 0,
+															),
+														);
+													}
+												}}
+											>
+												{filteredNotebooks?.slice(0, displayLimit).map((nb) => (
 													<label
 														key={nb.ref}
 														className="flex items-start px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors group cursor-pointer"
