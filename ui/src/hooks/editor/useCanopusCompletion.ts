@@ -33,8 +33,12 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 						endLineNumber: position.lineNumber,
 						endColumn: position.column,
 					});
-					const isInsideBracket = /\[/.test(textUntilPosition);
-					const isInsideString = /"/.test(textUntilPosition);
+					const lastOpenBracket = textUntilPosition.lastIndexOf("[");
+					const lastCloseBracket = textUntilPosition.lastIndexOf("]");
+					const isInsideBracket = lastOpenBracket > lastCloseBracket;
+
+					const quoteCount = (textUntilPosition.match(/"/g) || []).length;
+					const isInsideString = quoteCount % 2 !== 0;
 
 					if (isInsideBracket || isInsideString) return { suggestions: [] };
 
@@ -132,8 +136,12 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 					});
 
 					// Only trigger suggestions when typing a key
-					const isInsideBracket = /\[/.test(textUntilPosition);
-					const isInsideString = /"/.test(textUntilPosition);
+					const lastOpenBracket = textUntilPosition.lastIndexOf("[");
+					const lastCloseBracket = textUntilPosition.lastIndexOf("]");
+					const isInsideBracket = lastOpenBracket > lastCloseBracket;
+
+					const quoteCount = (textUntilPosition.match(/"/g) || []).length;
+					const isInsideString = quoteCount % 2 !== 0;
 
 					if (!isInsideBracket || isInsideString) return { suggestions: [] };
 
@@ -177,18 +185,22 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 						endColumn: position.column,
 					});
 					// Only trigger suggestions when typing a value
-					const isInsideBracket = /\[/.test(textUntilPosition);
-					const isBracketClosed = /\]/.test(textUntilPosition);
-					const isAfterStep = /=/.test(textUntilPosition);
+					const lastOpenBracket = textUntilPosition.lastIndexOf("[");
+					const lastCloseBracket = textUntilPosition.lastIndexOf("]");
+					const isInsideBracket = lastOpenBracket > lastCloseBracket;
 
-					if (!(isInsideBracket && isAfterStep && !isBracketClosed)) {
+					if (!isInsideBracket) {
 						return { suggestions: [] };
 					}
 
-					const currentKeyValuePair = textUntilPosition
-						.trim()
-						.split(",")
-						.at(-1);
+					const currentBlockText = textUntilPosition.slice(lastOpenBracket);
+					const isAfterStep = /=/.test(currentBlockText);
+
+					if (!isAfterStep) {
+						return { suggestions: [] };
+					}
+
+					const currentKeyValuePair = currentBlockText.trim().split(",").at(-1);
 					const currentKey = currentKeyValuePair
 						?.split("=")
 						.at(-2)
