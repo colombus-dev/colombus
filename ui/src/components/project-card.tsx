@@ -1,3 +1,4 @@
+import { ChevronRight, Folder } from "lucide-react";
 import { useNavigate } from "react-router";
 import { PATH } from "@/lib/constants";
 
@@ -12,13 +13,17 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
 		<button
 			type="button"
 			onClick={() => navigate(`${PATH.EXPLORER}/${project.id}`)}
-			className="w-full text-left bg-white rounded-2xl p-5 border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md cursor-pointer transition-all duration-200 flex flex-col justify-between min-h-[140px]"
+			className="w-full text-left bg-white rounded-xl p-4 border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md cursor-pointer transition-all duration-200 flex items-center justify-between"
 		>
-			<div className="flex items-start justify-between">
-				<h3 className="font-semibold text-slate-900 leading-tight">
+			<div className="flex items-center gap-3">
+				<div className="p-1.5 bg-slate-100 rounded-lg">
+					<Folder className="w-4 h-4 text-slate-500" />
+				</div>
+				<h3 className="font-semibold text-slate-700 leading-tight text-[15px]">
 					{project.name}
 				</h3>
 			</div>
+			<ChevronRight className="w-4 h-4 text-slate-300" />
 		</button>
 	);
 };

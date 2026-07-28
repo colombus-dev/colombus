@@ -45,7 +45,7 @@ export const ProjectCreateForm: React.FunctionComponent<
 				divProps.className,
 			)}
 		>
-			<h2 className="text-xl font-bold text-slate-900">Create project</h2>
+			<h2 className="text-2xl font-bold text-slate-900">Create project</h2>
 			<p className="text-sm text-slate-500 mt-1 mb-6">
 				Enter a project name, then create it directly from here.
 			</p>
