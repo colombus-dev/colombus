@@ -17,14 +17,14 @@ const NotFound = () => (
 );
 
 async function bootstrap() {
-	const googleClientId = await getAuthConfig();
+	const { auth_required, google_client_id } = await getAuthConfig();
 
 	createRoot(document.getElementById("root")!).render(
 		<StrictMode>
-			<GoogleOAuthProvider clientId={googleClientId}>
+			<GoogleOAuthProvider clientId={google_client_id}>
 				<BrowserRouter basename={import.meta.env.BASE_URL}>
 					<Routes>
-						<Route element={<App />}>
+						<Route element={<App authRequired={auth_required} />}>
 							<Route index element={<Home />} />
 							<Route path={PATH.HOME} element={<Home />} />
 							<Route

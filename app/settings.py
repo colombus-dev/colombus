@@ -19,8 +19,8 @@ class Settings(BaseSettings):
     allowed_origins: list[str] = []
 
     jwt_algorithm: str = "HS256"
-    jwt_expire_hours: int = 1
-    jwt_header_field: str = "x-api-key"
+    jwt_expire_hours: int = 8
+    jwt_header_field: str = "x-jwt-token"
     jwt_secret: str = Field(min_length=16)
 
     database_url: str = Field()
@@ -36,8 +36,7 @@ class Settings(BaseSettings):
     def allowed_google_emails_list(self) -> list[str]:
         return [e.strip() for e in self.allowed_google_emails.split(",") if e.strip()]
 
-    @property
-    def is_production(self) -> bool:
+    def is_environment_production(self) -> bool:
         return self.environment == "production"
 
     @property
@@ -46,7 +45,7 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def set_allowed_origins(self) -> "Settings":
-        if self.is_production:
+        if self.is_environment_production():
             self.allowed_origins = [self.ui_host]
         else:
             self.allowed_origins = ["*"]

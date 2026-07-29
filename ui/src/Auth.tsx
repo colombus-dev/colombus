@@ -4,12 +4,17 @@ import { toast } from "sonner";
 import { authGoogle } from "@/api/client";
 import { useColombusStore } from "@/store";
 
-export default function Auth({ children }: React.PropsWithChildren) {
+interface AuthProps extends React.PropsWithChildren {
+	authRequired: boolean;
+}
+
+export default function Auth({ authRequired, children }: AuthProps) {
 	const jwtToken = useColombusStore((state) => state.jwtToken);
 	const jwtExpiry = useColombusStore((state) => state.jwtExpiry);
 	const setJwtToken = useColombusStore((state) => state.setJwtToken);
 
 	useEffect(() => {
+		if (!authRequired) return;
 		if (!jwtToken || !jwtExpiry) return;
 
 		if (Date.now() >= jwtExpiry) {
@@ -22,7 +27,7 @@ export default function Auth({ children }: React.PropsWithChildren) {
 			jwtExpiry - Date.now(),
 		);
 		return () => clearTimeout(timer);
-	}, [jwtToken, jwtExpiry, setJwtToken]);
+	}, [authRequired, jwtToken, jwtExpiry, setJwtToken]);
 
 	const handleSuccess = async (response: any) => {
 		try {
@@ -33,7 +38,8 @@ export default function Auth({ children }: React.PropsWithChildren) {
 		}
 	};
 
-	const isAuthenticated = !!jwtToken && !!jwtExpiry && Date.now() < jwtExpiry;
+	const isAuthenticated =
+		!authRequired || (!!jwtToken && !!jwtExpiry && Date.now() < jwtExpiry);
 
 	return isAuthenticated ? (
 		children

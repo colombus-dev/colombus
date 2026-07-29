@@ -6,10 +6,16 @@ import { PATH } from "@/lib/constants";
 export interface NavbarProps {
 	isOnProject: boolean;
 	projectName?: string;
+	authRequired: boolean;
 	onLogout: () => void;
 }
 
-export const Navbar = ({ isOnProject, projectName, onLogout }: NavbarProps) => {
+export const Navbar = ({
+	isOnProject,
+	projectName,
+	authRequired,
+	onLogout,
+}: NavbarProps) => {
 	return (
 		<header className="border-grid sticky top-0 z-50 w-full border-b bg-white">
 			<div className="flex h-14 items-center px-6 gap-4 w-full">
@@ -38,14 +44,16 @@ export const Navbar = ({ isOnProject, projectName, onLogout }: NavbarProps) => {
 					)}
 				</div>
 
-				<Button
-					variant="ghost"
-					size="sm"
-					className="ml-auto text-slate-500 hover:text-slate-900"
-					onClick={onLogout}
-				>
-					Logout
-				</Button>
+				{authRequired && (
+					<Button
+						variant="ghost"
+						size="sm"
+						className="ml-auto text-slate-500 hover:text-slate-900"
+						onClick={onLogout}
+					>
+						Logout
+					</Button>
+				)}
 			</div>
 		</header>
 	);

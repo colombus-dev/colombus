@@ -15,12 +15,16 @@ settings = get_settings()
 
 
 class AuthConfig(BaseModel):
+    auth_required: bool
     google_client_id: str
 
 
 @router.get("/config")
 def get_auth_config() -> AuthConfig:
-    return AuthConfig(google_client_id=settings.google_client_id)
+    return AuthConfig(
+        auth_required=settings.is_environment_production(),
+        google_client_id=settings.google_client_id,
+    )
 
 
 class GoogleAuthRequest(BaseModel):
@@ -55,10 +59,18 @@ def auth_google(body: GoogleAuthRequest):
     return {"jwt_token": token, "exp": int(exp.timestamp() * 1000)}
 
 
-api_key_header = APIKeyHeader(name=settings.jwt_header_field)
+api_key_header = APIKeyHeader(name=settings.jwt_header_field, auto_error=False)
+
+DEV_PAYLOAD = {"sub": "dev@localhost", "email": "dev@localhost", "name": "Dev"}
 
 
-def check_api_key(api_key_header_value: str = Security(api_key_header)) -> dict:
+def check_api_key(api_key_header_value: str | None = Security(api_key_header)) -> dict:
+    if not settings.is_environment_production():
+        return DEV_PAYLOAD
+
+    if not api_key_header_value:
+        raise AuthException(name="Api")
+
     try:
         payload = jwt.decode(
             api_key_header_value,

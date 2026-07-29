@@ -35,7 +35,7 @@ export type GraphDefinition = {
 export const ProfileFileExtension = ".json";
 export const NotebookFileExtension = ".ipynb";
 
-const API_KEY_HEADER_NAME = "x-api-key";
+const API_KEY_HEADER_NAME = "x-jwt-token";
 
 const baseURL = `${import.meta.env.BASE_URL}api`;
 
@@ -254,10 +254,13 @@ export async function postFrequentStepsData(
 		.then(({ data }) => data.map((d) => ({ step: d[0], frequency: d[1] })));
 }
 
-export async function getAuthConfig(): Promise<string> {
+export async function getAuthConfig(): Promise<{
+	auth_required: boolean;
+	google_client_id: string;
+}> {
 	return await axiosInstance
-		.get<{ google_client_id: string }>("/auth/config")
-		.then(({ data }) => data.google_client_id);
+		.get<{ auth_required: boolean; google_client_id: string }>("/auth/config")
+		.then(({ data }) => data);
 }
 
 export async function authGoogle(credential: string) {
