@@ -37,7 +37,7 @@ export const NotebookFileExtension = ".ipynb";
 
 const API_KEY_HEADER_NAME = "x-api-key";
 
-const baseURL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`;
+const baseURL = `${import.meta.env.BASE_URL}api`;
 
 const axiosInstance = axios.create({
 	baseURL,

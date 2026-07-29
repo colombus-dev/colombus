@@ -9,6 +9,9 @@ RUN --mount=type=cache,target=/root/.cache/yarn \
 
 COPY . .
 
+ARG VITE_BASE_PATH=/colombus/
+ENV VITE_BASE_PATH=$VITE_BASE_PATH
+
 RUN yarn build
 
 FROM nginx:stable-alpine
