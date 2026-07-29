@@ -1,0 +1,75 @@
+{
+    "@context": "https://w3id.org/codemeta/3.0",
+    "type": "SoftwareSourceCode",
+    "author": [
+        {
+            "id": "https://orcid.org/0009-0004-4390-6694",
+            "type": "Person",
+            "affiliation": {
+                "type": "Organization",
+                "name": "Université Côte d’Azur, Inria, CNRS, I3S, France"
+            },
+            "email": "nicolas.lacroix@univ-cotedazur.fr",
+            "familyName": "Lacroix",
+            "givenName": "Nicolas"
+        }
+    ],
+    "codeRepository": "git+https://github.com/colombus-dev/colombus.git",
+    "contributor": [
+        {
+            "id": "_:contributor_1",
+            "type": "Person",
+            "affiliation": {
+                "type": "Organization",
+                "name": "Université Côte d'Azur, CNRS, I3S, France"
+            },
+            "email": "umer@i3s.unice.fr",
+            "familyName": "Umer",
+            "givenName": "Yassin Mohammed "
+        },
+        {
+            "id": "_:contributor_2",
+            "type": "Person",
+            "affiliation": {
+                "type": "Organization",
+                "name": "Université Côte d'Azur, France"
+            },
+            "email": "allah-eddine.cherigui@etu.univ-cotedazur.fr",
+            "familyName": "Cherigui",
+            "givenName": "Allah-Eddine"
+        }
+    ],
+    "dateCreated": "2024-12-18",
+    "dateModified": "2026-07-01",
+    "datePublished": "2026-05-21",
+    "description": "Colombus - The ML pipelines exploration platform",
+    "funder": {
+        "type": "Organization",
+        "name": "ANR"
+    },
+    "keywords": [
+        "visualization",
+        "pattern-matching",
+        "exploration",
+        "ml-profile"
+    ],
+    "license": "https://spdx.org/licenses/MIT",
+    "name": "Colombus",
+    "operatingSystem": [
+        "Linux",
+        "Windows",
+        "macOS"
+    ],
+    "programmingLanguage": [
+        "Python 3",
+        "Typescript"
+    ],
+    "softwareRequirements": [
+        "https://github.com/colombus-dev/mlprofiler",
+        "https://github.com/colombus-dev/canopus-dsl"
+    ],
+    "version": "v0.3.5",
+    "developmentStatus": "active",
+    "funding": "ANR- 24-IAS2-0002-01, ANR-24-CE25-1286-01",
+    "referencePublication": "https://doi.org/10.5381/jot.2026.25.3.a10"
+}
