@@ -31,6 +31,7 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@react-oauth/google": "^0.13.5",
     "@sigma/node-image": "^3.0.0",
+    "@tanstack/react-table": "^8.21.3",
     "antlr4": "^4.13.2",
     "axios": "^1.7.9",
     "class-variance-authority": "^0.7.1",
