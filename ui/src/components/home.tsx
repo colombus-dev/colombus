@@ -25,7 +25,11 @@ export default function Home() {
 				<h1 className="text-5xl font-extrabold tracking-tight sm:text-[6rem] text-slate-900">
 					Colombus
 				</h1>
-				<img src="/logo.png" alt="logo" className="w-16 h-16 sm:w-24 sm:h-24" />
+				<img
+					src={`${import.meta.env.BASE_URL}logo.png`}
+					alt="logo"
+					className="w-16 h-16 sm:w-24 sm:h-24"
+				/>
 			</div>
 
 			<div className="w-full max-w-[1100px] space-y-12">
