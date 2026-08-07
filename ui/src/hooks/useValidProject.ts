@@ -9,13 +9,9 @@ export default function useValidProject() {
 	>("pending");
 
 	const { projectId } = useParams<{ projectId: string }>();
-	const jwtToken = useColombusStore((state) => state.jwtToken);
 	const setProjectName = useColombusStore((state) => state.setProjectName);
 
 	useEffect(() => {
-		if (!jwtToken) {
-			return;
-		}
 		if (!projectId) {
 			setProjectValidity("invalid");
 			return;
@@ -26,7 +22,7 @@ export default function useValidProject() {
 				setProjectValidity("valid");
 			})
 			.catch(() => setProjectValidity("invalid"));
-	}, [jwtToken, projectId, setProjectName]);
+	}, [projectId, setProjectName]);
 
 	const projectStatus = useMemo(
 		() => ({ validity: projectValidity, projectId }),
