@@ -26,7 +26,11 @@ services:
       UI_HOST: "http://localhost"
       UI_PORT: 5173
       ENVIRONMENT: ${ENVIRONMENT}
-      DATABASE_URL: postgresql+psycopg://${DB_USERNAME}:${DB_PASSWORD}@colombus_postgresql:5432/${DB_NAME}
+      DB_HOST: colombus_postgresql
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
       ML_PROFILER_API_URL_PREFIX: ${ML_PROFILER_API_URL_PREFIX}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       ALLOWED_GOOGLE_EMAILS: ${ALLOWED_GOOGLE_EMAILS}

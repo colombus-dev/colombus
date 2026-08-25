@@ -348,7 +348,7 @@ wheels = [
 [[package]]
 name = "colombus"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "canopus-dsl" },
     { name = "fastapi", extra = ["standard"] },

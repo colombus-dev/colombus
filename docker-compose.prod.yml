@@ -15,7 +15,11 @@ services:
       UI_PORT: 443
       ENVIRONMENT: production
       ROOT_PATH: /colombus
-      DATABASE_URL: postgresql+psycopg://${DB_USERNAME}:${DB_PASSWORD}@colombus_postgresql:5432/${DB_NAME}
+      DB_HOST: colombus_postgresql
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
       ML_PROFILER_API_URL_PREFIX: ${ML_PROFILER_API_URL_PREFIX}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       JWT_SECRET: ${JWT_SECRET}
