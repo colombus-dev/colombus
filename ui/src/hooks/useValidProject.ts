@@ -13,9 +13,6 @@ export default function useValidProject() {
 	const setProjectName = useColombusStore((state) => state.setProjectName);
 
 	useEffect(() => {
-		if (!jwtToken) {
-			return;
-		}
 		if (!projectId) {
 			setProjectValidity("invalid");
 			return;

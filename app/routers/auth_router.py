@@ -38,6 +38,7 @@ def auth_google(body: GoogleAuthRequest):
             body.credential,
             google_requests.Request(),
             settings.google_client_id,
+            clock_skew_in_seconds=300,
         )
     except ValueError:
         raise AuthException(name="Google")
