@@ -9,7 +9,7 @@ import {
 	X,
 } from "lucide-react";
 import type React from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { NotebookFileExtension } from "@/api/client";
 import { Button } from "@/components/ui/button";
@@ -85,6 +85,54 @@ export default function ImportModal({
 				nb.ref.toLowerCase().includes(lowerSearch),
 		);
 	}, [searchedNotebooks, notebookSearch]);
+
+	const filteredCompetitions = useMemo(() => {
+		if (!searchedCompetitions) return null;
+		if (!competition.trim()) return searchedCompetitions;
+		const lowerSearch = competition.toLowerCase();
+		return searchedCompetitions.filter(
+			(c) =>
+				c.title.toLowerCase().includes(lowerSearch) ||
+				c.ref.toLowerCase().includes(lowerSearch) ||
+				c.description.toLowerCase().includes(lowerSearch),
+		);
+	}, [searchedCompetitions, competition]);
+
+	useEffect(() => {
+		if (
+			tab === "kaggle" &&
+			!searchedCompetitions &&
+			onSearchKaggleCompetitions &&
+			!isSearching
+		) {
+			setIsSearching(true);
+			onSearchKaggleCompetitions("competition")
+				.then((results) => setSearchedCompetitions(results))
+				.catch(() => {})
+				.finally(() => setIsSearching(false));
+		}
+	}, [tab, searchedCompetitions, onSearchKaggleCompetitions, isSearching]);
+
+	useEffect(() => {
+		if (!onSearchKaggleCompetitions || !competition.trim()) {
+			return;
+		}
+		const compSlug = competition.match(/kaggle\.com\/competitions\/([^/?#]+)/);
+		const finalComp = compSlug ? compSlug[1] : competition.trim();
+		if (finalComp.length < 2) return;
+
+		const timer = setTimeout(() => {
+			setIsSearching(true);
+			onSearchKaggleCompetitions(finalComp)
+				.then((results) => {
+					setSearchedCompetitions(results);
+				})
+				.catch(() => {})
+				.finally(() => setIsSearching(false));
+		}, 300);
+
+		return () => clearTimeout(timer);
+	}, [competition, onSearchKaggleCompetitions]);
 
 	const handleSearchCompetitionsClick = () => {
 		if (!onSearchKaggleCompetitions || !competition) return;
@@ -415,7 +463,6 @@ export default function ImportModal({
 											value={competition}
 											onChange={(e) => {
 												setCompetition(e.target.value);
-												setSearchedCompetitions(null);
 												setSearchedNotebooks(null);
 												setSelectedCompetition(null);
 												setSelectedNotebookSlugs([]);
@@ -443,15 +490,15 @@ export default function ImportModal({
 										competition URL). Requires a verified Kaggle account.
 									</p>
 
-									{searchedCompetitions && !selectedCompetition && (
+									{filteredCompetitions && !selectedCompetition && (
 										<div className="mt-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950 max-h-48 overflow-y-auto">
 											<div className="sticky top-0 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 py-2 flex justify-between items-center">
 												<p className="text-xs font-medium text-slate-600 dark:text-slate-400">
-													Found {searchedCompetitions.length} competitions
+													Found {filteredCompetitions.length} competitions
 												</p>
 											</div>
 											<div className="divide-y divide-slate-100 dark:divide-slate-800">
-												{searchedCompetitions.map((comp) => (
+												{filteredCompetitions.map((comp) => (
 													<button
 														key={comp.ref}
 														type="button"

@@ -19,10 +19,16 @@ from app.settings import get_settings
 settings = get_settings()
 
 
+import asyncio
+
+from app.routers.profile_router import preload_popular_kaggle_competitions
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     notebooks_storage_path.mkdir(parents=True, exist_ok=True)
     create_db_and_tables()
+    asyncio.create_task(preload_popular_kaggle_competitions())
     yield
     # TODO: close database session?
 

@@ -3,6 +3,7 @@ import json
 import logging
 import re
 import tempfile
+import time
 import uuid
 from pathlib import Path
 from typing import Any, Sequence
@@ -166,6 +167,26 @@ async def get_kaggle_status():
     return {"available": is_kaggle_available()}
 
 
+_COMPETITION_SEARCH_CACHE: dict[str, tuple[float, list[dict[str, str]]]] = {}
+CACHE_TTL = 3600
+
+
+async def preload_popular_kaggle_competitions():
+    if not is_kaggle_available():
+        return
+    import asyncio
+
+    logger.info("Preloading popular Kaggle search queries into local memory...")
+    popular_queries = ["titanic", "playground", "active", "competition", "predict"]
+    for q in popular_queries:
+        try:
+            await search_kaggle_competitions(uuid.uuid4(), q)
+        except (ValueError, OSError, RuntimeError) as e:
+            logger.warning(f"Failed to preload Kaggle search for '{q}': {e}")
+        await asyncio.sleep(0.2)
+    logger.info("✓ Kaggle popular searches preloaded into local memory")
+
+
 @router.get("/api/project/{project_id}/profile/kaggle/competitions")
 async def search_kaggle_competitions(
     project_id: uuid.UUID,
@@ -173,6 +194,46 @@ async def search_kaggle_competitions(
 ):
     if not search:
         raise HTTPException(status_code=400, detail="Missing search keyword")
+
+    cache_key = search.strip().lower()
+    now = time.time()
+    if cache_key in _COMPETITION_SEARCH_CACHE:
+        ts, cached_results = _COMPETITION_SEARCH_CACHE[cache_key]
+        if now - ts < CACHE_TTL:
+            return cached_results
+
+    settings = get_settings()
+    auth = (
+        (settings.kaggle_username, settings.kaggle_key)
+        if settings.is_kaggle_token_set
+        else None
+    )
+
+    import httpx
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as http_client:
+            resp = await http_client.get(
+                "https://www.kaggle.com/api/v1/competitions/list",
+                params={"search": search, "page": 1},
+                auth=auth,
+            )
+            if resp.status_code == 200:
+                comps = resp.json()
+                results = []
+                for comp in comps:
+                    ref = comp.get("ref") or comp.get("url", "").split("/")[-1]
+                    title = comp.get("title", ref)
+                    desc = comp.get("description", "")
+                    if ref:
+                        results.append(
+                            {"ref": ref, "title": title, "description": desc}
+                        )
+                if results:
+                    _COMPETITION_SEARCH_CACHE[cache_key] = (now, results)
+                    return results
+    except (ValueError, OSError, RuntimeError) as e:
+        logger.warning(f"Kaggle REST search endpoint failed, falling back: {e}")
 
     _, client = get_kaggle_api_and_client()
 
@@ -193,11 +254,10 @@ async def search_kaggle_competitions(
         client._http_client._init_session()
         client._http_client._session.timeout = 5.0
         resp = client.search.search_api_client.list_entities(req)
-    except Exception as e:
-        error_msg = str(e)
+    except (ValueError, OSError, RuntimeError) as e:
         raise HTTPException(
             status_code=400,
-            detail=f"Kaggle API failed to list competitions: {error_msg}",
+            detail=f"Kaggle API failed to list competitions: {e}",
         )
 
     results = []
@@ -211,6 +271,7 @@ async def search_kaggle_competitions(
                 }
             )
 
+    _COMPETITION_SEARCH_CACHE[cache_key] = (now, results)
     return results
 
 
