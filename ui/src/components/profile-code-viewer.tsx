@@ -80,8 +80,8 @@ export default function ProfileCodeViewer({
 			handleNodeSelect(null);
 			return;
 		}
-		if (selectedNodeId && !nodes.find((n) => n.id === selectedNodeId)) {
-			handleNodeSelect(null);
+		if (!selectedNodeId || !nodes.find((n) => n.id === selectedNodeId)) {
+			handleNodeSelect(nodes[0].id);
 		}
 	}, [nodes, selectedNodeId, handleNodeSelect]);
 
@@ -293,7 +293,7 @@ export default function ProfileCodeViewer({
 								>
 									<div className="flex items-center space-x-3 relative z-10 w-full">
 										<div
-											className="p-1.5 rounded-md flex-shrink-0"
+											className="p-1 rounded-md flex-shrink-0"
 											style={{
 												backgroundColor: isSelected
 													? currentStepColor
@@ -301,7 +301,7 @@ export default function ProfileCodeViewer({
 												color: isSelected ? "white" : currentStepColor,
 											}}
 										>
-											{getStepIcon(step.name)}
+											{getStepIcon(step.name, "w-3.5 h-3.5")}
 										</div>
 										<div className="flex flex-col flex-1 min-w-0">
 											<span
