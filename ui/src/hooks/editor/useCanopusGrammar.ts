@@ -67,6 +67,10 @@ export default function useCanopusGrammar(monaco: MonacoEditor | null) {
 				return;
 			}
 			const code = model.getValue();
+			if (!code.trim()) {
+				monaco.editor.setModelMarkers(model, "antlr", []);
+				return;
+			}
 			const markers: monaco_editor.editor.IMarkerData[] = [];
 
 			try {
