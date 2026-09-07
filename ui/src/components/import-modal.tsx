@@ -134,33 +134,6 @@ export default function ImportModal({
 		return () => clearTimeout(timer);
 	}, [competition, onSearchKaggleCompetitions]);
 
-	const handleSearchCompetitionsClick = () => {
-		if (!onSearchKaggleCompetitions || !competition) return;
-		setIsSearching(true);
-		setServerError(null);
-		setSearchedNotebooks(null);
-		setSelectedCompetition(null);
-		setDisplayLimit(20);
-		setNotebookSearch("");
-
-		const compSlug = competition.match(/kaggle\.com\/competitions\/([^/?#]+)/);
-		const finalComp = compSlug ? compSlug[1] : competition.trim();
-
-		onSearchKaggleCompetitions(finalComp)
-			.then((results) => {
-				setSearchedCompetitions(results);
-				if (results.length === 0) {
-					setServerError("No competitions found matching your search.");
-				}
-			})
-			.catch((error: any) => {
-				setServerError(error.message);
-			})
-			.finally(() => {
-				setIsSearching(false);
-			});
-	};
-
 	const handleSelectCompetition = (comp: { ref: string; title: string }) => {
 		if (!onSearchKaggle) return;
 		setSelectedCompetition(comp);
@@ -456,7 +429,7 @@ export default function ImportModal({
 									>
 										Competition Name
 									</label>
-									<div className="flex space-x-2">
+									<div className="relative flex items-center">
 										<Input
 											id="competition-name"
 											placeholder="e.g. titanic, playground-series-s6e7"
@@ -469,20 +442,12 @@ export default function ImportModal({
 												setDisplayLimit(20);
 												setNotebookSearch("");
 											}}
-											className="w-full"
+											className="w-full pr-10"
 										/>
-										{onSearchKaggleCompetitions && (
-											<Button
-												onClick={handleSearchCompetitionsClick}
-												disabled={!competition || isSearching}
-												variant="outline"
-											>
-												{isSearching ? (
-													<Loader2 className="w-4 h-4 animate-spin" />
-												) : (
-													"Search"
-												)}
-											</Button>
+										{isSearching && (
+											<div className="absolute right-3 top-2.5 pointer-events-none">
+												<Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+											</div>
 										)}
 									</div>
 									<p className="mt-2 text-xs text-slate-500">
