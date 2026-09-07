@@ -78,7 +78,7 @@ export default function useScoreDistribution() {
 			{
 				min: -1,
 				max: -1,
-				label: "Sans note",
+				label: "No score",
 				color: scoreToBandColor(null),
 				count: noScoreCount,
 			},
@@ -93,7 +93,7 @@ export default function useScoreDistribution() {
 				bandsList[2].count++;
 			} else if (score > 0.6 && score <= 0.8) {
 				bandsList[3].count++;
-			} else if (score > 0.8 && score <= 1.0) {
+			} else if (score > 0.8) {
 				bandsList[4].count++;
 			}
 		}
