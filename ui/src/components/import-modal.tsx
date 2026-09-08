@@ -99,21 +99,6 @@ export default function ImportModal({
 	}, [searchedCompetitions, competition]);
 
 	useEffect(() => {
-		if (
-			tab === "kaggle" &&
-			!searchedCompetitions &&
-			onSearchKaggleCompetitions &&
-			!isSearching
-		) {
-			setIsSearching(true);
-			onSearchKaggleCompetitions("competition")
-				.then((results) => setSearchedCompetitions(results))
-				.catch(() => {})
-				.finally(() => setIsSearching(false));
-		}
-	}, [tab, searchedCompetitions, onSearchKaggleCompetitions, isSearching]);
-
-	useEffect(() => {
 		if (!onSearchKaggleCompetitions || !competition.trim()) {
 			return;
 		}
@@ -442,46 +427,52 @@ export default function ImportModal({
 												setDisplayLimit(20);
 												setNotebookSearch("");
 											}}
-											className="w-full pr-10"
+											className="w-full"
 										/>
-										{isSearching && (
-											<div className="absolute right-3 top-2.5 pointer-events-none">
-												<Loader2 className="w-4 h-4 animate-spin text-slate-400" />
-											</div>
-										)}
 									</div>
 									<p className="mt-2 text-xs text-slate-500">
 										Enter the exact slug of the Kaggle competition (found in the
 										competition URL). Requires a verified Kaggle account.
 									</p>
 
-									{filteredCompetitions && !selectedCompetition && (
-										<div className="mt-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950 max-h-48 overflow-y-auto">
-											<div className="sticky top-0 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 py-2 flex justify-between items-center">
-												<p className="text-xs font-medium text-slate-600 dark:text-slate-400">
-													Found {filteredCompetitions.length} competitions
-												</p>
-											</div>
-											<div className="divide-y divide-slate-100 dark:divide-slate-800">
-												{filteredCompetitions.map((comp) => (
-													<button
-														key={comp.ref}
-														type="button"
-														onClick={() => handleSelectCompetition(comp)}
-														className="w-full text-left block px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors group"
-													>
-														<p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
-															{comp.title}
-														</p>
-														<p className="text-xs text-slate-500 truncate mt-0.5">
-															{comp.description} &bull;{" "}
-															<span className="font-mono">{comp.ref}</span>
-														</p>
-													</button>
-												))}
-											</div>
+									{isSearching && (
+										<div className="flex flex-col items-center justify-center min-h-[200px] mt-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-slate-900/50">
+											<Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-4" />
+											<p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+												Searching notebooks...
+											</p>
 										</div>
 									)}
+
+									{filteredCompetitions &&
+										!selectedCompetition &&
+										!isSearching && (
+											<div className="mt-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950 max-h-48 overflow-y-auto">
+												<div className="sticky top-0 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 py-2 flex justify-between items-center">
+													<p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+														Found {filteredCompetitions.length} competitions
+													</p>
+												</div>
+												<div className="divide-y divide-slate-100 dark:divide-slate-800">
+													{filteredCompetitions.map((comp) => (
+														<button
+															key={comp.ref}
+															type="button"
+															onClick={() => handleSelectCompetition(comp)}
+															className="w-full text-left block px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors group"
+														>
+															<p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
+																{comp.title}
+															</p>
+															<p className="text-xs text-slate-500 truncate mt-0.5">
+																{comp.description} &bull;{" "}
+																<span className="font-mono">{comp.ref}</span>
+															</p>
+														</button>
+													))}
+												</div>
+											</div>
+										)}
 
 									{selectedCompetition && (
 										<div className="mt-4">
@@ -507,7 +498,7 @@ export default function ImportModal({
 										</div>
 									)}
 
-									{searchedNotebooks && (
+									{searchedNotebooks && !isSearching && (
 										<div
 											className="mt-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950 flex flex-col min-h-0"
 											style={{ maxHeight: "400px" }}
