@@ -202,39 +202,6 @@ async def search_kaggle_competitions(
         if now - ts < CACHE_TTL:
             return cached_results
 
-    settings = get_settings()
-    auth = (
-        (settings.kaggle_username, settings.kaggle_key)
-        if settings.is_kaggle_token_set
-        else None
-    )
-
-    import httpx
-
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as http_client:
-            resp = await http_client.get(
-                "https://www.kaggle.com/api/v1/competitions/list",
-                params={"search": search, "page": 1},
-                auth=auth,
-            )
-            if resp.status_code == 200:
-                comps = resp.json()
-                results = []
-                for comp in comps:
-                    ref = comp.get("ref") or comp.get("url", "").split("/")[-1]
-                    title = comp.get("title", ref)
-                    desc = comp.get("description", "")
-                    if ref:
-                        results.append(
-                            {"ref": ref, "title": title, "description": desc}
-                        )
-                if results:
-                    _COMPETITION_SEARCH_CACHE[cache_key] = (now, results)
-                    return results
-    except (ValueError, OSError, RuntimeError) as e:
-        logger.warning(f"Kaggle REST search endpoint failed, falling back: {e}")
-
     _, client = get_kaggle_api_and_client()
 
     from kagglesdk.search.types.search_api_service import (
@@ -279,10 +246,11 @@ async def search_kaggle_competitions(
 async def list_kaggle_competition(
     project_id: uuid.UUID,
     competition: str,
+    page_token: str | None = None,
 ):
     if not competition:
         raise HTTPException(status_code=400, detail="Missing competition slug")
-    return await list_kaggle_competition_notebooks(competition)
+    return await list_kaggle_competition_notebooks(competition, page_token)
 
 
 @router.post("/api/project/{project_id}/profile/import/kaggle")
@@ -299,7 +267,7 @@ async def import_kaggle_competition(
     if not payload.competition:
         raise HTTPException(status_code=400, detail="Missing competition or slugs")
 
-    notebooks = await list_kaggle_competition_notebooks(payload.competition)
-    slugs = [nb["ref"] for nb in notebooks[:10]]
+    result = await list_kaggle_competition_notebooks(payload.competition)
+    slugs = [nb["ref"] for nb in result["notebooks"][:10]]
 
     return await pull_kaggle_notebooks(project_id, session, slugs, payload.scores)

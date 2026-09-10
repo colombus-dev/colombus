@@ -32,9 +32,16 @@ interface ImportModalProps {
 	}) => Promise<void>;
 	onSearchKaggle?: (
 		competition: string,
-	) => Promise<
-		{ ref: string; title: string; author: string; score?: number | null }[]
-	>;
+		pageToken?: string,
+	) => Promise<{
+		notebooks: {
+			ref: string;
+			title: string;
+			author: string;
+			score?: number | null;
+		}[];
+		next_page_token: string | null;
+	}>;
 	onSearchKaggleCompetitions?: (
 		search: string,
 	) => Promise<{ ref: string; title: string; description: string }[]>;
@@ -73,6 +80,8 @@ export default function ImportModal({
 	const [isSearching, setIsSearching] = useState(false);
 	const [displayLimit, setDisplayLimit] = useState(20);
 	const [notebookSearch, setNotebookSearch] = useState("");
+	const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+	const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
 
 	const filteredNotebooks = useMemo(() => {
 		if (!searchedNotebooks) return null;
@@ -129,8 +138,9 @@ export default function ImportModal({
 		setNotebookSearch("");
 
 		onSearchKaggle(comp.ref)
-			.then((notebooks) => {
-				setSearchedNotebooks(notebooks);
+			.then((result) => {
+				setSearchedNotebooks(result.notebooks);
+				setNextPageToken(result.next_page_token);
 				setSelectedNotebookSlugs([]);
 			})
 			.catch((error: any) => {
@@ -507,27 +517,69 @@ export default function ImportModal({
 												<div className="flex justify-between items-center">
 													<p className="text-xs font-medium text-slate-600 dark:text-slate-400">
 														Found {filteredNotebooks?.length || 0} notebooks
+														{isFetchingNextPage && " (loading more...)"}
 													</p>
 													<label className="flex items-center space-x-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
 														<input
 															type="checkbox"
-															className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+															className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
+															disabled={isFetchingNextPage}
 															checked={
 																(filteredNotebooks?.length || 0) > 0 &&
 																selectedNotebookSlugs.length ===
 																	filteredNotebooks?.length
 															}
-															onChange={(e) => {
+															onChange={async (e) => {
 																if (e.target.checked && filteredNotebooks) {
-																	setSelectedNotebookSlugs(
-																		filteredNotebooks.map((nb) => nb.ref),
-																	);
+																	if (
+																		nextPageToken &&
+																		selectedCompetition &&
+																		onSearchKaggle
+																	) {
+																		setIsFetchingNextPage(true);
+																		try {
+																			let currentToken: string | null =
+																				nextPageToken;
+																			let allNbs = [
+																				...(searchedNotebooks || []),
+																			];
+																			while (currentToken) {
+																				const result = await onSearchKaggle(
+																					selectedCompetition.ref,
+																					currentToken,
+																				);
+																				allNbs = [
+																					...allNbs,
+																					...result.notebooks,
+																				];
+																				currentToken = result.next_page_token;
+																			}
+																			setSearchedNotebooks(allNbs);
+																			setNextPageToken(null);
+																			setSelectedNotebookSlugs(
+																				allNbs.map((nb) => nb.ref),
+																			);
+																		} catch (err) {
+																			console.error(err);
+																		} finally {
+																			setIsFetchingNextPage(false);
+																		}
+																	} else {
+																		setSelectedNotebookSlugs(
+																			filteredNotebooks.map((nb) => nb.ref),
+																		);
+																	}
 																} else {
 																	setSelectedNotebookSlugs([]);
 																}
 															}}
 														/>
-														<span>Select All</span>
+														<span className="flex items-center space-x-1">
+															<span>Select All</span>
+															{isFetchingNextPage && (
+																<Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
+															)}
+														</span>
 													</label>
 												</div>
 												<div className="relative">
@@ -549,12 +601,38 @@ export default function ImportModal({
 													const { scrollTop, scrollHeight, clientHeight } =
 														e.currentTarget;
 													if (scrollHeight - scrollTop <= clientHeight + 50) {
-														setDisplayLimit((prev) =>
-															Math.min(
-																prev + 20,
-																filteredNotebooks?.length || 0,
-															),
-														);
+														if (
+															displayLimit >=
+																(filteredNotebooks?.length || 0) &&
+															nextPageToken &&
+															!isFetchingNextPage &&
+															selectedCompetition &&
+															onSearchKaggle &&
+															!notebookSearch.trim()
+														) {
+															setIsFetchingNextPage(true);
+															onSearchKaggle(
+																selectedCompetition.ref,
+																nextPageToken,
+															)
+																.then((result) => {
+																	setSearchedNotebooks((prev) => [
+																		...(prev || []),
+																		...result.notebooks,
+																	]);
+																	setNextPageToken(result.next_page_token);
+																	setDisplayLimit((prev) => prev + 20);
+																})
+																.catch(() => {})
+																.finally(() => setIsFetchingNextPage(false));
+														} else {
+															setDisplayLimit((prev) =>
+																Math.min(
+																	prev + 20,
+																	filteredNotebooks?.length || 0,
+																),
+															);
+														}
 													}
 												}}
 											>

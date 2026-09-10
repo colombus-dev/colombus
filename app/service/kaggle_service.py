@@ -139,12 +139,14 @@ from kagglesdk.search.types.search_api_service import (
     ListEntitiesRequest,
 )
 
-_NOTEBOOK_SEARCH_CACHE: dict[str, tuple[float, list[dict[str, Any]]]] = {}
+_NOTEBOOK_SEARCH_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
 NOTEBOOK_CACHE_TTL = 600
 
 
-async def list_kaggle_competition_notebooks(competition: str) -> list[dict[str, Any]]:
-    cache_key = competition.strip().lower()
+async def list_kaggle_competition_notebooks(
+    competition: str, page_token: str | None = None
+) -> dict[str, Any]:
+    cache_key = f"{competition.strip().lower()}:{page_token or ''}"
     now = time.time()
     if cache_key in _NOTEBOOK_SEARCH_CACHE:
         ts, cached_results = _NOTEBOOK_SEARCH_CACHE[cache_key]
@@ -159,21 +161,18 @@ async def list_kaggle_competition_notebooks(competition: str) -> list[dict[str, 
     filters.document_types = [DocumentType.KERNEL]
     req.filters = filters
     req.page_size = 100
+    if page_token:
+        req.page_token = page_token
 
     all_documents = []
+    next_page_token = None
     try:
         client._http_client._init_session()
         client._http_client._session.timeout = 5.0
-        while True:
-            resp = client.search.search_api_client.list_entities(req)
-            if resp and resp.documents:
-                all_documents.extend(resp.documents)
-                if getattr(resp, "next_page_token", None):
-                    req.page_token = resp.next_page_token
-                else:
-                    break
-            else:
-                break
+        resp = client.search.search_api_client.list_entities(req)
+        if resp and resp.documents:
+            all_documents.extend(resp.documents)
+            next_page_token = getattr(resp, "next_page_token", None)
     except (ValueError, OSError, RuntimeError) as e:
         raise HTTPException(
             status_code=400,
@@ -203,10 +202,11 @@ async def list_kaggle_competition_notebooks(competition: str) -> list[dict[str, 
                     }
                 )
 
-    if not notebooks:
+    if not notebooks and not page_token:
         raise HTTPException(
             status_code=400, detail="No notebooks found for this competition."
         )
 
-    _NOTEBOOK_SEARCH_CACHE[cache_key] = (now, notebooks)
-    return notebooks
+    result = {"notebooks": notebooks, "next_page_token": next_page_token}
+    _NOTEBOOK_SEARCH_CACHE[cache_key] = (now, result)
+    return result
