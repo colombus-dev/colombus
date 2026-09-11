@@ -9,48 +9,27 @@ from sqlmodel import Session, text
 
 from app.models.sql_model import engine
 
-
-def ensure_index(session: Session) -> None:
-    session.execute(
-        text(
-            "CREATE INDEX IF NOT EXISTS ix_step_profile_id_position "
-            "ON step (profile_id, position)"
-        )
-    )
-    session.commit()
+TOKEN_DELIMITER = "\x1f"
 
 
-def _is_wildcard_term(term: str) -> bool:
-    return "*" in term or "?" in term
+def _glob_to_are(term: str) -> str:
+    pattern = []
+    for char in term:
+        if char == "*":
+            pattern.append(f"[^{TOKEN_DELIMITER}]*")
+        elif char == "?":
+            pattern.append(f"[^{TOKEN_DELIMITER}]")
+        else:
+            pattern.append(char)
+    return "".join(pattern)
 
 
-def _glob_to_sql_like(term: str) -> str:
-    return term.replace("*", "%").replace("?", "_")
+def _term_to_token_pattern(term: str) -> str:
+    return rf"{TOKEN_DELIMITER}{_glob_to_are(term)}(?={TOKEN_DELIMITER})"
 
 
-def build_query(steps: list[str]) -> str:
-    aliases = [f"s{i}" for i in range(len(steps))]
-    joins = [f"FROM step AS {aliases[0]}"]
-    for i in range(1, len(steps)):
-        joins.append(
-            f"JOIN step AS {aliases[i]} "
-            f"ON {aliases[i]}.profile_id = {aliases[i - 1]}.profile_id "
-            f"AND {aliases[i]}.position = {aliases[i - 1]}.position + 1"
-        )
-    where_clauses = [
-        f"{alias}.name LIKE :step{i}"
-        if _is_wildcard_term(step)
-        else f"{alias}.name = :step{i}"
-        for i, (alias, step) in enumerate(zip(aliases, steps))
-    ]
-
-    return (
-        "SELECT DISTINCT p.name "
-        + " ".join(joins)
-        + f" JOIN profile AS p ON p.id = {aliases[0]}.profile_id "
-        + "WHERE p.project_id = :project_id AND "
-        + " AND ".join(where_clauses)
-    )
+def compile_pattern(steps: list[str]) -> str:
+    return "".join(_term_to_token_pattern(step) for step in steps)
 
 
 def timing_stats(samples_ms: list[float]) -> dict:
@@ -66,29 +45,46 @@ def timing_stats(samples_ms: list[float]) -> dict:
     }
 
 
-def run(project_id: uuid.UUID, steps: list[str], repeat: int) -> dict:
-    query = build_query(steps)
-    params = {"project_id": str(project_id)}
-    params.update(
-        {
-            f"step{i}": _glob_to_sql_like(step) if _is_wildcard_term(step) else step
-            for i, step in enumerate(steps)
-        }
+QUERY = """
+    WITH sequences AS (
+        SELECT
+            p.name AS profile_name,
+            :delimiter || string_agg(s.name, :delimiter ORDER BY s.position) || :delimiter
+                AS token_string
+        FROM step s
+        JOIN profile p ON p.id = s.profile_id
+        WHERE p.project_id = :project_id
+        GROUP BY p.id, p.name
     )
+    SELECT profile_name
+    FROM sequences
+    WHERE token_string ~ :pattern
+"""
+
+
+def run(project_id: uuid.UUID, steps: list[str], repeat: int) -> dict:
+    pattern = compile_pattern(steps)
+    print(f"query={QUERY}")
+    print(f"pattern={pattern}")
+
+    params = {
+        "project_id": str(project_id),
+        "delimiter": TOKEN_DELIMITER,
+        "pattern": pattern,
+    }
 
     timings_ms = []
     matches: list[str] = []
     with Session(engine) as session:
-        ensure_index(session)
         for i in range(repeat):
             start = time.perf_counter()
-            rows = session.execute(text(query), params).all()
+            rows = session.execute(text(QUERY), params).all()
             timings_ms.append((time.perf_counter() - start) * 1000)
             if i == 0:
-                matches = [row[0] for row in rows]
+                matches = sorted(row[0] for row in rows)
 
     return {
-        "approach": "after self-join on step.position",
+        "approach": "postgres single-pass string_agg + regex",
         "matches": matches,
         "timing_ms": timing_stats(timings_ms),
     }
