@@ -24,6 +24,8 @@ interface PatternSlice {
 	resetCurrentPattern: () => void;
 	allSavedPatterns: Pattern[];
 	setAllSavedPatterns: (p: Pattern[]) => void;
+	patternAppendTrigger?: string;
+	setPatternAppendTrigger: (t?: string) => void;
 }
 
 interface GraphCustomizationSlice {
@@ -33,6 +35,10 @@ interface GraphCustomizationSlice {
 	setUseWeightedNodes: (uwn: boolean) => void;
 	patternCapturedNodesDisplayMode: PpmNodesDisplayMode;
 	setPatternCapturedNodesDisplayMode: (mode: PpmNodesDisplayMode) => void;
+	scoreEvolutionFilter: number; // 1 = Decreasing, 2 = Constant, 3 = Increasing
+	setScoreEvolutionFilter: (filter: number) => void;
+	useScoreEvolutionFilter: boolean;
+	setUseScoreEvolutionFilter: (use: boolean) => void;
 }
 
 interface ProfilesSlice {
@@ -108,6 +114,9 @@ const createPatternSlice: StateCreator<ColombusStore, [], [], PatternSlice> = (
 	allSavedPatterns: [],
 	setAllSavedPatterns: (p) =>
 		set((state) => ({ ...state, allSavedPatterns: p })),
+	patternAppendTrigger: undefined,
+	setPatternAppendTrigger: (t) =>
+		set((state) => ({ ...state, patternAppendTrigger: t })),
 });
 
 const createAuthSlice: StateCreator<ColombusStore, [], [], AuthSlice> = (
@@ -135,6 +144,12 @@ const createGraphCustomizationSlice: StateCreator<
 	patternCapturedNodesDisplayMode: "show-variable",
 	setPatternCapturedNodesDisplayMode: (mode) =>
 		set((state) => ({ ...state, patternCapturedNodesDisplayMode: mode })),
+	scoreEvolutionFilter: 2,
+	setScoreEvolutionFilter: (filter) =>
+		set((state) => ({ ...state, scoreEvolutionFilter: filter })),
+	useScoreEvolutionFilter: false,
+	setUseScoreEvolutionFilter: (use) =>
+		set((state) => ({ ...state, useScoreEvolutionFilter: use })),
 });
 
 const createProfilesSlice: StateCreator<
