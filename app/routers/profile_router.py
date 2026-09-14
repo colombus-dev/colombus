@@ -171,22 +171,6 @@ _COMPETITION_SEARCH_CACHE: dict[str, tuple[float, list[dict[str, str]]]] = {}
 CACHE_TTL = 3600
 
 
-async def preload_popular_kaggle_competitions():
-    if not is_kaggle_available():
-        return
-    import asyncio
-
-    logger.info("Preloading popular Kaggle search queries into local memory...")
-    popular_queries = ["titanic", "playground", "active", "competition", "predict"]
-    for q in popular_queries:
-        try:
-            await search_kaggle_competitions(uuid.uuid4(), q)
-        except (ValueError, OSError, RuntimeError) as e:
-            logger.warning(f"Failed to preload Kaggle search for '{q}': {e}")
-        await asyncio.sleep(0.2)
-    logger.info("✓ Kaggle popular searches preloaded into local memory")
-
-
 @router.get("/api/project/{project_id}/profile/kaggle/competitions")
 async def search_kaggle_competitions(
     project_id: uuid.UUID,
