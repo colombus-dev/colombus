@@ -163,27 +163,16 @@ export async function postApplyPpmFilterByName(
 		.then(({ data }) => data);
 }
 
-const searchKaggleCompetitionsCache = new Map<
-	string,
-	Promise<{ ref: string; title: string; description: string }[]>
->();
-
 export async function searchKaggleCompetitions(
 	projectId: string,
 	search: string,
 ) {
-	const cacheKey = `${projectId}:${search}`;
-	if (searchKaggleCompetitionsCache.has(cacheKey)) {
-		return searchKaggleCompetitionsCache.get(cacheKey)!;
-	}
-	const promise = axiosInstance
+	return axiosInstance
 		.get<{ ref: string; title: string; description: string }[]>(
 			`/project/${projectId}/profile/kaggle/competitions`,
 			{ params: { search } },
 		)
 		.then(({ data }) => data);
-	searchKaggleCompetitionsCache.set(cacheKey, promise);
-	return promise;
 }
 
 export async function getKaggleStatus() {
@@ -192,29 +181,12 @@ export async function getKaggleStatus() {
 		.then(({ data }) => data.available);
 }
 
-const getKaggleCompetitionNotebooksCache = new Map<
-	string,
-	Promise<{
-		notebooks: {
-			ref: string;
-			title: string;
-			author: string;
-			score?: number | null;
-		}[];
-		next_page_token: string | null;
-	}>
->();
-
 export async function getKaggleCompetitionNotebooks(
 	projectId: string,
 	competition: string,
 	pageToken?: string,
 ) {
-	const cacheKey = `${projectId}:${competition}:${pageToken || ""}`;
-	if (getKaggleCompetitionNotebooksCache.has(cacheKey)) {
-		return getKaggleCompetitionNotebooksCache.get(cacheKey)!;
-	}
-	const promise = axiosInstance
+	return axiosInstance
 		.get<{
 			notebooks: {
 				ref: string;
@@ -227,8 +199,6 @@ export async function getKaggleCompetitionNotebooks(
 			params: { competition, page_token: pageToken },
 		})
 		.then(({ data }) => data);
-	getKaggleCompetitionNotebooksCache.set(cacheKey, promise);
-	return promise;
 }
 
 export async function postImportKaggle(
