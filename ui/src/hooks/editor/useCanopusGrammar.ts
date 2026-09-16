@@ -67,6 +67,8 @@ export default function useCanopusGrammar(monaco: MonacoEditor | null) {
 				return;
 			}
 			const code = model.getValue();
+			// If the editor is empty, clear any syntax errors and skip ANTLR validation
+			// to avoid showing unexpected EOF errors to the user.
 			if (!code.trim()) {
 				monaco.editor.setModelMarkers(model, "antlr", []);
 				return;
