@@ -139,20 +139,10 @@ from kagglesdk.search.types.search_api_service import (
     ListEntitiesRequest,
 )
 
-_NOTEBOOK_SEARCH_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
-NOTEBOOK_CACHE_TTL = 600
-
 
 async def list_kaggle_competition_notebooks(
     competition: str, page_token: str | None = None
 ) -> dict[str, Any]:
-    cache_key = f"{competition.strip().lower()}:{page_token or ''}"
-    now = time.time()
-    if cache_key in _NOTEBOOK_SEARCH_CACHE:
-        ts, cached_results = _NOTEBOOK_SEARCH_CACHE[cache_key]
-        if now - ts < NOTEBOOK_CACHE_TTL:
-            return cached_results
-
     _, client = get_kaggle_api_and_client()
 
     req = ListEntitiesRequest()
@@ -208,5 +198,5 @@ async def list_kaggle_competition_notebooks(
         )
 
     result = {"notebooks": notebooks, "next_page_token": next_page_token}
-    _NOTEBOOK_SEARCH_CACHE[cache_key] = (now, result)
+
     return result

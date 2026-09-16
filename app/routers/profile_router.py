@@ -167,10 +167,6 @@ async def get_kaggle_status():
     return {"available": is_kaggle_available()}
 
 
-_COMPETITION_SEARCH_CACHE: dict[str, tuple[float, list[dict[str, str]]]] = {}
-CACHE_TTL = 3600
-
-
 @router.get("/api/project/{project_id}/profile/kaggle/competitions")
 async def search_kaggle_competitions(
     project_id: uuid.UUID,
@@ -178,13 +174,6 @@ async def search_kaggle_competitions(
 ):
     if not search:
         raise HTTPException(status_code=400, detail="Missing search keyword")
-
-    cache_key = search.strip().lower()
-    now = time.time()
-    if cache_key in _COMPETITION_SEARCH_CACHE:
-        ts, cached_results = _COMPETITION_SEARCH_CACHE[cache_key]
-        if now - ts < CACHE_TTL:
-            return cached_results
 
     _, client = get_kaggle_api_and_client()
 
@@ -222,7 +211,6 @@ async def search_kaggle_competitions(
                 }
             )
 
-    _COMPETITION_SEARCH_CACHE[cache_key] = (now, results)
     return results
 
 
