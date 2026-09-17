@@ -9,7 +9,7 @@ import {
 	X,
 } from "lucide-react";
 import type React from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { NotebookFileExtension } from "@/api/client";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import type { KaggleNotebookList } from "@/lib/types";
 
 interface ImportModalProps {
 	onImport: (files: File[]) => Promise<void>;
@@ -32,9 +33,8 @@ interface ImportModalProps {
 	}) => Promise<void>;
 	onSearchKaggle?: (
 		competition: string,
-	) => Promise<
-		{ ref: string; title: string; author: string; score?: number | null }[]
-	>;
+		pageToken?: string,
+	) => Promise<KaggleNotebookList>;
 	onSearchKaggleCompetitions?: (
 		search: string,
 	) => Promise<{ ref: string; title: string; description: string }[]>;
@@ -64,8 +64,7 @@ export default function ImportModal({
 		title: string;
 	} | null>(null);
 	const [searchedNotebooks, setSearchedNotebooks] = useState<
-		| { ref: string; title: string; author: string; score?: number | null }[]
-		| null
+		KaggleNotebookList["notebooks"] | null
 	>(null);
 	const [selectedNotebookSlugs, setSelectedNotebookSlugs] = useState<string[]>(
 		[],
@@ -73,6 +72,8 @@ export default function ImportModal({
 	const [isSearching, setIsSearching] = useState(false);
 	const [displayLimit, setDisplayLimit] = useState(20);
 	const [notebookSearch, setNotebookSearch] = useState("");
+	const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+	const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
 
 	const filteredNotebooks = useMemo(() => {
 		if (!searchedNotebooks) return null;
@@ -86,32 +87,40 @@ export default function ImportModal({
 		);
 	}, [searchedNotebooks, notebookSearch]);
 
-	const handleSearchCompetitionsClick = () => {
-		if (!onSearchKaggleCompetitions || !competition) return;
-		setIsSearching(true);
-		setServerError(null);
-		setSearchedNotebooks(null);
-		setSelectedCompetition(null);
-		setDisplayLimit(20);
-		setNotebookSearch("");
+	const filteredCompetitions = useMemo(() => {
+		if (!searchedCompetitions) return null;
+		if (!competition.trim()) return searchedCompetitions;
+		const lowerSearch = competition.toLowerCase();
+		return searchedCompetitions.filter(
+			(c) =>
+				c.title.toLowerCase().includes(lowerSearch) ||
+				c.ref.toLowerCase().includes(lowerSearch) ||
+				c.description.toLowerCase().includes(lowerSearch),
+		);
+	}, [searchedCompetitions, competition]);
 
+	useEffect(() => {
+		if (!onSearchKaggleCompetitions || !competition.trim()) {
+			return;
+		}
 		const compSlug = competition.match(/kaggle\.com\/competitions\/([^/?#]+)/);
 		const finalComp = compSlug ? compSlug[1] : competition.trim();
+		if (finalComp.length < 2) return;
 
-		onSearchKaggleCompetitions(finalComp)
-			.then((results) => {
-				setSearchedCompetitions(results);
-				if (results.length === 0) {
-					setServerError("No competitions found matching your search.");
-				}
-			})
-			.catch((error: any) => {
-				setServerError(error.message);
-			})
-			.finally(() => {
-				setIsSearching(false);
-			});
-	};
+		const timer = setTimeout(() => {
+			setIsSearching(true);
+			onSearchKaggleCompetitions(finalComp)
+				.then((results) => {
+					setSearchedCompetitions(results);
+				})
+				.catch((error: any) => {
+					setServerError(error.message || "An error occurred");
+				})
+				.finally(() => setIsSearching(false));
+		}, 300);
+
+		return () => clearTimeout(timer);
+	}, [competition, onSearchKaggleCompetitions]);
 
 	const handleSelectCompetition = (comp: { ref: string; title: string }) => {
 		if (!onSearchKaggle) return;
@@ -123,8 +132,9 @@ export default function ImportModal({
 		setNotebookSearch("");
 
 		onSearchKaggle(comp.ref)
-			.then((notebooks) => {
-				setSearchedNotebooks(notebooks);
+			.then((result) => {
+				setSearchedNotebooks(result.notebooks);
+				setNextPageToken(result.next_page_token);
 				setSelectedNotebookSlugs([]);
 			})
 			.catch((error: any) => {
@@ -408,14 +418,13 @@ export default function ImportModal({
 									>
 										Competition Name
 									</label>
-									<div className="flex space-x-2">
+									<div className="relative flex items-center">
 										<Input
 											id="competition-name"
 											placeholder="e.g. titanic, playground-series-s6e7"
 											value={competition}
 											onChange={(e) => {
 												setCompetition(e.target.value);
-												setSearchedCompetitions(null);
 												setSearchedNotebooks(null);
 												setSelectedCompetition(null);
 												setSelectedNotebookSlugs([]);
@@ -424,52 +433,50 @@ export default function ImportModal({
 											}}
 											className="w-full"
 										/>
-										{onSearchKaggleCompetitions && (
-											<Button
-												onClick={handleSearchCompetitionsClick}
-												disabled={!competition || isSearching}
-												variant="outline"
-											>
-												{isSearching ? (
-													<Loader2 className="w-4 h-4 animate-spin" />
-												) : (
-													"Search"
-												)}
-											</Button>
-										)}
 									</div>
 									<p className="mt-2 text-xs text-slate-500">
 										Enter the exact slug of the Kaggle competition (found in the
 										competition URL). Requires a verified Kaggle account.
 									</p>
 
-									{searchedCompetitions && !selectedCompetition && (
-										<div className="mt-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950 max-h-48 overflow-y-auto">
-											<div className="sticky top-0 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 py-2 flex justify-between items-center">
-												<p className="text-xs font-medium text-slate-600 dark:text-slate-400">
-													Found {searchedCompetitions.length} competitions
-												</p>
-											</div>
-											<div className="divide-y divide-slate-100 dark:divide-slate-800">
-												{searchedCompetitions.map((comp) => (
-													<button
-														key={comp.ref}
-														type="button"
-														onClick={() => handleSelectCompetition(comp)}
-														className="w-full text-left block px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors group"
-													>
-														<p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
-															{comp.title}
-														</p>
-														<p className="text-xs text-slate-500 truncate mt-0.5">
-															{comp.description} &bull;{" "}
-															<span className="font-mono">{comp.ref}</span>
-														</p>
-													</button>
-												))}
-											</div>
+									{isSearching && (
+										<div className="flex flex-col items-center justify-center min-h-[200px] mt-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-slate-900/50">
+											<Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-4" />
+											<p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+												Searching notebooks...
+											</p>
 										</div>
 									)}
+
+									{filteredCompetitions &&
+										!selectedCompetition &&
+										!isSearching && (
+											<div className="mt-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950 max-h-48 overflow-y-auto">
+												<div className="sticky top-0 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 py-2 flex justify-between items-center">
+													<p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+														Found {filteredCompetitions.length} competitions
+													</p>
+												</div>
+												<div className="divide-y divide-slate-100 dark:divide-slate-800">
+													{filteredCompetitions.map((comp) => (
+														<button
+															key={comp.ref}
+															type="button"
+															onClick={() => handleSelectCompetition(comp)}
+															className="w-full text-left block px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors group"
+														>
+															<p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
+																{comp.title}
+															</p>
+															<p className="text-xs text-slate-500 truncate mt-0.5">
+																{comp.description} &bull;{" "}
+																<span className="font-mono">{comp.ref}</span>
+															</p>
+														</button>
+													))}
+												</div>
+											</div>
+										)}
 
 									{selectedCompetition && (
 										<div className="mt-4">
@@ -495,7 +502,7 @@ export default function ImportModal({
 										</div>
 									)}
 
-									{searchedNotebooks && (
+									{searchedNotebooks && !isSearching && (
 										<div
 											className="mt-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950 flex flex-col min-h-0"
 											style={{ maxHeight: "400px" }}
@@ -504,27 +511,69 @@ export default function ImportModal({
 												<div className="flex justify-between items-center">
 													<p className="text-xs font-medium text-slate-600 dark:text-slate-400">
 														Found {filteredNotebooks?.length || 0} notebooks
+														{isFetchingNextPage && " (loading more...)"}
 													</p>
 													<label className="flex items-center space-x-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
 														<input
 															type="checkbox"
-															className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+															className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
+															disabled={isFetchingNextPage}
 															checked={
 																(filteredNotebooks?.length || 0) > 0 &&
 																selectedNotebookSlugs.length ===
 																	filteredNotebooks?.length
 															}
-															onChange={(e) => {
+															onChange={async (e) => {
 																if (e.target.checked && filteredNotebooks) {
-																	setSelectedNotebookSlugs(
-																		filteredNotebooks.map((nb) => nb.ref),
-																	);
+																	if (
+																		nextPageToken &&
+																		selectedCompetition &&
+																		onSearchKaggle
+																	) {
+																		setIsFetchingNextPage(true);
+																		try {
+																			let currentToken: string | null =
+																				nextPageToken;
+																			let allNbs = [
+																				...(searchedNotebooks || []),
+																			];
+																			while (currentToken) {
+																				const result = await onSearchKaggle(
+																					selectedCompetition.ref,
+																					currentToken,
+																				);
+																				allNbs = [
+																					...allNbs,
+																					...result.notebooks,
+																				];
+																				currentToken = result.next_page_token;
+																			}
+																			setSearchedNotebooks(allNbs);
+																			setNextPageToken(null);
+																			setSelectedNotebookSlugs(
+																				allNbs.map((nb) => nb.ref),
+																			);
+																		} catch (err) {
+																			console.error(err);
+																		} finally {
+																			setIsFetchingNextPage(false);
+																		}
+																	} else {
+																		setSelectedNotebookSlugs(
+																			filteredNotebooks.map((nb) => nb.ref),
+																		);
+																	}
 																} else {
 																	setSelectedNotebookSlugs([]);
 																}
 															}}
 														/>
-														<span>Select All</span>
+														<span className="flex items-center space-x-1">
+															<span>Select All</span>
+															{isFetchingNextPage && (
+																<Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
+															)}
+														</span>
 													</label>
 												</div>
 												<div className="relative">
@@ -546,12 +595,42 @@ export default function ImportModal({
 													const { scrollTop, scrollHeight, clientHeight } =
 														e.currentTarget;
 													if (scrollHeight - scrollTop <= clientHeight + 50) {
-														setDisplayLimit((prev) =>
-															Math.min(
-																prev + 20,
-																filteredNotebooks?.length || 0,
-															),
-														);
+														if (
+															displayLimit >=
+																(filteredNotebooks?.length || 0) &&
+															nextPageToken &&
+															!isFetchingNextPage &&
+															selectedCompetition &&
+															onSearchKaggle &&
+															!notebookSearch.trim()
+														) {
+															setIsFetchingNextPage(true);
+															onSearchKaggle(
+																selectedCompetition.ref,
+																nextPageToken,
+															)
+																.then((result) => {
+																	setSearchedNotebooks((prev) => [
+																		...(prev || []),
+																		...result.notebooks,
+																	]);
+																	setNextPageToken(result.next_page_token);
+																	setDisplayLimit((prev) => prev + 20);
+																})
+																.catch((error: any) => {
+																	setServerError(
+																		error.message || "An error occurred",
+																	);
+																})
+																.finally(() => setIsFetchingNextPage(false));
+														} else {
+															setDisplayLimit((prev) =>
+																Math.min(
+																	prev + 20,
+																	filteredNotebooks?.length || 0,
+																),
+															);
+														}
 													}
 												}}
 											>

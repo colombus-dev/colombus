@@ -193,11 +193,10 @@ async def search_kaggle_competitions(
         client._http_client._init_session()
         client._http_client._session.timeout = 5.0
         resp = client.search.search_api_client.list_entities(req)
-    except Exception as e:
-        error_msg = str(e)
+    except (ValueError, OSError, RuntimeError) as e:
         raise HTTPException(
             status_code=400,
-            detail=f"Kaggle API failed to list competitions: {error_msg}",
+            detail=f"Kaggle API failed to list competitions: {e}",
         )
 
     results = []
@@ -218,10 +217,11 @@ async def search_kaggle_competitions(
 async def list_kaggle_competition(
     project_id: uuid.UUID,
     competition: str,
+    page_token: str | None = None,
 ):
     if not competition:
         raise HTTPException(status_code=400, detail="Missing competition slug")
-    return await list_kaggle_competition_notebooks(competition)
+    return await list_kaggle_competition_notebooks(competition, page_token)
 
 
 @router.post("/api/project/{project_id}/profile/import/kaggle")
@@ -238,7 +238,7 @@ async def import_kaggle_competition(
     if not payload.competition:
         raise HTTPException(status_code=400, detail="Missing competition or slugs")
 
-    notebooks = await list_kaggle_competition_notebooks(payload.competition)
-    slugs = [nb["ref"] for nb in notebooks[:10]]
+    result = await list_kaggle_competition_notebooks(payload.competition)
+    slugs = [nb["ref"] for nb in result["notebooks"][:10]]
 
     return await pull_kaggle_notebooks(project_id, session, slugs, payload.scores)

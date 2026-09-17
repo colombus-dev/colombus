@@ -16,11 +16,6 @@ from app.utils.save_notebook_sql import save_notebook_as_sql
 
 logger = logging.getLogger(__name__)
 
-from kagglesdk.search.types.search_api_service import (
-    DocumentType,
-    ListEntitiesFilters,
-    ListEntitiesRequest,
-)
 
 try:
     from kaggle.api.kaggle_api_extended import KaggleApi
@@ -137,45 +132,16 @@ async def pull_kaggle_notebooks(
         return [profile.name for profile in profiles]
 
 
-async def get_kaggle_scores(competition: str) -> dict[str, float]:
-    try:
-        _, client = get_kaggle_api_and_client()
-    except HTTPException:
-        logger.warning("Failed to build KaggleClient for score fetching")
-        return {}
-
-    req = ListEntitiesRequest()
-    filters = ListEntitiesFilters()
-    filters.query = competition
-    filters.document_types = [DocumentType.KERNEL]
-    req.filters = filters
-    req.page_size = 50
-
-    try:
-        client._http_client._init_session()
-        client._http_client._session.timeout = 5.0
-        resp = client.search.search_api_client.list_entities(req)
-    except (ValueError, OSError, RuntimeError) as e:
-        logger.warning(f"Failed to query Kaggle Search list_entities: {e}")
-        return {}
-
-    scores = {}
-    if resp and resp.documents:
-        for doc in resp.documents:
-            author = doc.owner_user.user_name if doc.owner_user else None
-            ref = f"{author}/{doc.slug}" if author else doc.slug
-            score_val = (
-                doc.kernel_document.best_public_score if doc.kernel_document else None
-            )
-            if ref and score_val is not None:
-                try:
-                    scores[ref] = float(score_val)
-                except (ValueError, TypeError):
-                    pass
-    return scores
+from kagglesdk.search.types.search_api_service import (
+    DocumentType,
+    ListEntitiesFilters,
+    ListEntitiesRequest,
+)
 
 
-async def list_kaggle_competition_notebooks(competition: str) -> list[dict[str, Any]]:
+async def list_kaggle_competition_notebooks(
+    competition: str, page_token: str | None = None
+) -> dict[str, Any]:
     _, client = get_kaggle_api_and_client()
 
     req = ListEntitiesRequest()
@@ -184,33 +150,23 @@ async def list_kaggle_competition_notebooks(competition: str) -> list[dict[str, 
     filters.document_types = [DocumentType.KERNEL]
     req.filters = filters
     req.page_size = 100
+    if page_token:
+        req.page_token = page_token
 
     all_documents = []
+    next_page_token = None
     try:
         client._http_client._init_session()
         client._http_client._session.timeout = 5.0
-        while True:
-            resp = client.search.search_api_client.list_entities(req)
-            if resp and resp.documents:
-                all_documents.extend(resp.documents)
-                if getattr(resp, "next_page_token", None):
-                    req.page_token = resp.next_page_token
-                else:
-                    break
-            else:
-                break
+        resp = client.search.search_api_client.list_entities(req)
+        if resp and resp.documents:
+            all_documents.extend(resp.documents)
+            next_page_token = getattr(resp, "next_page_token", None)
     except (ValueError, OSError, RuntimeError) as e:
-        error_msg = str(e)
         raise HTTPException(
             status_code=400,
-            detail=f"Kaggle API failed to list kernels: {error_msg}",
+            detail=f"Kaggle API failed to list kernels: {e}",
         )
-
-    try:
-        scores = await get_kaggle_scores(competition)
-    except (ValueError, OSError, RuntimeError) as e:
-        logger.warning(f"Failed to fetch Kaggle scores automatically: {e}")
-        scores = {}
 
     notebooks = []
     seen_refs = set()
@@ -219,6 +175,10 @@ async def list_kaggle_competition_notebooks(competition: str) -> list[dict[str, 
             author = doc.owner_user.user_name if doc.owner_user else None
             ref = f"{author}/{doc.slug}" if author else getattr(doc, "slug", "")
             title = getattr(doc, "title", getattr(doc, "slug", ""))
+            best_score = (
+                doc.kernel_document.best_public_score if doc.kernel_document else None
+            )
+            score_val = float(best_score) if best_score is not None else None
 
             if ref and ref not in seen_refs:
                 seen_refs.add(ref)
@@ -227,13 +187,15 @@ async def list_kaggle_competition_notebooks(competition: str) -> list[dict[str, 
                         "ref": ref,
                         "title": title,
                         "author": author or "",
-                        "score": scores.get(ref),
+                        "score": score_val,
                     }
                 )
 
-    if not notebooks:
+    if not notebooks and not page_token:
         raise HTTPException(
             status_code=400, detail="No notebooks found for this competition."
         )
 
-    return notebooks
+    result = {"notebooks": notebooks, "next_page_token": next_page_token}
+
+    return result

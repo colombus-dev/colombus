@@ -1,5 +1,10 @@
 import axios from "axios";
-import type { DiffResult, PatternGroup, PpmResult } from "@/lib/types";
+import type {
+	DiffResult,
+	KaggleNotebookList,
+	PatternGroup,
+	PpmResult,
+} from "@/lib/types";
 import { Pattern } from "@/lib/types";
 import { useColombusStore } from "@/store";
 
@@ -184,11 +189,12 @@ export async function getKaggleStatus() {
 export async function getKaggleCompetitionNotebooks(
 	projectId: string,
 	competition: string,
+	pageToken?: string,
 ) {
 	return await axiosInstance
-		.get<
-			{ ref: string; title: string; author: string; score?: number | null }[]
-		>(`/project/${projectId}/profile/kaggle/list`, { params: { competition } })
+		.get<KaggleNotebookList>(`/project/${projectId}/profile/kaggle/list`, {
+			params: { competition, page_token: pageToken },
+		})
 		.then(({ data }) => data);
 }
 
