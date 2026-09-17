@@ -113,7 +113,9 @@ export default function ImportModal({
 				.then((results) => {
 					setSearchedCompetitions(results);
 				})
-				.catch(() => {})
+				.catch((error: any) => {
+					setServerError(error.message || "An error occurred");
+				})
 				.finally(() => setIsSearching(false));
 		}, 300);
 
@@ -615,7 +617,11 @@ export default function ImportModal({
 																	setNextPageToken(result.next_page_token);
 																	setDisplayLimit((prev) => prev + 20);
 																})
-																.catch(() => {})
+																.catch((error: any) => {
+																	setServerError(
+																		error.message || "An error occurred",
+																	);
+																})
 																.finally(() => setIsFetchingNextPage(false));
 														} else {
 															setDisplayLimit((prev) =>
