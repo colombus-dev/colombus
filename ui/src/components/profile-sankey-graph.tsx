@@ -1,5 +1,5 @@
 import { ZoomIn, ZoomOut } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Plot from "react-plotly.js";
 import type { GraphDefinition } from "@/api/client";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { stepsColorsMapping } from "@/configuration";
-import { hexToRgba, scoreToBandColor } from "@/lib/utils";
+import { hexToRgba } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 import ProfileExplorer2GraphSettingsBar from "./profile-explorer2-graph-settings-bar";
 
@@ -43,6 +43,21 @@ export default function ProfileSankeyGraph({
 	);
 
 	const [zoom, setZoom] = useState(1);
+	const innerRef = useRef<HTMLDivElement>(null);
+	const outerRef = useRef<HTMLDivElement>(null);
+	const dragRef = useRef({
+		isDragging: false,
+		startX: 0,
+		startY: 0,
+		panX: 0,
+		panY: 0,
+		currentZoom: 1,
+		wheelTimeout: null as NodeJS.Timeout | null,
+	});
+
+	useEffect(() => {
+		dragRef.current.currentZoom = zoom;
+	}, [zoom]);
 
 	const sankeyData = useMemo(() => {
 		if (!nodes || nodes.length === 0) return null;
@@ -96,13 +111,27 @@ export default function ProfileSankeyGraph({
 			avgNodeScore[nodeId] = scores.reduce((a, b) => a + b, 0) / scores.length;
 		}
 
-		const getBandIndex = (score: number | null | undefined) => {
-			if (score === undefined || score === null) return -1;
-			if (score <= 0.2) return 0;
-			if (score <= 0.4) return 1;
-			if (score <= 0.6) return 2;
-			if (score <= 0.8) return 3;
-			return 4;
+		// removed getBandIndex
+
+		const scoreToContinuousColor = (score: number | null | undefined) => {
+			if (score === undefined || score === null) return "#94a3b8";
+			const s = Math.max(0, Math.min(1, score));
+			let r = 0,
+				g = 0,
+				b = 0;
+			if (s < 0.5) {
+				const ratio = s / 0.5;
+				r = Math.round(239 + (250 - 239) * ratio);
+				g = Math.round(68 + (204 - 68) * ratio);
+				b = Math.round(68 + (21 - 68) * ratio);
+			} else {
+				const ratio = (s - 0.5) / 0.5;
+				r = Math.round(250 + (34 - 250) * ratio);
+				g = Math.round(204 + (197 - 204) * ratio);
+				b = Math.round(21 + (94 - 21) * ratio);
+			}
+			const toHex = (c: number) => c.toString(16).padStart(2, "0");
+			return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 		};
 
 		const checkCondition = (src: string, tgt: string) => {
@@ -114,14 +143,26 @@ export default function ProfileSankeyGraph({
 			const tgtScore = avgNodeScore[tgt];
 			if (srcScore === undefined || tgtScore === undefined) return false;
 
-			const srcBand = getBandIndex(srcScore);
-			const tgtBand = getBandIndex(tgtScore);
-			const delta = tgtBand - srcBand;
+			const delta = tgtScore - srcScore;
 
-			if (scoreEvolutionFilter === 1) return delta < 0;
+			if (scoreEvolutionFilter === 1) return delta <= 0;
 			if (scoreEvolutionFilter === 2) return delta === 0;
-			if (scoreEvolutionFilter === 3) return delta > 0;
+			if (scoreEvolutionFilter === 3) return delta >= 0;
 			return true;
+		};
+
+		const checkStrictCondition = (src: string, tgt: string) => {
+			if (!useScoreEvolutionFilter) return false;
+			const isPadding =
+				src.startsWith("_PADDING_") || tgt.startsWith("_PADDING_");
+			if (isPadding) return false;
+			const srcScore = avgNodeScore[src];
+			const tgtScore = avgNodeScore[tgt];
+			if (srcScore === undefined || tgtScore === undefined) return false;
+			const delta = tgtScore - srcScore;
+			if (scoreEvolutionFilter === 1) return delta < 0;
+			if (scoreEvolutionFilter === 3) return delta > 0;
+			return false;
 		};
 
 		const nodesByDepth: string[][] = Array.from({ length: maxDepth }, () => []);
@@ -141,16 +182,26 @@ export default function ProfileSankeyGraph({
 		}
 
 		const reachableFromStart = new Set<string>();
+		const reachableFromStartStrict = new Set<string>();
 		for (const nodeId of nodesByDepth[0]) reachableFromStart.add(nodeId);
 
 		for (let d = 0; d < maxDepth - 1; d++) {
 			for (const src of nodesByDepth[d]) {
-				if (!reachableFromStart.has(src)) continue;
+				const isReach =
+					reachableFromStart.has(src) || reachableFromStartStrict.has(src);
+				if (!isReach) continue;
 				const targets = existingLinks[src];
 				if (targets) {
 					for (const tgt of targets) {
 						if (checkCondition(src, tgt)) {
-							reachableFromStart.add(tgt);
+							if (
+								reachableFromStartStrict.has(src) ||
+								checkStrictCondition(src, tgt)
+							) {
+								reachableFromStartStrict.add(tgt);
+							} else {
+								reachableFromStart.add(tgt);
+							}
 						}
 					}
 				}
@@ -158,6 +209,7 @@ export default function ProfileSankeyGraph({
 		}
 
 		const canReachEnd = new Set<string>();
+		const canReachEndStrict = new Set<string>();
 		if (maxDepth > 0) {
 			for (const nodeId of nodesByDepth[maxDepth - 1]) canReachEnd.add(nodeId);
 			for (let d = maxDepth - 2; d >= 0; d--) {
@@ -165,8 +217,19 @@ export default function ProfileSankeyGraph({
 					const targets = existingLinks[src];
 					if (targets) {
 						for (const tgt of targets) {
-							if (canReachEnd.has(tgt) && checkCondition(src, tgt)) {
-								canReachEnd.add(src);
+							if (checkCondition(src, tgt)) {
+								const isReachEnd =
+									canReachEnd.has(tgt) || canReachEndStrict.has(tgt);
+								if (isReachEnd) {
+									if (
+										canReachEndStrict.has(tgt) ||
+										checkStrictCondition(src, tgt)
+									) {
+										canReachEndStrict.add(src);
+									} else {
+										canReachEnd.add(src);
+									}
+								}
 							}
 						}
 					}
@@ -263,10 +326,23 @@ export default function ProfileSankeyGraph({
 					bucketKey = "transparent";
 					countToAdd = 1e-6;
 				} else {
-					const partOfValidPath =
-						checkCondition(sourceId, targetId) &&
-						reachableFromStart.has(sourceId) &&
-						canReachEnd.has(targetId);
+					const isReachStart =
+						reachableFromStart.has(sourceId) ||
+						reachableFromStartStrict.has(sourceId);
+					const isReachEnd =
+						canReachEnd.has(targetId) || canReachEndStrict.has(targetId);
+					let partOfValidPath =
+						checkCondition(sourceId, targetId) && isReachStart && isReachEnd;
+					if (
+						partOfValidPath &&
+						useScoreEvolutionFilter &&
+						(scoreEvolutionFilter === 1 || scoreEvolutionFilter === 3)
+					) {
+						partOfValidPath =
+							reachableFromStartStrict.has(sourceId) ||
+							checkStrictCondition(sourceId, targetId) ||
+							canReachEndStrict.has(targetId);
+					}
 
 					if (!partOfValidPath) {
 						bucketKey = "grey";
@@ -323,7 +399,7 @@ export default function ProfileSankeyGraph({
 					} else {
 						const avgScore =
 							bucket.numScores > 0 ? bucket.sumScore / bucket.numScores : 0;
-						const colorHex = scoreToBandColor(avgScore);
+						const colorHex = scoreToContinuousColor(avgScore);
 						const alphaStr = bucketKey.split("_")[1];
 						const alpha = parseFloat(alphaStr);
 						linkColor = hexToRgba(colorHex, alpha);
@@ -504,8 +580,8 @@ export default function ProfileSankeyGraph({
 	}
 
 	const dynamicThickness = sankeyData
-		? Math.max(10, 30 - sankeyData.maxDepth * 0.4)
-		: 25;
+		? Math.max(10, 120 - sankeyData.maxDepth * 0.4)
+		: 100;
 	const dynamicVerticalMargin = sankeyData
 		? Math.min(100, 20 + sankeyData.maxDepth * 1.5)
 		: 40;
@@ -558,8 +634,60 @@ export default function ProfileSankeyGraph({
 				</TooltipProvider>
 			</div>
 
-			<div className="w-full h-full overflow-auto">
+			<div
+				role="application"
+				ref={outerRef}
+				className="w-full h-full overflow-hidden cursor-grab"
+				onWheel={(e) => {
+					let newZoom = dragRef.current.currentZoom - e.deltaY * 0.002;
+					newZoom = Math.min(3, Math.max(0.05, newZoom));
+					dragRef.current.currentZoom = newZoom;
+
+					if (innerRef.current) {
+						innerRef.current.style.transform = `translate(${dragRef.current.panX}px, ${dragRef.current.panY}px) scale(${newZoom / zoom})`;
+					}
+
+					if (dragRef.current.wheelTimeout)
+						clearTimeout(dragRef.current.wheelTimeout);
+					dragRef.current.wheelTimeout = setTimeout(() => {
+						setZoom(newZoom);
+					}, 150);
+				}}
+				onMouseDown={(e) => {
+					if (e.button !== 0) return;
+					dragRef.current.isDragging = true;
+					dragRef.current.startX = e.clientX - dragRef.current.panX;
+					dragRef.current.startY = e.clientY - dragRef.current.panY;
+					if (outerRef.current) {
+						outerRef.current.classList.remove("cursor-grab");
+						outerRef.current.classList.add("cursor-grabbing");
+					}
+				}}
+				onMouseMove={(e) => {
+					if (!dragRef.current.isDragging) return;
+					dragRef.current.panX = e.clientX - dragRef.current.startX;
+					dragRef.current.panY = e.clientY - dragRef.current.startY;
+					if (innerRef.current) {
+						innerRef.current.style.transform = `translate(${dragRef.current.panX}px, ${dragRef.current.panY}px) scale(${dragRef.current.currentZoom / zoom})`;
+					}
+				}}
+				onMouseUp={() => {
+					dragRef.current.isDragging = false;
+					if (outerRef.current) {
+						outerRef.current.classList.remove("cursor-grabbing");
+						outerRef.current.classList.add("cursor-grab");
+					}
+				}}
+				onMouseLeave={() => {
+					dragRef.current.isDragging = false;
+					if (outerRef.current) {
+						outerRef.current.classList.remove("cursor-grabbing");
+						outerRef.current.classList.add("cursor-grab");
+					}
+				}}
+			>
 				<div
+					ref={innerRef}
 					style={{
 						minWidth: "100%",
 						minHeight: "100%",
@@ -568,12 +696,19 @@ export default function ProfileSankeyGraph({
 								? `${sankeyData.maxDepth * 100 * zoom}px`
 								: `${zoom * 100}%`,
 						height: `${Math.max(100, sankeyData.uniqueNodesCount * 0.5 * zoom)}%`,
+						transformOrigin: "0 0",
+						transform: `translate(${dragRef.current.panX}px, ${dragRef.current.panY}px) scale(${dragRef.current.currentZoom / zoom})`,
 					}}
 				>
 					<Plot
 						onClick={(data) => {
 							if (data.points && data.points.length > 0) {
-								const point = data.points[0] as any;
+								const point = data.points[0] as {
+									source?: number;
+									pointNumber?: number;
+									index?: number;
+									label?: string;
+								};
 
 								const isNode = point.source === undefined;
 
@@ -590,10 +725,7 @@ export default function ProfileSankeyGraph({
 										let nodeName = "";
 										if (customDataStr) {
 											nodeName = customDataStr.split("<br />")[0];
-										} else if (
-											sankeyData.nodeLabels &&
-											sankeyData.nodeLabels[idx]
-										) {
+										} else if (sankeyData.nodeLabels?.[idx]) {
 											nodeName = sankeyData.nodeLabels[idx].replace(
 												/ \(\d+\)$/,
 												"",
@@ -626,8 +758,11 @@ export default function ProfileSankeyGraph({
 									},
 									label: sankeyData.nodeLabels,
 									color: sankeyData.nodeColors,
-									// biome-ignore lint/suspicious/noExplicitAny: Plotly customdata prop type workaround
-									customdata: sankeyData?.nodeCustomData as any,
+									customdata: sankeyData?.nodeCustomData as (
+										| string
+										| number
+										| null
+									)[],
 									hovertemplate: "%{customdata}<extra></extra>",
 								},
 								link: {
