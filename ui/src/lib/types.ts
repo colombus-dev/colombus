@@ -103,3 +103,13 @@ export type DiffResult = z.infer<typeof DiffResult>;
 
 // Monaco editor (for DSL)
 export type MonacoEditor = typeof monaco_editor;
+
+export type KaggleNotebookList = {
+	notebooks: {
+		ref: string;
+		title: string;
+		author: string;
+		score?: number | null;
+	}[];
+	next_page_token: string | null;
+};

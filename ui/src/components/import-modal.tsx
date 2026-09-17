@@ -22,6 +22,7 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import type { KaggleNotebookList } from "@/lib/types";
 
 interface ImportModalProps {
 	onImport: (files: File[]) => Promise<void>;
@@ -33,15 +34,7 @@ interface ImportModalProps {
 	onSearchKaggle?: (
 		competition: string,
 		pageToken?: string,
-	) => Promise<{
-		notebooks: {
-			ref: string;
-			title: string;
-			author: string;
-			score?: number | null;
-		}[];
-		next_page_token: string | null;
-	}>;
+	) => Promise<KaggleNotebookList>;
 	onSearchKaggleCompetitions?: (
 		search: string,
 	) => Promise<{ ref: string; title: string; description: string }[]>;
@@ -71,8 +64,7 @@ export default function ImportModal({
 		title: string;
 	} | null>(null);
 	const [searchedNotebooks, setSearchedNotebooks] = useState<
-		| { ref: string; title: string; author: string; score?: number | null }[]
-		| null
+		KaggleNotebookList["notebooks"] | null
 	>(null);
 	const [selectedNotebookSlugs, setSelectedNotebookSlugs] = useState<string[]>(
 		[],
