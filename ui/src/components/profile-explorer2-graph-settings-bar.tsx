@@ -72,11 +72,7 @@ const ProfileExplorer2GraphSettingsBar: React.FunctionComponent<
 							<p className="font-bold">Customization</p>
 							<RadioGroup
 								key="radio-ppm-nodes-display-div"
-								value={
-									pathsDisplayMode === "show-variable"
-										? "show-fixed"
-										: pathsDisplayMode
-								}
+								value={pathsDisplayMode}
 								onValueChange={(value) =>
 									// biome-ignore lint/suspicious/noExplicitAny: Temporary workaround
 									setPathsDisplayMode(value as any)
@@ -94,9 +90,9 @@ const ProfileExplorer2GraphSettingsBar: React.FunctionComponent<
 									</label>
 								</div>
 								<div className="flex items-center space-x-2">
-									<RadioGroupItem value="show-fixed" id="show-fixed" />
+									<RadioGroupItem value="show-matching" id="show-matching" />
 									<label
-										htmlFor="show-fixed"
+										htmlFor="show-matching"
 										className="text-sm font-medium leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 									>
 										Show matching paths

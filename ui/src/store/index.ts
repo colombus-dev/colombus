@@ -2,7 +2,7 @@ import type { StateCreator } from "zustand";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import { postDiffSort } from "@/api/client";
-import type { PpmNodesDisplayMode } from "@/configuration";
+import type { PathsDisplayMode, PpmNodesDisplayMode } from "@/configuration";
 import type { DiffResult, Pattern, PpmResult } from "@/lib/types";
 
 interface AuthSlice {
@@ -33,9 +33,9 @@ interface GraphCustomizationSlice {
 	setDisplayedLevel: (level: number) => void;
 	useWeightedNodes: boolean; // default true
 	setUseWeightedNodes: (uwn: boolean) => void;
-	pathsDisplayMode: PpmNodesDisplayMode;
+	pathsDisplayMode: PathsDisplayMode;
 	patternCapturedNodesDisplayMode: PpmNodesDisplayMode;
-	setPathsDisplayMode: (mode: PpmNodesDisplayMode) => void;
+	setPathsDisplayMode: (mode: PathsDisplayMode) => void;
 	setPatternCapturedNodesDisplayMode: (mode: PpmNodesDisplayMode) => void;
 	scoreEvolutionFilter: number; // 1 = Decreasing, 2 = Constant, 3 = Increasing
 	setScoreEvolutionFilter: (filter: number) => void;
@@ -143,7 +143,7 @@ const createGraphCustomizationSlice: StateCreator<
 	useWeightedNodes: true,
 	setUseWeightedNodes: (uwn) =>
 		set((state) => ({ ...state, useWeightedNodes: uwn })),
-	pathsDisplayMode: "show-variable",
+	pathsDisplayMode: "show-matching",
 	patternCapturedNodesDisplayMode: "show-variable",
 	setPatternCapturedNodesDisplayMode: (mode) =>
 		set((state) => ({ ...state, patternCapturedNodesDisplayMode: mode })),

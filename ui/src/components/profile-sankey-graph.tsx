@@ -345,7 +345,7 @@ export default function ProfileSankeyGraph({
 					if (!partOfValidPath) {
 						bucketKey = "grey";
 					} else if (isPatternActive) {
-						if (pathsDisplayMode === "show-fixed") {
+						if (pathsDisplayMode === "show-matching") {
 							bucketKey = isMatched ? "colored_0.75" : "grey";
 						} else {
 							bucketKey = "colored_0.6";
