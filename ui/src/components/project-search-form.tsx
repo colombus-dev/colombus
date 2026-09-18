@@ -5,21 +5,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PATH } from "@/lib/constants.ts";
 import { cn } from "@/lib/utils";
+import { useColombusStore } from "@/store";
 
 const ProjectSearchForm: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
 > = ({ ...divProps }) => {
+	const jwtToken = useColombusStore((state) => state.jwtToken);
 	const navigate = useNavigate();
 
 	const handleProfileFormSubmit = useCallback(
 		async (formData: FormData) => {
 			const projectId = formData.get("project-name-form");
-			if (!projectId) {
+			if (!jwtToken || !projectId) {
 				return;
 			}
 			navigate(`${PATH.EXPLORER}/${projectId}`);
 		},
-		[navigate],
+		[jwtToken, navigate],
 	);
 
 	return (
