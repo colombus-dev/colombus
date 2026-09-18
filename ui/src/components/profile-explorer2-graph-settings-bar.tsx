@@ -23,11 +23,9 @@ const ProfileExplorer2GraphSettingsBar: React.FunctionComponent<
 	const setScoreEvolutionFilter = useColombusStore(
 		(state) => state.setScoreEvolutionFilter,
 	);
-	const patternCapturedNodesDisplayMode = useColombusStore(
-		(state) => state.patternCapturedNodesDisplayMode,
-	);
-	const setPatternCapturedNodesDisplayMode = useColombusStore(
-		(state) => state.setPatternCapturedNodesDisplayMode,
+	const pathsDisplayMode = useColombusStore((state) => state.pathsDisplayMode);
+	const setPathsDisplayMode = useColombusStore(
+		(state) => state.setPathsDisplayMode,
 	);
 
 	return (
@@ -75,13 +73,13 @@ const ProfileExplorer2GraphSettingsBar: React.FunctionComponent<
 							<RadioGroup
 								key="radio-ppm-nodes-display-div"
 								value={
-									patternCapturedNodesDisplayMode === "show-variable"
+									pathsDisplayMode === "show-variable"
 										? "show-fixed"
-										: patternCapturedNodesDisplayMode
+										: pathsDisplayMode
 								}
 								onValueChange={(value) =>
 									// biome-ignore lint/suspicious/noExplicitAny: Temporary workaround
-									setPatternCapturedNodesDisplayMode(value as any)
+									setPathsDisplayMode(value as any)
 								}
 								disabled={!referenceDiffProfile && !currentPattern}
 								className="flex flex-col space-y-2 mt-1"

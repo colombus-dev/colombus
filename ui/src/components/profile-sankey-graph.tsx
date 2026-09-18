@@ -32,9 +32,7 @@ export default function ProfileSankeyGraph({
 		(state) => state.availableProfilesWithPpmData,
 	);
 	const profilesScores = useColombusStore((state) => state.profilesScores);
-	const patternCapturedNodesDisplayMode = useColombusStore(
-		(state) => state.patternCapturedNodesDisplayMode,
-	);
+	const pathsDisplayMode = useColombusStore((state) => state.pathsDisplayMode);
 	const scoreEvolutionFilter = useColombusStore(
 		(state) => state.scoreEvolutionFilter,
 	);
@@ -347,7 +345,7 @@ export default function ProfileSankeyGraph({
 					if (!partOfValidPath) {
 						bucketKey = "grey";
 					} else if (isPatternActive) {
-						if (patternCapturedNodesDisplayMode === "show-fixed") {
+						if (pathsDisplayMode === "show-fixed") {
 							bucketKey = isMatched ? "colored_0.75" : "grey";
 						} else {
 							bucketKey = "colored_0.6";
@@ -558,7 +556,7 @@ export default function ProfileSankeyGraph({
 		filteredProfilesNames,
 		availableProfilesWithPpmData,
 		profilesScores,
-		patternCapturedNodesDisplayMode,
+		pathsDisplayMode,
 		scoreEvolutionFilter,
 		useScoreEvolutionFilter,
 	]);
