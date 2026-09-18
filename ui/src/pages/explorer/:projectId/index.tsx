@@ -18,6 +18,7 @@ import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-resu
 import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
 import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
+import ProfileSankeyGraph from "@/components/profile-sankey-graph";
 import ProfileScoreDistributionChart from "@/components/profile-score-distribution-chart";
 import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,7 @@ const GRAPH_CONTAINER_ID = "graph-container";
 
 export default function ExplorerProjectIdPage() {
 	const [activeTab, setActiveTab] = useState<
-		"explorer" | "statistics" | "code"
+		"explorer" | "statistics" | "code" | "explorer2"
 	>("explorer");
 	const [graphContainerId, setGraphContainerId] = useState<
 		string | undefined
@@ -418,6 +419,17 @@ export default function ExplorerProjectIdPage() {
 						</button>
 						<button
 							type="button"
+							onClick={() => setActiveTab("explorer2")}
+							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${
+								activeTab === "explorer2"
+									? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
+									: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+							}`}
+						>
+							Explorer 2
+						</button>
+						<button
+							type="button"
 							onClick={() => setActiveTab("statistics")}
 							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${
 								activeTab === "statistics"
@@ -442,6 +454,20 @@ export default function ExplorerProjectIdPage() {
 						containerId={GRAPH_CONTAINER_ID}
 						isLoading={isLoading}
 						graphRenderer={renderer.current}
+					/>
+				</div>
+
+				<div
+					className={
+						activeTab === "explorer2"
+							? "flex-1 min-h-0 py-2 h-full"
+							: "absolute left-[-9999px] top-[-9999px] invisible pointer-events-none w-full h-full"
+					}
+				>
+					<ProfileSankeyGraph
+						className="w-full h-full"
+						nodes={filteredWorkflowsNodes}
+						isLoading={isLoading}
 					/>
 				</div>
 
