@@ -20,7 +20,7 @@ export const Navbar = ({
 		<header className="border-grid sticky top-0 z-50 w-full border-b bg-white">
 			<div className="flex h-14 items-center px-6 gap-4 w-full">
 				<img
-					src="/logo.png"
+					src={`${import.meta.env.BASE_URL}logo.png`}
 					alt="Colombus Logo"
 					className="w-8 h-8 rounded-lg shadow-sm shrink-0 object-cover"
 				/>

@@ -50,30 +50,30 @@ export default function ProfileScoreDistributionChart() {
 						</div>
 					</div>
 
-					<div className="flex-1 w-full grid grid-cols-2 gap-3 sm:grid-cols-3">
+					<div className="flex-1 w-full grid grid-cols-2 gap-2 sm:grid-cols-3">
 						{bands.map((band) => (
 							<div
 								key={band.label}
-								className={`border border-slate-100 dark:border-slate-800/60 rounded-2xl p-4 flex flex-col space-y-1.5 transition-all duration-150 ${
+								className={`border border-slate-100 dark:border-slate-800/60 rounded-2xl p-3 flex flex-col space-y-1.5 transition-all duration-150 min-w-0 ${
 									band.count > 0
 										? "bg-slate-50/50 dark:bg-slate-900/50 shadow-sm"
 										: "bg-transparent opacity-60"
 								}`}
 							>
-								<span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+								<span className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
 									{band.label}
 								</span>
-								<div className="flex items-center space-x-2.5">
+								<div className="flex items-center space-x-2 min-w-0">
 									<span
-										className="w-3.5 h-3.5 rounded-full flex-shrink-0 shadow-sm transition-transform hover:scale-110"
+										className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm transition-transform hover:scale-110"
 										style={{ backgroundColor: band.color }}
 									/>
-									<div className="flex flex-col leading-none">
-										<span className="text-xl font-extrabold text-slate-900 dark:text-slate-50">
+									<div className="flex items-baseline space-x-1 min-w-0">
+										<span className="text-lg font-extrabold text-slate-900 dark:text-slate-50">
 											{band.count}
 										</span>
-										<span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5">
-											notebooks
+										<span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight truncate">
+											{band.count > 1 ? "notebooks" : "notebook"}
 										</span>
 									</div>
 								</div>

@@ -1,6 +1,7 @@
 import uuid
 from typing import Any, Optional
 
+from sqlalchemy import Index
 from sqlalchemy.dialects import mysql
 from sqlalchemy.orm import relationship
 from sqlmodel import (
@@ -77,6 +78,8 @@ class StepBase(SQLModel):
 
 
 class Step(StepBase, table=True):
+    __table_args__ = (Index("ix_step_profile_id_position", "profile_id", "position"),)
+
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(index=True)
 

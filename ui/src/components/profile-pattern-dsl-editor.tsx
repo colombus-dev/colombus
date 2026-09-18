@@ -139,7 +139,7 @@ export default function PatternDslEditor({
 		(newContent: string | undefined) => {
 			setIsDirty(newContent !== (currentPatternContent ?? DEFAULT_DSL_CODE));
 			const model = editorRef.current?.getModel();
-			if (model && newContent) {
+			if (model && newContent !== undefined) {
 				validateGrammarModel(model);
 				if (backendError) {
 					monaco?.editor.setModelMarkers(model, "backend", []);

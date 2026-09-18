@@ -60,7 +60,7 @@ const stepsIcons: { [stepName: string]: LucideIcon } = {
 	"Save Results": Save,
 };
 
-export const getStepIcon = (name: string) => {
+export const getStepIcon = (name: string, className = "w-5 h-5") => {
 	const Icon = stepsIcons[name] || Box;
-	return <Icon className="w-5 h-5" />;
+	return <Icon className={className} />;
 };
