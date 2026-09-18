@@ -3,7 +3,7 @@ import type { GraphDefinition } from "@/api/client";
 import type { PathsDisplayMode } from "@/configuration";
 import { stepsColorsMapping } from "@/configuration";
 import type { PpmResult } from "@/lib/types";
-import { hexToRgba } from "@/lib/utils";
+import { hexToRgba, scoreToContinuousColor } from "@/lib/utils";
 
 type SankeyDataBuilderProps = {
 	nodes: GraphDefinition[] | undefined;
@@ -75,29 +75,6 @@ export function useSankeyDataBuilder({
 		for (const [nodeId, scores] of Object.entries(nodeScoresAcc)) {
 			avgNodeScore[nodeId] = scores.reduce((a, b) => a + b, 0) / scores.length;
 		}
-
-		// removed getBandIndex
-
-		const scoreToContinuousColor = (score: number | null | undefined) => {
-			if (score === undefined || score === null) return "#94a3b8";
-			const s = Math.max(0, Math.min(1, score));
-			let r = 0,
-				g = 0,
-				b = 0;
-			if (s < 0.5) {
-				const ratio = s / 0.5;
-				r = Math.round(239 + (250 - 239) * ratio);
-				g = Math.round(68 + (204 - 68) * ratio);
-				b = Math.round(68 + (21 - 68) * ratio);
-			} else {
-				const ratio = (s - 0.5) / 0.5;
-				r = Math.round(250 + (34 - 250) * ratio);
-				g = Math.round(204 + (197 - 204) * ratio);
-				b = Math.round(21 + (94 - 21) * ratio);
-			}
-			const toHex = (c: number) => c.toString(16).padStart(2, "0");
-			return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-		};
 
 		const checkCondition = (src: string, tgt: string) => {
 			if (!useScoreEvolutionFilter) return true;
