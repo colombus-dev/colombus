@@ -24,9 +24,11 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 	const setUseWeightedNodes = useColombusStore(
 		(state) => state.setUseWeightedNodes,
 	);
-	const pathsDisplayMode = useColombusStore((state) => state.pathsDisplayMode);
-	const setPathsDisplayMode = useColombusStore(
-		(state) => state.setPathsDisplayMode,
+	const patternCapturedNodesDisplayMode = useColombusStore(
+		(state) => state.patternCapturedNodesDisplayMode,
+	);
+	const setPatternCapturedNodesDisplayMode = useColombusStore(
+		(state) => state.setPatternCapturedNodesDisplayMode,
 	);
 
 	return (
@@ -73,8 +75,10 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 						</div>
 						<RadioGroup
 							key="radio-ppm-nodes-display-div"
-							value={pathsDisplayMode}
-							onValueChange={(value) => setPathsDisplayMode(value as any)}
+							value={patternCapturedNodesDisplayMode}
+							onValueChange={(value) =>
+								setPatternCapturedNodesDisplayMode(value as any)
+							}
 							disabled={!referenceDiffProfile && !currentPattern}
 							className="flex flex-col space-y-1 pt-2"
 						>

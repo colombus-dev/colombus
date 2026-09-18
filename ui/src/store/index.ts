@@ -34,7 +34,9 @@ interface GraphCustomizationSlice {
 	useWeightedNodes: boolean; // default true
 	setUseWeightedNodes: (uwn: boolean) => void;
 	pathsDisplayMode: PpmNodesDisplayMode;
+	patternCapturedNodesDisplayMode: PpmNodesDisplayMode;
 	setPathsDisplayMode: (mode: PpmNodesDisplayMode) => void;
+	setPatternCapturedNodesDisplayMode: (mode: PpmNodesDisplayMode) => void;
 	scoreEvolutionFilter: number; // 1 = Decreasing, 2 = Constant, 3 = Increasing
 	setScoreEvolutionFilter: (filter: number) => void;
 	useScoreEvolutionFilter: boolean;
@@ -142,6 +144,9 @@ const createGraphCustomizationSlice: StateCreator<
 	setUseWeightedNodes: (uwn) =>
 		set((state) => ({ ...state, useWeightedNodes: uwn })),
 	pathsDisplayMode: "show-variable",
+	patternCapturedNodesDisplayMode: "show-variable",
+	setPatternCapturedNodesDisplayMode: (mode) =>
+		set((state) => ({ ...state, patternCapturedNodesDisplayMode: mode })),
 	setPathsDisplayMode: (mode) =>
 		set((state) => ({ ...state, pathsDisplayMode: mode })),
 	scoreEvolutionFilter: 2,

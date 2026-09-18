@@ -36,7 +36,9 @@ const shouldHideNodeForModeMapping = {
 };
 
 export default function useGraphPpm(graphRenderer?: Sigma) {
-	const pathsDisplayMode = useColombusStore((state) => state.pathsDisplayMode);
+	const patternCapturedNodesDisplayMode = useColombusStore(
+		(state) => state.patternCapturedNodesDisplayMode,
+	);
 	const availableProfilesWithPpmData = useColombusStore(
 		(state) => state.availableProfilesWithPpmData,
 	);
@@ -123,7 +125,7 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 				(availableProfilesWithPpmData.length > 0 || hoveredNode) &&
 				!hoverShouldDisplayNode &&
 				res.layerLevel > 1 && // always showing matched groups
-				shouldHideNodeForModeMapping[pathsDisplayMode](
+				shouldHideNodeForModeMapping[patternCapturedNodesDisplayMode](
 					allUuidsToDisplay,
 					nodeId,
 				)
@@ -141,7 +143,7 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 		});
 	}, [
 		graphRenderer,
-		pathsDisplayMode,
+		patternCapturedNodesDisplayMode,
 		availableProfilesWithPpmData,
 		allUuidsToDisplay,
 		hoveredNode,
