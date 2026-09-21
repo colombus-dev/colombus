@@ -1,3 +1,4 @@
+import debounce from "lodash/debounce";
 import {
 	CloudDownload,
 	FileJson,
@@ -99,6 +100,25 @@ export default function ImportModal({
 		);
 	}, [searchedCompetitions, competition]);
 
+	const debouncedSearch = useMemo(
+		() =>
+			debounce(
+				(searchComp: string, callback: (comp: string) => Promise<any>) => {
+					setIsSearching(true);
+					callback(searchComp)
+						.then((results) => {
+							setSearchedCompetitions(results);
+						})
+						.catch((error: any) => {
+							setServerError(error.message || "An error occurred");
+						})
+						.finally(() => setIsSearching(false));
+				},
+				1000,
+			),
+		[],
+	);
+
 	useEffect(() => {
 		if (!onSearchKaggleCompetitions || !competition.trim()) {
 			return;
@@ -107,20 +127,12 @@ export default function ImportModal({
 		const finalComp = compSlug ? compSlug[1] : competition.trim();
 		if (finalComp.length < 2) return;
 
-		const timer = setTimeout(() => {
-			setIsSearching(true);
-			onSearchKaggleCompetitions(finalComp)
-				.then((results) => {
-					setSearchedCompetitions(results);
-				})
-				.catch((error: any) => {
-					setServerError(error.message || "An error occurred");
-				})
-				.finally(() => setIsSearching(false));
-		}, 300);
+		debouncedSearch(finalComp, onSearchKaggleCompetitions);
 
-		return () => clearTimeout(timer);
-	}, [competition, onSearchKaggleCompetitions]);
+		return () => {
+			debouncedSearch.cancel();
+		};
+	}, [competition, onSearchKaggleCompetitions, debouncedSearch]);
 
 	const handleSelectCompetition = (comp: { ref: string; title: string }) => {
 		if (!onSearchKaggle) return;
