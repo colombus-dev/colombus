@@ -250,13 +250,13 @@ export default function ExplorerProjectIdPage() {
 	}, [projectValidity]);
 
 	const handleKaggleSearch = useCallback(
-		(competition: string) => {
+		(competition: string, pageToken?: string) => {
 			if (!projectId) {
-				return Promise.resolve([]);
+				return Promise.resolve({ notebooks: [], next_page_token: null });
 			}
 			return import("@/api/client")
 				.then(({ getKaggleCompetitionNotebooks }) =>
-					getKaggleCompetitionNotebooks(projectId, competition),
+					getKaggleCompetitionNotebooks(projectId, competition, pageToken),
 				)
 				.catch((error: any) => {
 					console.error("Failed to search Kaggle competition", error);
@@ -286,8 +286,8 @@ export default function ExplorerProjectIdPage() {
 			if (payload.slugs) {
 				slugsPromise = Promise.resolve(payload.slugs);
 			} else if (payload.competition) {
-				slugsPromise = handleKaggleSearch(payload.competition).then(
-					(notebooks) => notebooks.slice(0, 10).map((nb) => nb.ref),
+				slugsPromise = handleKaggleSearch(payload.competition).then((result) =>
+					result.notebooks.slice(0, 10).map((nb: any) => nb.ref),
 				);
 			}
 
