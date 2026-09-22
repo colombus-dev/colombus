@@ -24,22 +24,30 @@ function processAggregatedLinkBuckets(
 	for (const bucketKey in buckets) {
 		const bucket = buckets[bucketKey];
 		let linkColor = "";
+		const avgScore =
+			bucket.numScores > 0 ? bucket.sumScore / bucket.numScores : 0;
 
 		if (bucketKey === "transparent") {
 			linkColor = "rgba(0,0,0,0)";
-		} else if (bucketKey === "grey") {
+		} else if (bucketKey === "grey" || bucketKey === "hidden") {
 			linkColor = "rgba(100, 100, 100, 0.15)";
 		} else {
-			const avgScore =
-				bucket.numScores > 0 ? bucket.sumScore / bucket.numScores : 0;
 			const colorHex = scoreToContinuousColor(avgScore);
 			const alphaStr = bucketKey.split("_")[1];
 			linkColor = hexToRgba(colorHex, Number.parseFloat(alphaStr));
 		}
 		if (!rawLinkCounts[sourceId][targetId][linkColor]) {
-			rawLinkCounts[sourceId][targetId][linkColor] = 0;
+			rawLinkCounts[sourceId][targetId][linkColor] = { count: 0, avgScore: 0 };
 		}
-		rawLinkCounts[sourceId][targetId][linkColor] += bucket.count;
+
+		const existing = rawLinkCounts[sourceId][targetId][linkColor];
+		const totalCount = existing.count + bucket.count;
+		if (totalCount > 0) {
+			existing.avgScore =
+				(existing.avgScore * existing.count + avgScore * bucket.count) /
+				totalCount;
+		}
+		existing.count += bucket.count;
 	}
 }
 

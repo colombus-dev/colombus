@@ -232,7 +232,9 @@ export default function ProfileSankeyGraph({
 									target: sankeyData?.targets,
 									value: sankeyData?.values,
 									color: sankeyData?.colors,
-									hovertemplate: "<extra></extra>",
+									customdata: sankeyData?.linkCustomData,
+									hovertemplate:
+										"%{source.label} → %{target.label}<br /><span style='font-size:10px;color:#888'>Occurrences: %{value}<br />Avg Score: %{customdata[0]}</span><extra></extra>",
 								},
 							},
 						]}

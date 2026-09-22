@@ -82,7 +82,7 @@ function determineBucketKey(
 			conf.canReachEndStrict.has(tgt);
 	}
 
-	if (!validPath) return { key: "grey", count: 1 };
+	if (!validPath) return { key: "hidden", count: 0 };
 
 	let isMatched = false;
 	for (const range of matchedRanges) {

@@ -13,7 +13,7 @@ export type AggregatedLinksMap = Record<
 
 export type RawLinkCountsMap = Record<
 	string,
-	Record<string, Record<string, number>>
+	Record<string, Record<string, { count: number; avgScore: number }>>
 >;
 
 export type SankeyAggregationConfig = {
