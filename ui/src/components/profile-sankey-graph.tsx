@@ -1,5 +1,5 @@
 import { ZoomIn, ZoomOut } from "lucide-react";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Plot from "react-plotly.js";
 import type { GraphDefinition } from "@/api/client";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,42 @@ export default function ProfileSankeyGraph({
 		scoreEvolutionFilter,
 		useScoreEvolutionFilter,
 	});
+
+	const handlePlotClick = useCallback(
+		(data: any) => {
+			if (!data.points || data.points.length === 0) return;
+
+			const point = data.points[0] as {
+				source?: number;
+				pointNumber?: number;
+				index?: number;
+				label?: string;
+			};
+
+			const isNode = point.source === undefined;
+			if (!isNode) return;
+
+			const idx = point.pointNumber ?? point.index;
+			if (idx === undefined || !sankeyData?.nodeCustomData) return;
+
+			const customDataStr = sankeyData.nodeCustomData[idx] as string;
+			let nodeName = "";
+
+			if (customDataStr) {
+				nodeName = customDataStr.split("<br />")[0];
+			} else if (sankeyData.nodeLabels?.[idx]) {
+				nodeName = sankeyData.nodeLabels[idx].replace(/ \(\d+\)$/, "");
+			} else if (point.label) {
+				nodeName = point.label.replace(/ \(\d+\)$/, "");
+			}
+
+			if (nodeName && !nodeName.startsWith("_PADDING_")) {
+				const trigger = `[step="${nodeName}"]`;
+				useColombusStore.getState().setPatternAppendTrigger(trigger);
+			}
+		},
+		[sankeyData],
+	);
 
 	if (isLoading) {
 		return (
@@ -192,49 +228,7 @@ export default function ProfileSankeyGraph({
 					}}
 				>
 					<Plot
-						onClick={(data) => {
-							if (data.points && data.points.length > 0) {
-								const point = data.points[0] as {
-									source?: number;
-									pointNumber?: number;
-									index?: number;
-									label?: string;
-								};
-
-								const isNode = point.source === undefined;
-
-								if (isNode) {
-									const idx =
-										point.pointNumber !== undefined
-											? point.pointNumber
-											: point.index;
-
-									if (idx !== undefined && sankeyData.nodeCustomData) {
-										const customDataStr = sankeyData.nodeCustomData[
-											idx
-										] as string;
-										let nodeName = "";
-										if (customDataStr) {
-											nodeName = customDataStr.split("<br />")[0];
-										} else if (sankeyData.nodeLabels?.[idx]) {
-											nodeName = sankeyData.nodeLabels[idx].replace(
-												/ \(\d+\)$/,
-												"",
-											);
-										} else if (point.label) {
-											nodeName = point.label.replace(/ \(\d+\)$/, "");
-										}
-
-										if (nodeName && !nodeName.startsWith("_PADDING_")) {
-											const trigger = `[step="${nodeName}"]`;
-											useColombusStore
-												.getState()
-												.setPatternAppendTrigger(trigger);
-										}
-									}
-								}
-							}
-						}}
+						onClick={handlePlotClick}
 						data={[
 							{
 								type: "sankey",
