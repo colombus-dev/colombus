@@ -24,21 +24,6 @@ export default function ProfileSankeyGraph({
 	isLoading,
 	className,
 }: ProfileSankeyGraphProps) {
-	const filteredProfilesNames = useColombusStore(
-		(state) => state.filteredProfilesNames,
-	);
-	const availableProfilesWithPpmData = useColombusStore(
-		(state) => state.availableProfilesWithPpmData,
-	);
-	const profilesScores = useColombusStore((state) => state.profilesScores);
-	const pathsDisplayMode = useColombusStore((state) => state.pathsDisplayMode);
-	const scoreEvolutionFilter = useColombusStore(
-		(state) => state.scoreEvolutionFilter,
-	);
-	const useScoreEvolutionFilter = useColombusStore(
-		(state) => state.useScoreEvolutionFilter,
-	);
-
 	const [zoom, setZoom] = useState(1);
 	const innerRef = useRef<HTMLDivElement>(null);
 	const outerRef = useRef<HTMLDivElement>(null);
@@ -50,15 +35,7 @@ export default function ProfileSankeyGraph({
 		panY: 0,
 	});
 
-	const sankeyData = useSankeyDataBuilder({
-		nodes,
-		filteredProfilesNames,
-		availableProfilesWithPpmData,
-		profilesScores,
-		pathsDisplayMode,
-		scoreEvolutionFilter,
-		useScoreEvolutionFilter,
-	});
+	const sankeyData = useSankeyDataBuilder({ nodes });
 
 	const handlePlotClick = useCallback(
 		(data: any) => {
