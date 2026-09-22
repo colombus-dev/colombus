@@ -10,6 +10,7 @@ import useCanopusGrammar from "@/hooks/editor/useCanopusGrammar";
 import useCanopusTheme from "@/hooks/editor/useCanopusTheme";
 import useCompletionActions from "@/hooks/editor/useCompletionActions";
 import useEditorErrorHandling from "@/hooks/editor/useEditorErrorHandling";
+import useEditorPatternAppender from "@/hooks/editor/useEditorPatternAppender";
 import useEditorResizer from "@/hooks/editor/useEditorResizer";
 import { DEFAULT_DSL_CODE, EDITOR_LANGUAGE_ID } from "@/lib/constants";
 import type { MonacoEditor } from "@/lib/types";
@@ -54,75 +55,7 @@ export default function PatternDslEditor({
 
 	const [isDirty, setIsDirty] = useState(false);
 
-	const patternAppendTrigger = useColombusStore(
-		(state) => state.patternAppendTrigger,
-	);
-	const setPatternAppendTrigger = useColombusStore(
-		(state) => state.setPatternAppendTrigger,
-	);
-
-	const allSavedPatterns = useColombusStore((state) => state.allSavedPatterns);
-
-	useEffect(() => {
-		if (patternAppendTrigger && editorRef.current) {
-			const currentVal = editorRef.current.getValue();
-			const trimmed = currentVal.trim();
-			let newVal = currentVal;
-
-			const hasPatternDecl = /pattern\s+[a-zA-Z0-9_]+\s*=/.test(currentVal);
-			const isOnlyComments =
-				trimmed === "" ||
-				trimmed.split("\n").every((l) => {
-					const t = l.trim();
-					return t.startsWith("#") || t === "";
-				});
-
-			if (!hasPatternDecl && isOnlyComments) {
-				const suffix =
-					currentVal.endsWith("\n") || currentVal === "" ? "" : "\n";
-
-				// Find next PatternX number
-				let maxPatternIndex = 0;
-				for (const p of allSavedPatterns) {
-					const match = p.name?.match(/^Pattern(\d+)$/i);
-					if (match) {
-						const num = parseInt(match[1], 10);
-						if (num > maxPatternIndex) maxPatternIndex = num;
-					}
-				}
-				const nextIndex = maxPatternIndex + 1;
-
-				newVal =
-					currentVal +
-					suffix +
-					`pattern Pattern${nextIndex} = ${patternAppendTrigger}`;
-			} else {
-				if (trimmed.endsWith("=")) {
-					newVal =
-						currentVal +
-						(currentVal.endsWith(" ") ? "" : " ") +
-						patternAppendTrigger;
-				} else if (trimmed.endsWith("]")) {
-					newVal = currentVal + " -> " + patternAppendTrigger;
-				} else if (trimmed.endsWith(">")) {
-					// for '->'
-					newVal =
-						currentVal +
-						(currentVal.endsWith(" ") ? "" : " ") +
-						patternAppendTrigger;
-				} else {
-					newVal =
-						currentVal +
-						(currentVal.endsWith(" ") ? "" : " ") +
-						patternAppendTrigger;
-				}
-			}
-
-			editorRef.current.setValue(newVal);
-			setPatternAppendTrigger(undefined);
-			setIsDirty(true);
-		}
-	}, [patternAppendTrigger, setPatternAppendTrigger, allSavedPatterns]);
+	useEditorPatternAppender({ editorRef, setIsDirty });
 
 	useEffect(() => {
 		return () => {
