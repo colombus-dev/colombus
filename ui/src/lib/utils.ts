@@ -1,5 +1,7 @@
+import chroma from "chroma-js";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+
 import { metacharacterPLUS, metacharacterSTAR } from "@/configuration";
 import type { PatternGroup } from "@/lib/types";
 
@@ -64,26 +66,9 @@ export function scoreToContinuousColor(score: number | null | undefined) {
 	// Snaps to 0.01 increments
 	const s = Math.max(0, Math.min(1, Math.round(score * 100) / 100));
 
-	const colors = [
-		{ r: 239, g: 68, b: 68 }, // #ef4444
-		{ r: 245, g: 158, b: 11 }, // #f59e0b
-		{ r: 250, g: 204, b: 21 }, // #facc15
-		{ r: 167, g: 243, b: 208 }, // #a7f3d0
-		{ r: 34, g: 197, b: 94 }, // #22c55e
-	];
+	const scale = chroma
+		.scale(["#ef4444", "#f59e0b", "#facc15", "#a7f3d0", "#22c55e"])
+		.domain([0, 1]);
 
-	const scaled = s * 4;
-	const index = Math.floor(scaled);
-	if (index >= 4) return "#22c55e";
-
-	const c1 = colors[index];
-	const c2 = colors[index + 1];
-	const ratio = scaled - index;
-
-	const r = Math.round(c1.r + (c2.r - c1.r) * ratio);
-	const g = Math.round(c1.g + (c2.g - c1.g) * ratio);
-	const b = Math.round(c1.b + (c2.b - c1.b) * ratio);
-
-	const toHex = (c: number) => c.toString(16).padStart(2, "0");
-	return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+	return scale(s).hex();
 }
