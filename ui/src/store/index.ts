@@ -112,7 +112,11 @@ const createPatternSlice: StateCreator<ColombusStore, [], [], PatternSlice> = (
 	currentPattern: undefined,
 	setCurrentPattern: (p) => set((state) => ({ ...state, currentPattern: p })),
 	resetCurrentPattern: () =>
-		set((state) => ({ ...state, currentPattern: undefined })),
+		set((state) => ({
+			...state,
+			currentPattern: undefined,
+			pathsDisplayMode: "show-all",
+		})),
 	allSavedPatterns: [],
 	setAllSavedPatterns: (p) =>
 		set((state) => ({ ...state, allSavedPatterns: p })),
