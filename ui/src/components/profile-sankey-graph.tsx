@@ -1,6 +1,7 @@
 import { LocateFixed, ZoomIn, ZoomOut } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Plot from "react-plotly.js";
+import BounceLoader from "react-spinners/BounceLoader";
 import type { GraphDefinition } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -98,15 +99,19 @@ export default function ProfileSankeyGraph({
 
 	if (isLoading) {
 		return (
-			<div className={`flex items-center justify-center ${className || ""}`}>
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 dark:border-white" />
+			<div
+				className={`relative flex items-center justify-center w-full h-full bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(15,23,42,0.04)] border border-slate-200 dark:border-slate-800 ${className || ""}`}
+			>
+				<BounceLoader color="green" loading={isLoading} />
 			</div>
 		);
 	}
 
 	if (!nodes || nodes.length === 0 || !sankeyData) {
 		return (
-			<div className="flex items-center justify-center h-full w-full bg-slate-50 dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-400">
+			<div
+				className={`flex items-center justify-center h-full w-full bg-slate-50 dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-400 ${className || ""}`}
+			>
 				Aucune donnée de graphe
 			</div>
 		);
