@@ -3,7 +3,7 @@ import ProjectTaxonomyList from "@/components/project-taxonomy-list";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useColombusStore } from "@/store";
 
-const ProfileExplorer2GraphSettingsBar: React.FunctionComponent<
+const ProfileSankeyGraphSettingsBar: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
 > = ({ ...divProps }) => {
 	const referenceDiffProfile = useColombusStore(
@@ -108,4 +108,4 @@ const ProfileExplorer2GraphSettingsBar: React.FunctionComponent<
 	);
 };
 
-export default ProfileExplorer2GraphSettingsBar;
+export default ProfileSankeyGraphSettingsBar;

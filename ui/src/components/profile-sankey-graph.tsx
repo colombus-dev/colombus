@@ -1,5 +1,5 @@
-import { ZoomIn, ZoomOut } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { LocateFixed, ZoomIn, ZoomOut } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Plot from "react-plotly.js";
 import type { GraphDefinition } from "@/api/client";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useSankeyDataBuilder } from "@/hooks/explorer/useSankeyDataBuilder";
 import { useColombusStore } from "@/store";
-import ProfileExplorer2GraphSettingsBar from "./profile-explorer2-graph-settings-bar";
+import ProfileSankeyGraphSettingsBar from "./profile-sankey-graph-settings-bar";
 
 type ProfileSankeyGraphProps = {
 	nodes: GraphDefinition[] | undefined;
@@ -73,6 +73,27 @@ export default function ProfileSankeyGraph({
 		[sankeyData],
 	);
 
+	const handleRecenter = useCallback(() => {
+		if (outerRef.current && innerRef.current) {
+			const defaultZoom = 0.2;
+
+			setZoom(defaultZoom);
+			dragRef.current.panX = 0;
+			dragRef.current.panY = 0;
+			innerRef.current.style.transform = `translate(0px, 0px) scale(${defaultZoom})`;
+		}
+	}, []);
+
+	useEffect(() => {
+		if (sankeyData) {
+			// Small timeout to allow the DOM to render the inner and outer containers first
+			const timer = setTimeout(() => {
+				handleRecenter();
+			}, 50);
+			return () => clearTimeout(timer);
+		}
+	}, [sankeyData, handleRecenter]);
+
 	if (isLoading) {
 		return (
 			<div className={`flex items-center justify-center ${className || ""}`}>
@@ -100,8 +121,20 @@ export default function ProfileSankeyGraph({
 		<div
 			className={`relative w-full h-full bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(15,23,42,0.04)] border border-slate-200 dark:border-slate-800 ${className || ""}`}
 		>
-			<ProfileExplorer2GraphSettingsBar className="absolute bottom-6 right-6 w-72 h-auto max-h-[calc(100%-3rem)] bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-[20px] p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] z-10" />
+			<ProfileSankeyGraphSettingsBar className="absolute bottom-6 right-6 w-72 h-auto max-h-[calc(100%-3rem)] bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-[20px] p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] z-10" />
 			<div className="absolute bottom-6 right-[320px] flex flex-col bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-[20px] shadow-[0_10px_30px_rgba(15,23,42,0.06)] z-10">
+				<TooltipProvider>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button variant="ghost" onClick={handleRecenter}>
+								<LocateFixed />
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>
+							<p>Recenter</p>
+						</TooltipContent>
+					</Tooltip>
+				</TooltipProvider>
 				<TooltipProvider>
 					<Tooltip>
 						<TooltipTrigger asChild>
@@ -149,7 +182,7 @@ export default function ProfileSankeyGraph({
 				ref={outerRef}
 				className="w-full h-full overflow-hidden cursor-grab"
 				onWheel={(e) => {
-					let newZoom = zoom - e.deltaY * 0.002;
+					let newZoom = zoom - e.deltaY * 0.0005;
 					newZoom = Math.min(3, Math.max(0.05, newZoom));
 					setZoom(newZoom);
 

@@ -426,7 +426,7 @@ export default function ExplorerProjectIdPage() {
 									: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
 							}`}
 						>
-							Explorer 2
+							Path Explorer
 						</button>
 						<button
 							type="button"
