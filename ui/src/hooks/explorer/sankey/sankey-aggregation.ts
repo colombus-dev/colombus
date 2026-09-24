@@ -1,4 +1,4 @@
-import type { GraphDefinition, StepNode } from "@/api/client";
+import type { GraphDefinition } from "@/api/client";
 import type { PpmResult } from "@/lib/types";
 import { checkConditionBase } from "./sankey-reachability";
 import { unrollSteps } from "./sankey-topology";
@@ -7,14 +7,19 @@ import type {
 	SankeyAggregationConfig,
 } from "./sankey-types";
 
-function findMinMaxMatchedIndices(
-	results: string[][],
-	stepIdMap: Map<string, number>,
+function extractMatchedRanges(
+	profilePpm: PpmResult | undefined,
+	steps: { id: string }[],
 ) {
+	const matchedRanges: { min: number; max: number }[] = [];
+	if (!profilePpm?.results) return matchedRanges;
+
+	const stepIdMap = new Map(steps.map((s, idx) => [s.id, idx]));
+
 	let globalMin = Number.MAX_SAFE_INTEGER;
 	let globalMax = -1;
 
-	for (const groupMatches of results) {
+	for (const groupMatches of profilePpm.results) {
 		for (const stepId of groupMatches) {
 			const idx = stepIdMap.get(stepId);
 			if (idx !== undefined) {
@@ -23,35 +28,21 @@ function findMinMaxMatchedIndices(
 			}
 		}
 	}
-	return { globalMin, globalMax };
-}
-
-function extractMatchedRanges(
-	profilePpm: PpmResult | undefined,
-	steps: StepNode[],
-) {
-	const matchedRanges: { min: number; max: number }[] = [];
-	if (!profilePpm?.results) return matchedRanges;
-
-	const stepIdMap = new Map(steps.map((s, idx) => [s.id, idx]));
-	let { globalMin, globalMax } = findMinMaxMatchedIndices(
-		profilePpm.results,
-		stepIdMap,
-	);
 
 	if (globalMin !== Number.MAX_SAFE_INTEGER) {
+		// If globalMin === globalMax, it means a single node matched.
+		// We extend globalMax by 1 so the outgoing edge is colored.
 		if (globalMin === globalMax) globalMax = globalMin + 1;
 		matchedRanges.push({ min: globalMin, max: globalMax });
 	}
+
 	return matchedRanges;
 }
 
 function determineBucketKey(
 	src: string,
 	tgt: string,
-	i: number,
-	matchedRanges: { min: number; max: number }[],
-	isPatternActive: boolean,
+	isMatched: boolean,
 	conf: SankeyAggregationConfig,
 ): { key: string; count: number } {
 	if (src.startsWith("_PADDING_") || tgt.startsWith("_PADDING_")) {
@@ -84,59 +75,12 @@ function determineBucketKey(
 
 	if (!validPath) return { key: "hidden", count: 0 };
 
-	let isMatched = false;
-	for (const range of matchedRanges) {
-		if (i >= range.min && i < range.max) {
-			isMatched = true;
-			break;
-		}
-	}
+	// isMatched is already provided
 
-	if (isPatternActive && conf.pathsDisplayMode === "show-matching") {
+	if (conf.pathsDisplayMode === "show-matching") {
 		return { key: isMatched ? "colored_0.75" : "grey", count: 1 };
 	}
 	return { key: "colored_0.6", count: 1 };
-}
-
-function processSingleProfileLink(
-	i: number,
-	unrolledIds: string[],
-	matchedRanges: { min: number; max: number }[],
-	isPatternActive: boolean,
-	score: number | null | undefined,
-	conf: SankeyAggregationConfig,
-	aggregatedLinks: AggregatedLinksMap,
-) {
-	const sourceId = unrolledIds[i];
-	const targetId = unrolledIds[i + 1];
-	if (sourceId === targetId) return;
-
-	const { key: bucketKey, count: countToAdd } = determineBucketKey(
-		sourceId,
-		targetId,
-		i,
-		matchedRanges,
-		isPatternActive,
-		conf,
-	);
-
-	if (!aggregatedLinks[sourceId]) aggregatedLinks[sourceId] = {};
-	if (!aggregatedLinks[sourceId][targetId])
-		aggregatedLinks[sourceId][targetId] = {};
-	if (!aggregatedLinks[sourceId][targetId][bucketKey]) {
-		aggregatedLinks[sourceId][targetId][bucketKey] = {
-			sumScore: 0,
-			numScores: 0,
-			count: 0,
-		};
-	}
-
-	const bucket = aggregatedLinks[sourceId][targetId][bucketKey];
-	bucket.count += countToAdd;
-	if (score !== undefined && score !== null && bucketKey !== "transparent") {
-		bucket.sumScore += score;
-		bucket.numScores += 1;
-	}
 }
 
 function processProfileLinks(
@@ -162,15 +106,44 @@ function processProfileLinks(
 	const isPatternActive = !!profilePpm?.results;
 
 	for (let i = 0; i < conf.maxDepth - 1; i++) {
-		processSingleProfileLink(
-			i,
-			unrolledIds,
-			matchedRanges,
-			isPatternActive,
-			score,
+		const sourceId = unrolledIds[i];
+		const targetId = unrolledIds[i + 1];
+		if (sourceId === targetId) continue;
+
+		let isMatched = false;
+		if (isPatternActive) {
+			for (const range of matchedRanges) {
+				if (i >= range.min && i < range.max) {
+					isMatched = true;
+					break;
+				}
+			}
+		}
+
+		const { key: bucketKey, count: countToAdd } = determineBucketKey(
+			sourceId,
+			targetId,
+			isMatched,
 			conf,
-			aggregatedLinks,
 		);
+
+		if (!aggregatedLinks[sourceId]) aggregatedLinks[sourceId] = {};
+		if (!aggregatedLinks[sourceId][targetId])
+			aggregatedLinks[sourceId][targetId] = {};
+		if (!aggregatedLinks[sourceId][targetId][bucketKey]) {
+			aggregatedLinks[sourceId][targetId][bucketKey] = {
+				sumScore: 0,
+				numScores: 0,
+				count: 0,
+			};
+		}
+
+		const bucket = aggregatedLinks[sourceId][targetId][bucketKey];
+		bucket.count += countToAdd;
+		if (score !== undefined && score !== null && bucketKey !== "transparent") {
+			bucket.sumScore += score;
+			bucket.numScores += 1;
+		}
 	}
 }
 
@@ -187,9 +160,16 @@ export function aggregateLinkWeights(
 
 	for (const profile of nodes) {
 		if (!filteredProfilesNames.includes(profile.name)) continue;
-		const profilePpm = availableProfilesWithPpmData.find(
+		const profilePpms = availableProfilesWithPpmData.filter(
 			(p) => p.profile_name === profile.name,
 		);
+		let profilePpm: PpmResult | undefined;
+		if (profilePpms.length > 0) {
+			profilePpm = {
+				profile_name: profile.name,
+				results: profilePpms.flatMap((p) => p.results),
+			};
+		}
 		const score = profilesScores?.[profile.name];
 		processProfileLinks(
 			profile,
