@@ -29,6 +29,7 @@ export default function ProfileSankeyGraph({
 	const outerRef = useRef<HTMLDivElement>(null);
 	const dragRef = useRef({
 		isDragging: false,
+		hasDragged: false,
 		startX: 0,
 		startY: 0,
 		panX: 0,
@@ -39,7 +40,8 @@ export default function ProfileSankeyGraph({
 
 	const handlePlotClick = useCallback(
 		(data: any) => {
-			if (!data.points || data.points.length === 0) return;
+			if (dragRef.current.hasDragged) return;
+			if (!data || !data.points || data.points.length === 0) return;
 
 			const point = data.points[0] as {
 				source?: number;
@@ -180,8 +182,10 @@ export default function ProfileSankeyGraph({
 			<div
 				role="application"
 				ref={outerRef}
-				className="w-full h-full overflow-hidden cursor-grab"
-				onWheel={(e) => {
+				className="w-full h-full overflow-hidden cursor-grab select-none bg-white"
+				onDragStartCapture={(e) => e.preventDefault()}
+				onWheelCapture={(e) => {
+					e.stopPropagation();
 					let newZoom = zoom - e.deltaY * 0.0005;
 					newZoom = Math.min(3, Math.max(0.05, newZoom));
 					setZoom(newZoom);
@@ -190,9 +194,22 @@ export default function ProfileSankeyGraph({
 						innerRef.current.style.transform = `translate(${dragRef.current.panX}px, ${dragRef.current.panY}px) scale(${newZoom})`;
 					}
 				}}
-				onMouseDown={(e) => {
+				onMouseDownCapture={(e) => {
 					if (e.button !== 0) return;
+
+					// Block Plotly from seeing background clicks to avoid crash
+					const target = e.target as HTMLElement | SVGElement;
+					if (target && target.closest) {
+						const isInteractive = target.closest(
+							".sankey-node, .node-rect, .sankey-link, .sankey-link-path, .hoverlayer, .cursor-pointer",
+						);
+						if (!isInteractive) {
+							e.stopPropagation();
+						}
+					}
+
 					dragRef.current.isDragging = true;
+					dragRef.current.hasDragged = false;
 					dragRef.current.startX = e.clientX - dragRef.current.panX;
 					dragRef.current.startY = e.clientY - dragRef.current.panY;
 					if (outerRef.current) {
@@ -200,15 +217,27 @@ export default function ProfileSankeyGraph({
 						outerRef.current.classList.add("cursor-grabbing");
 					}
 				}}
-				onMouseMove={(e) => {
+				onMouseMoveCapture={(e) => {
 					if (!dragRef.current.isDragging) return;
-					dragRef.current.panX = e.clientX - dragRef.current.startX;
-					dragRef.current.panY = e.clientY - dragRef.current.startY;
+					e.stopPropagation();
+
+					const newPanX = e.clientX - dragRef.current.startX;
+					const newPanY = e.clientY - dragRef.current.startY;
+
+					if (
+						Math.abs(newPanX - dragRef.current.panX) > 3 ||
+						Math.abs(newPanY - dragRef.current.panY) > 3
+					) {
+						dragRef.current.hasDragged = true;
+					}
+
+					dragRef.current.panX = newPanX;
+					dragRef.current.panY = newPanY;
 					if (innerRef.current) {
 						innerRef.current.style.transform = `translate(${dragRef.current.panX}px, ${dragRef.current.panY}px) scale(${zoom})`;
 					}
 				}}
-				onMouseUp={() => {
+				onMouseUpCapture={() => {
 					dragRef.current.isDragging = false;
 					if (outerRef.current) {
 						outerRef.current.classList.remove("cursor-grabbing");
@@ -220,6 +249,13 @@ export default function ProfileSankeyGraph({
 					if (outerRef.current) {
 						outerRef.current.classList.remove("cursor-grabbing");
 						outerRef.current.classList.add("cursor-grab");
+					}
+				}}
+				onClickCapture={(e) => {
+					if (dragRef.current.hasDragged) {
+						e.stopPropagation();
+						e.preventDefault();
+						dragRef.current.hasDragged = false;
 					}
 				}}
 			>
