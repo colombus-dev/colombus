@@ -1,5 +1,10 @@
 import { test, expect } from '@playwright/test';
 
+/**
+ * Tests for the DSL (Domain Specific Language) Editor in the Explorer page.
+ * These tests ensure that the Monaco editor loads correctly, allows user input,
+ * and correctly handles parsing, execution, saving, and resetting of patterns.
+ */
 test.describe('DSL Editor', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/project/test-project/details', async (route) => { await route.fulfill({ status: 200, json: "Test Project Details" }); });
@@ -11,6 +16,14 @@ test.describe('DSL Editor', () => {
     await page.goto('/explorer/test-project');
   });
 
+  /**
+   * Main test flow for the DSL Editor:
+   * 1. Waits for the Monaco editor to mount and injects a test pattern.
+   * 2. Mocks backend responses for parsing and execution.
+   * 3. Triggers pattern execution and verifies the API call.
+   * 4. Mocks backend responses for saving and verifies the save action.
+   * 5. Checks that the reset button appears.
+   */
   test('executes, resets, and saves a pattern', async ({ page }) => {
     page.on('request', req => console.log('REQ:', req.method(), req.url()));
     page.on('console', msg => console.log('PAGE LOG:', msg.text()));
