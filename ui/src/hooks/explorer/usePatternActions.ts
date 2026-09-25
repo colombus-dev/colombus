@@ -58,6 +58,8 @@ export default function usePatternActions({
 					setBackendError(
 						detail || "Failed to execute pattern. Please check the logic.",
 					);
+				})
+				.finally(() => {
 					setIsLoading(false);
 				});
 		},
