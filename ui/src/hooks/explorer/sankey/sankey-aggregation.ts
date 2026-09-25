@@ -91,6 +91,7 @@ function processProfileLinks(
 	aggregatedLinks: AggregatedLinksMap,
 	nodePositions: Record<string, number[]>,
 	nodeLabelMap: Record<string, string>,
+	matchedNodes: Set<string>,
 ) {
 	const steps = [...profile.steps].sort((a, b) => a.position - b.position);
 	const unrolledIds = unrollSteps(steps, conf.maxDepth);
@@ -104,6 +105,18 @@ function processProfileLinks(
 
 	const matchedRanges = extractMatchedRanges(profilePpm, steps);
 	const isPatternActive = !!profilePpm?.results;
+
+	if (isPatternActive && profilePpm?.results) {
+		const stepIdMap = new Map(steps.map((s, idx) => [s.id, idx]));
+		for (const groupMatches of profilePpm.results) {
+			for (const stepId of groupMatches) {
+				const idx = stepIdMap.get(stepId);
+				if (idx !== undefined) {
+					matchedNodes.add(unrolledIds[idx]);
+				}
+			}
+		}
+	}
 
 	for (let i = 0; i < conf.maxDepth - 1; i++) {
 		const sourceId = unrolledIds[i];
@@ -157,6 +170,7 @@ export function aggregateLinkWeights(
 	const aggregatedLinks: AggregatedLinksMap = {};
 	const nodePositions: Record<string, number[]> = {};
 	const nodeLabelMap: Record<string, string> = {};
+	const matchedNodes = new Set<string>();
 
 	for (const profile of nodes) {
 		if (!filteredProfilesNames.includes(profile.name)) continue;
@@ -179,7 +193,8 @@ export function aggregateLinkWeights(
 			aggregatedLinks,
 			nodePositions,
 			nodeLabelMap,
+			matchedNodes,
 		);
 	}
-	return { aggregatedLinks, nodePositions, nodeLabelMap };
+	return { aggregatedLinks, nodePositions, nodeLabelMap, matchedNodes };
 }

@@ -95,12 +95,20 @@ function computeNodeProperties(
 	nodeLabelMap: Record<string, string>,
 	nodeIncoming: Map<string, number>,
 	nodeOutgoing: Map<string, number>,
+	matchedNodes: Set<string>,
+	pathsDisplayMode: string,
 ) {
 	const realNodeLabels = uniqueNodes.map((id) => nodeLabelMap[id]);
 	const nodeLabels = uniqueNodes.map(() => "");
 
-	const nodeColors = realNodeLabels.map((label) => {
+	const nodeColors = uniqueNodes.map((id, index) => {
+		const label = realNodeLabels[index];
 		if (label.startsWith("_PADDING_")) return "rgba(0,0,0,0)";
+
+		if (pathsDisplayMode === "show-matching" && !matchedNodes.has(id)) {
+			return "rgba(180, 180, 180, 0.4)";
+		}
+
 		const baseLabel = label.replace(/ \(\d+\)$/, "");
 		return stepsColorsMapping[baseLabel] || "rgba(128, 128, 128, 0.7)";
 	});
@@ -125,6 +133,8 @@ export function formatSankeyData(
 	nodeLabelMap: Record<string, string>,
 	avgPosition: Record<string, number>,
 	maxDepth: number,
+	matchedNodes: Set<string>,
+	pathsDisplayMode: string,
 ) {
 	const { nodeIncoming, nodeOutgoing } = calculateNodeFlows(rawLinkCounts);
 
@@ -145,6 +155,8 @@ export function formatSankeyData(
 		nodeLabelMap,
 		nodeIncoming,
 		nodeOutgoing,
+		matchedNodes,
+		pathsDisplayMode,
 	);
 
 	const arrays = mapLinksToArrays(linkCounts, nodeIndices);

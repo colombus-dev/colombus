@@ -63,7 +63,7 @@ export function useSankeyDataBuilder({ nodes }: SankeyDataBuilderProps) {
 			avgNodeScore,
 		};
 
-		const { aggregatedLinks, nodePositions, nodeLabelMap } =
+		const { aggregatedLinks, nodePositions, nodeLabelMap, matchedNodes } =
 			aggregateLinkWeights(
 				nodes,
 				filteredProfilesNames,
@@ -84,6 +84,8 @@ export function useSankeyDataBuilder({ nodes }: SankeyDataBuilderProps) {
 			nodeLabelMap,
 			avgPosition,
 			maxDepth,
+			matchedNodes,
+			pathsDisplayMode,
 		);
 	}, [
 		nodes,
