@@ -29,7 +29,7 @@ export default function useGraph(
 
 	useEffect(() => {
 		if (containerId) {
-			const graphContainer = document.getElementById("graph-container");
+			const graphContainer = document.getElementById(containerId);
 			if (graphContainer) {
 				renderer.current = new Sigma(graph.current, graphContainer, {
 					nodeProgramClasses: {

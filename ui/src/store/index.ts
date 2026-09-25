@@ -2,7 +2,7 @@ import type { StateCreator } from "zustand";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import { postDiffSort } from "@/api/client";
-import type { PpmNodesDisplayMode } from "@/configuration";
+import type { PathsDisplayMode, PpmNodesDisplayMode } from "@/configuration";
 import type { DiffResult, Pattern, PpmResult } from "@/lib/types";
 
 interface AuthSlice {
@@ -24,6 +24,8 @@ interface PatternSlice {
 	resetCurrentPattern: () => void;
 	allSavedPatterns: Pattern[];
 	setAllSavedPatterns: (p: Pattern[]) => void;
+	patternAppendTrigger?: string;
+	setPatternAppendTrigger: (t?: string) => void;
 }
 
 interface GraphCustomizationSlice {
@@ -31,8 +33,14 @@ interface GraphCustomizationSlice {
 	setDisplayedLevel: (level: number) => void;
 	useWeightedNodes: boolean; // default true
 	setUseWeightedNodes: (uwn: boolean) => void;
+	pathsDisplayMode: PathsDisplayMode;
 	patternCapturedNodesDisplayMode: PpmNodesDisplayMode;
+	setPathsDisplayMode: (mode: PathsDisplayMode) => void;
 	setPatternCapturedNodesDisplayMode: (mode: PpmNodesDisplayMode) => void;
+	scoreEvolutionFilter: number; // 1 = Decreasing, 2 = Constant, 3 = Increasing
+	setScoreEvolutionFilter: (filter: number) => void;
+	useScoreEvolutionFilter: boolean;
+	setUseScoreEvolutionFilter: (use: boolean) => void;
 }
 
 interface ProfilesSlice {
@@ -104,10 +112,17 @@ const createPatternSlice: StateCreator<ColombusStore, [], [], PatternSlice> = (
 	currentPattern: undefined,
 	setCurrentPattern: (p) => set((state) => ({ ...state, currentPattern: p })),
 	resetCurrentPattern: () =>
-		set((state) => ({ ...state, currentPattern: undefined })),
+		set((state) => ({
+			...state,
+			currentPattern: undefined,
+			pathsDisplayMode: "show-all",
+		})),
 	allSavedPatterns: [],
 	setAllSavedPatterns: (p) =>
 		set((state) => ({ ...state, allSavedPatterns: p })),
+	patternAppendTrigger: undefined,
+	setPatternAppendTrigger: (t) =>
+		set((state) => ({ ...state, patternAppendTrigger: t })),
 });
 
 const createAuthSlice: StateCreator<ColombusStore, [], [], AuthSlice> = (
@@ -132,9 +147,18 @@ const createGraphCustomizationSlice: StateCreator<
 	useWeightedNodes: true,
 	setUseWeightedNodes: (uwn) =>
 		set((state) => ({ ...state, useWeightedNodes: uwn })),
+	pathsDisplayMode: "show-matching",
 	patternCapturedNodesDisplayMode: "show-variable",
 	setPatternCapturedNodesDisplayMode: (mode) =>
 		set((state) => ({ ...state, patternCapturedNodesDisplayMode: mode })),
+	setPathsDisplayMode: (mode) =>
+		set((state) => ({ ...state, pathsDisplayMode: mode })),
+	scoreEvolutionFilter: 2,
+	setScoreEvolutionFilter: (filter) =>
+		set((state) => ({ ...state, scoreEvolutionFilter: filter })),
+	useScoreEvolutionFilter: false,
+	setUseScoreEvolutionFilter: (use) =>
+		set((state) => ({ ...state, useScoreEvolutionFilter: use })),
 });
 
 const createProfilesSlice: StateCreator<

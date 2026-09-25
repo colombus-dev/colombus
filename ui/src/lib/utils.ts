@@ -1,5 +1,7 @@
+import chroma from "chroma-js";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+
 import { metacharacterPLUS, metacharacterSTAR } from "@/configuration";
 import type { PatternGroup } from "@/lib/types";
 
@@ -58,3 +60,15 @@ export const hexToRgba = (hex: string, alpha: number) => {
 	const b = parseInt(hex.slice(5, 7), 16) || 0;
 	return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
+
+export function scoreToContinuousColor(score: number | null | undefined) {
+	if (score === undefined || score === null) return "#94a3b8";
+	// Snaps to 0.01 increments
+	const s = Math.max(0, Math.min(1, Math.round(score * 100) / 100));
+
+	const scale = chroma
+		.scale(["#ef4444", "#f59e0b", "#facc15", "#a7f3d0", "#22c55e"])
+		.domain([0, 1]);
+
+	return scale(s).hex();
+}

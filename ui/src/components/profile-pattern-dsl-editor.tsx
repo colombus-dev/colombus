@@ -10,6 +10,7 @@ import useCanopusGrammar from "@/hooks/editor/useCanopusGrammar";
 import useCanopusTheme from "@/hooks/editor/useCanopusTheme";
 import useCompletionActions from "@/hooks/editor/useCompletionActions";
 import useEditorErrorHandling from "@/hooks/editor/useEditorErrorHandling";
+import useEditorPatternAppender from "@/hooks/editor/useEditorPatternAppender";
 import useEditorResizer from "@/hooks/editor/useEditorResizer";
 import { DEFAULT_DSL_CODE, EDITOR_LANGUAGE_ID } from "@/lib/constants";
 import type { MonacoEditor } from "@/lib/types";
@@ -53,6 +54,8 @@ export default function PatternDslEditor({
 	const { editorHeight, onMouseDown } = useEditorResizer(192, editorRef);
 
 	const [isDirty, setIsDirty] = useState(false);
+
+	useEditorPatternAppender({ editorRef, setIsDirty });
 
 	useEffect(() => {
 		return () => {
