@@ -13,7 +13,10 @@ services:
       depends_on:
         - colombus_app
   colombus_app:
-    build: .
+    build:
+      context: "."
+      platforms:
+          - "linux/amd64"
     ports:
       - "8180:8180"
     networks:

@@ -213,3 +213,6 @@ postgres_data/
 .idea/
 node_modules/
 ui/node_modules
+
+# MacOs filesystem
+.DS_Store
