@@ -19,6 +19,9 @@ const ProfilePatternActions: React.FunctionComponent<
 	const resetCurrentPattern = useColombusStore(
 		(state) => state.resetCurrentPattern,
 	);
+	const setPatternCapturedNodesDisplayMode = useColombusStore(
+		(state) => state.setPatternCapturedNodesDisplayMode,
+	);
 
 	const { projectId } = useParams<{ projectId: string }>();
 
@@ -38,7 +41,10 @@ const ProfilePatternActions: React.FunctionComponent<
 			</Button>
 			<Button
 				variant="ghost"
-				onClick={resetCurrentPattern}
+				onClick={() => {
+					resetCurrentPattern();
+					setPatternCapturedNodesDisplayMode("show-all");
+				}}
 				disabled={currentPattern === undefined}
 			>
 				<RotateCcw className="mr-2 h-4 w-4" /> Reset pattern

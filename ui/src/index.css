@@ -78,3 +78,8 @@
 		@apply bg-background text-foreground;
 	}
 }
+
+/* Override Plotly's default crosshair cursor on hover to inherit from our container (grab/grabbing) */
+.js-plotly-plot .plotly .cursor-crosshair {
+	cursor: inherit !important;
+}
