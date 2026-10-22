@@ -92,13 +92,17 @@ async def convert_to_profiles(
 
         response = await client.post(
             "/v2/profile",
-            data=[
-                notebook_info.model_dump()
-                for notebook_info in list_of_notebook_information
-            ],
-            params={"profiler": profiler.value, "taxonomy": taxonomy.value},
+            params={
+                "list_of_notebooks": [
+                    notebook_info.model_dump_json()
+                    for notebook_info in list_of_notebook_information
+                ],
+                "profiler": profiler.value,
+                "taxonomy": taxonomy.value,
+            },
             timeout=ML_PROFILER_API_TIMEOUT,
         )
+
         response.raise_for_status()
         profiles = response.json()
         return [Profile.model_validate(p) for p in profiles]
