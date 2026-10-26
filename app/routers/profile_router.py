@@ -39,7 +39,7 @@ from app.service.kaggle_service import (
 
 
 @router.get("/api/project/{project_id}/profile/getAll")
-async def get_all_profile(
+def get_all_profile(
     project_id: uuid.UUID,
     session: DatabaseSession,
 ) -> Sequence[str]:
@@ -49,7 +49,7 @@ async def get_all_profile(
 
 
 @router.get("/api/project/{project_id}/profile/scores")
-async def get_profiles_scores(
+def get_profiles_scores(
     project_id: uuid.UUID,
     session: DatabaseSession,
 ) -> dict[str, float | None]:
@@ -77,7 +77,7 @@ async def get_json_profile(
     "/api/project/{project_id}/profile/nodes",
     response_model=list[ProfileNodes],
 )
-async def get_all_nodes(
+def get_all_nodes(
     project_id: uuid.UUID,
     session: DatabaseSession,
     names: list[str] = Query(None),
@@ -162,7 +162,7 @@ async def delete_profile(
 
 
 @router.get("/api/kaggle/status")
-async def get_kaggle_status():
+def get_kaggle_status():
     return {"available": is_kaggle_available()}
 
 

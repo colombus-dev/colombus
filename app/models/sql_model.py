@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, Optional
 
-from sqlalchemy import Index
+from sqlalchemy import Index, text
 from sqlalchemy.dialects import mysql
 from sqlalchemy.orm import relationship
 from sqlmodel import (
@@ -14,6 +14,7 @@ from sqlmodel import (
     create_engine,
 )
 
+from app.constants import QUERY_TIMEOUT_SECONDS
 from app.settings import get_settings
 
 settings = get_settings()
@@ -84,7 +85,7 @@ class Step(StepBase, table=True):
     name: str = Field(index=True)
 
     previous_step_id: uuid.UUID | None = Field(
-        default=None, foreign_key="step.id", ondelete="CASCADE"
+        default=None, foreign_key="step.id", ondelete="CASCADE", index=True
     )
     previous_step: Optional["Step"] = Relationship(
         back_populates="next_step",
@@ -168,7 +169,12 @@ class Pattern(SQLModel, table=True):
     project: Project = Relationship(back_populates="patterns")
 
 
-engine = create_engine(settings.database_url, echo=False)
+engine = create_engine(
+    settings.database_url,
+    echo=False,
+    pool_pre_ping=True,
+    connect_args={"options": f"-c statement_timeout={QUERY_TIMEOUT_SECONDS * 1000}"},
+)
 
 
 def create_db_and_tables():

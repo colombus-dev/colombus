@@ -67,5 +67,5 @@ class ProjectResponse(BaseModel):
 
 
 @router.get("/api/project", response_model=list[ProjectResponse])
-async def get_all_projects(session: DatabaseSession):
+def get_all_projects(session: DatabaseSession):
     return session.exec(select(Project)).all()

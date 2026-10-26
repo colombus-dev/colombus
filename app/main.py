@@ -1,9 +1,11 @@
+import asyncio
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, status
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-from app.constants import notebooks_storage_path
+from app.constants import REQUEST_TIMEOUT_SECONDS, notebooks_storage_path
 from app.dependencies import APIKeyDeps
 from app.models.sql_model import create_db_and_tables
 from app.routers import (
@@ -42,6 +44,19 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST", "DELETE"],
         allow_headers=[settings.jwt_header_field, "content-type"],
     )
+
+    @application.middleware("http")
+    async def timeout_middleware(request: Request, call_next):
+        try:
+            return await asyncio.wait_for(
+                call_next(request), timeout=REQUEST_TIMEOUT_SECONDS
+            )
+        except asyncio.TimeoutError:
+            return JSONResponse(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                content={"detail": "Request timed out"},
+            )
+
     # TODO: add security dependency
     application.include_router(auth_router.router)
     application.include_router(
