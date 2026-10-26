@@ -1,3 +1,4 @@
+import logging
 from enum import Enum
 from typing import Any, Generator
 
@@ -6,7 +7,7 @@ import ujson
 from pydantic import BaseModel
 
 from app.models.api_model import Profile
-from app.models.parser import ParserFunction
+from app.models.parser import ParserFunction, ParserSubgraph
 from app.parsers.factory import get_parser
 from app.settings import get_settings
 
@@ -18,7 +19,7 @@ class NotebookInformation(BaseModel):
     "Groups all information about a notebook in one object"
 
     name: str
-    parser_model: Any
+    parser_model: list[ParserSubgraph]
     source_code: str
     parser_function: str
 
@@ -93,12 +94,13 @@ async def convert_to_profiles(
         response = await client.post(
             "/v2/profile",
             params={
-                "list_of_notebooks": [
-                    notebook_info.model_dump_json()
-                    for notebook_info in list_of_notebook_information
-                ],
                 "profiler": profiler.value,
                 "taxonomy": taxonomy.value,
+            },
+            json={
+                "data": [
+                    notebook.model_dump() for notebook in list_of_notebook_information
+                ]
             },
             timeout=ML_PROFILER_API_TIMEOUT,
         )
