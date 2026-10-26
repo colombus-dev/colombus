@@ -8,6 +8,7 @@ import time
 import uuid
 
 from seed import PROJECT_NAME
+from sqlalchemy.exc import OperationalError
 from sqlmodel import Session, select, text
 
 from app.models.sql_model import Project, engine
@@ -17,6 +18,15 @@ MANIFEST_PATH = (
     / "data"
     / "notebooks.manifest.json"
 )
+
+TIMED_OUT_TIMING = {
+    "count": -1,
+    "min_ms": -1,
+    "mean_ms": -1,
+    "median_ms": -1,
+    "p95_ms": -1,
+    "max_ms": -1,
+}
 
 TOKEN_DELIMITER = "\x1f"
 
@@ -141,7 +151,18 @@ def find_matching_sequences(project_id: uuid.UUID, pattern: str, repeat: int) ->
     with Session(engine) as session:
         for i in range(repeat):
             start = time.perf_counter()
-            rows = session.execute(text(SEQUENCES_QUERY), params).all()
+            try:
+                rows = session.execute(text(SEQUENCES_QUERY), params).all()
+            except OperationalError as e:
+                if "statement timeout" not in str(e):
+                    raise
+                session.rollback()
+                return {
+                    "matches": [],
+                    "match_occurrences": -1,
+                    "timing_ms": TIMED_OUT_TIMING,
+                    "timed_out": True,
+                }
             timings_ms.append((time.perf_counter() - start) * 1000)
             if i == 0:
                 grouped: dict[str, list] = {}

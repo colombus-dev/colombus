@@ -38,9 +38,13 @@ def build_pattern(terms: list[str]) -> list[PatternGroup]:
     ]
 
 
-def run_dsl_query(project_id: uuid.UUID, terms: list[str], repeat: int) -> dict:
+def run_dsl_query(
+    project_id: uuid.UUID, terms: list[str], repeat: int, quiet: bool
+) -> dict:
     pattern = build_pattern(terms)
     query = convert_steps_to_sql_query_template(project_id, pattern)
+    if not quiet:
+        print(f"query:\n{query}\n")
 
     timings_ms = []
     matches: list[dict] = []
@@ -78,7 +82,7 @@ def run_dsl_query(project_id: uuid.UUID, terms: list[str], repeat: int) -> dict:
     }
 
 
-def run_test_mode(repeat: int) -> None:
+def run_test_mode(repeat: int, quiet: bool) -> None:
     manifest = json.loads(MANIFEST_PATH.read_text())
     profiles = manifest["notebooks"]
     project_id = resolve_project_id()
@@ -90,7 +94,7 @@ def run_test_mode(repeat: int) -> None:
             for profile_name, profile in profiles.items()
             if sequence_matches(profile["steps"], terms)
         )
-        result = run_dsl_query(project_id, terms, repeat)
+        result = run_dsl_query(project_id, terms, repeat, quiet)
 
         if result.get("timed_out"):
             all_correct = False
@@ -112,11 +116,13 @@ def run_test_mode(repeat: int) -> None:
         raise SystemExit(1)
 
 
-def run_query_mode(terms: list[str], project_id: uuid.UUID | None, repeat: int) -> None:
+def run_query_mode(
+    terms: list[str], project_id: uuid.UUID | None, repeat: int, quiet: bool
+) -> None:
     if project_id is None:
         project_id = resolve_project_id()
 
-    result = run_dsl_query(project_id, terms, repeat)
+    result = run_dsl_query(project_id, terms, repeat, quiet)
     print(json.dumps(result, indent=2))
 
 
@@ -130,17 +136,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--project-id", type=uuid.UUID, default=None)
     parser.add_argument("--repeat", type=int, default=20)
     parser.add_argument("--test", action="store_true")
+    parser.add_argument("--quiet", action="store_true")
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     if args.test:
-        run_test_mode(args.repeat)
+        run_test_mode(args.repeat, args.quiet)
         return
     if not args.steps:
         raise SystemExit("pass --steps or --test")
-    run_query_mode(args.steps, args.project_id, args.repeat)
+    run_query_mode(args.steps, args.project_id, args.repeat, args.quiet)
 
 
 if __name__ == "__main__":
