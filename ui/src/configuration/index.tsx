@@ -10,6 +10,8 @@ import {
 	Wrench,
 } from "lucide-react";
 
+export type PathsDisplayMode = "show-all" | "show-matching";
+
 export type PpmNodesDisplayMode = "show-all" | "show-fixed" | "show-variable";
 
 export const supportedSteps = [
