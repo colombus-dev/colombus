@@ -1,0 +1,15 @@
+services:
+  sonar-scanner:
+    image: sonarsource/sonar-scanner-cli
+    network_mode: "host"
+    environment:
+      SONAR_HOST_URL: "http://localhost:9000"
+      SONAR_TOKEN: "${SONAR_TOKEN}"
+    volumes:
+      - .:/usr/src
+    command: >
+      -Dsonar.projectKey=colombus
+      -Dsonar.sources=app,ui/src
+      -Dsonar.tests=tests
+      -Dsonar.exclusions=**/node_modules/**,**/.venv/**,**/playwright-report/**
+      -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info

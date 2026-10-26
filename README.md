@@ -27,6 +27,31 @@ docker compose -f docker-compose.dev.yml up --build
 UI → http://localhost:5173
 API → http://localhost:8180
 
+## Testing & Code Coverage
+
+This project uses **Playwright** for E2E tests and **SonarQube** for code coverage and quality analysis.
+
+### 1. Run E2E Tests
+Make sure the development server is running (`docker compose -f docker-compose.dev.yml up`), then run the test suite:
+```bash
+npx playwright test
+```
+
+### 2. Generate Coverage Report
+Once the tests pass, unify the Docker paths with your local machine and generate the coverage file:
+```bash
+python3 fix_coverage_paths.py
+npx nyc report --reporter=lcov
+```
+*This generates a `coverage/lcov.info` file containing the test execution data.*
+
+### 3. Analyze with SonarQube
+Ensure your local SonarQube server is running on port 9000. Send the code and coverage report to SonarQube using:
+```bash
+docker compose -f docker-compose.sonar.yml up
+```
+Once finished, view your detailed coverage visualisations at `http://localhost:9000/dashboard?id=colombus`.
+
 ## Configuration (.env)
 
 The application works out-of-the-box with the default settings provided in `.env.sample`.
