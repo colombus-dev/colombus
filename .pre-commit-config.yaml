@@ -44,3 +44,7 @@ repos:
     language: system
     files: ^ui/src/.*\.(ts|tsx|js|jsx|css|json)$
     pass_filenames: false
+  - id: pytest-check
+    name: pytest-check
+    entry: bash -c 'pytest'
+    language: system
