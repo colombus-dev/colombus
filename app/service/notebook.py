@@ -16,7 +16,7 @@ settings = get_settings()
 
 
 class NotebookInformation(BaseModel):
-    "Groups all information about a notebook in one object"
+    "Groups all needed information for profiling in one object"
 
     name: str
     parser_model: list[ParserSubgraph]
@@ -38,6 +38,8 @@ class ProfilerFunction(str, Enum):
 
 
 class NotebookCellIterator:
+    "Class for iterating on a notebook file"
+
     def __init__(self, content_raw: str):
         self._content_parsed = ujson.loads(content_raw)
         self._generator = self._iterate_cells()
@@ -59,12 +61,41 @@ class NotebookCellIterator:
                     yield cell
 
 
+async def get_notebooks_information(list_of_notebooks, parser_name):
+    "Parses notebooks given a parser and put all needed information for profiling in a single object"
+
+    list_of_notebook_information = []
+
+    for notebook in list_of_notebooks:
+        file_content = await notebook.read()
+        source_code = "\n".join(
+            c["source"] for c in NotebookCellIterator(file_content.decode("utf8"))
+        )
+
+        parser_model = get_parser(parser_name).parse_code(source_code)
+
+        notebook_information = NotebookInformation(
+            name=notebook.filename,
+            parser_model=parser_model,
+            source_code=source_code,
+            parser_function=parser_name.value,
+        )
+
+        list_of_notebook_information.append(notebook_information)
+
+    return list_of_notebook_information
+
+
 async def convert_to_profiles(
     list_of_notebooks: list[Any],
     taxonomy: TaxonomyFunction = TaxonomyFunction.DSPIPELINES,
     profiler: ProfilerFunction = ProfilerFunction.EMBEDDING,
     parser_name: ParserFunction = ParserFunction.VESPUCCI,
 ):
+    """
+    Parse notebooks and returns their profiles according to a taxonomy, a profiler and a parsing function
+    """
+
     if not list_of_notebooks:
         return []
     async with httpx.AsyncClient(
@@ -72,24 +103,9 @@ async def convert_to_profiles(
     ) as client:
         # TODO ymu: maybe create a shared client once at startup using fast API's lifespan for ex
 
-        list_of_notebook_information = []
-
-        for notebook in list_of_notebooks:
-            file_content = await notebook.read()
-            source_code = "\n".join(
-                c["source"] for c in NotebookCellIterator(file_content.decode("utf8"))
-            )
-
-            parser_model = get_parser(parser_name).parse_code(source_code)
-
-            notebook_information = NotebookInformation(
-                name=notebook.filename,
-                parser_model=parser_model,
-                source_code=source_code,
-                parser_function=parser_name.value,
-            )
-
-            list_of_notebook_information.append(notebook_information)
+        list_of_notebook_information = get_notebooks_information(
+            list_of_notebooks, parser_name
+        )
 
         response = await client.post(
             "/v2/profile",
