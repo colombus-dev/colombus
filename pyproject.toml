@@ -36,6 +36,7 @@ dev = [
     "jupyterlab>=4.4.7",
     "pre-commit>=3.7",
     "pytest>=9.1.1",
+    "pytest-env>=1.8.2",
     "pyright>=1.1.414",
 ]
 
@@ -56,3 +57,6 @@ min_confidence = 80
 paths = ["app/"]
 sort_by_size = true
 verbose = false
+
+[tool.pytest_env]
+VESPUCCI_PARSER_API_URL_PREFIX=""
