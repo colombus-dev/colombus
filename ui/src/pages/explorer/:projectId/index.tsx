@@ -29,6 +29,7 @@ import useValidProject from "@/hooks/useValidProject";
 import { PATH } from "@/lib/constants";
 import type { PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
+import { AgentChat } from "@/components/agent-chat";
 
 const GRAPH_CONTAINER_ID = "graph-container";
 
@@ -357,7 +358,7 @@ export default function ExplorerProjectIdPage() {
 	}
 
 	return projectValidity === "valid" ? (
-		<section className="grid grid-cols-7 gap-4 px-4 h-[calc(100vh-76px)] pb-4">
+		<section className="grid grid-cols-9 gap-4 px-4 h-[calc(100vh-76px)] pb-4">
 			<div className="col-span-1 flex flex-col h-full space-y-4 p-2 min-h-0">
 				<div className="mb-4">
 					<p className="font-bold mb-2">Upload</p>
@@ -470,6 +471,9 @@ export default function ExplorerProjectIdPage() {
 						<ProfileCodeViewer nodes={filteredWorkflowsNodes} />
 					</div>
 				)}
+			</div>
+			<div className="col-span-2 flex flex-col h-full space-y-4 p-2 min-h-0">
+				<AgentChat />
 			</div>
 		</section>
 	) : (

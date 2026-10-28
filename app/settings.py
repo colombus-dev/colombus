@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     db_password: str = Field()
     db_name: str = Field()
 
+    llm_base_url: str | None = None
+    llm_api_key: str | None = None
+    llm_model_name: str | None = None
+
     ml_profiler_api_url_prefix: str = Field()
     google_client_id: str = Field()
 

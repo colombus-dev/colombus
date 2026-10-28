@@ -9,6 +9,7 @@ from app.constants import REQUEST_TIMEOUT_SECONDS, notebooks_storage_path
 from app.dependencies import APIKeyDeps
 from app.models.sql_model import create_db_and_tables
 from app.routers import (
+    agent_router,
     auth_router,
     pattern_router,
     profile_router,
@@ -71,6 +72,10 @@ def create_app() -> FastAPI:
     application.include_router(
         statistics_router.router, tags=["statistics"], dependencies=[APIKeyDeps]
     )
+    if settings.llm_base_url:
+        application.include_router(
+            agent_router.router, tags=["agent"], dependencies=[APIKeyDeps]
+        )
     application.include_router(
         utils_router.router, tags=["utils"], dependencies=[APIKeyDeps]
     )

@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from sqlmodel import col, select, text
 
+import app.service.pattern as patterns_service
 from app.dependencies import DatabaseSession
 from app.exceptions import ElementNotFoundException, InvalidPatternDefinitionException
 from app.models.api_model import Pattern as PatternApi
@@ -48,27 +49,12 @@ async def parse_ppm(
     params: ParsePpmParams,
     session: DatabaseSession,
 ) -> PatternApi:
-    canopus_listener = canopus_dsl.parse_string(params.pattern_dsl)
-    if not canopus_listener.program:
+    try:
+        return await patterns_service.parse_pattern_string(
+            params.pattern_dsl, session=session
+        )
+    except ValueError:
         raise InvalidPatternDefinitionException()
-    all_patterns_names = [p.name for p in canopus_listener.program.patterns]
-    all_imports_to_load = [
-        imp for imp in canopus_listener.program.imports if imp not in all_patterns_names
-    ]
-    imported_patterns = [
-        PatternApi(**imp_p)
-        for imp_p in session.exec(
-            select(Pattern.json_pattern).where(
-                col(Pattern.name).in_(all_imports_to_load)
-            )
-        ).all()
-    ]
-    # TODO: manage imports
-    return convert_pattern_to_legacy(
-        canopus_listener.program.patterns[:-1],
-        canopus_listener.program.patterns[-1],
-        imported_patterns,
-    )
 
 
 @router.post("/api/project/{project_id}/ppm/execute")
