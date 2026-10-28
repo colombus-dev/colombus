@@ -39,8 +39,14 @@ dependencies = [
 dev = [
     "jupyterlab>=4.4.7",
     "pre-commit>=3.7",
+    "pyright>=1.1.414",
     "types-ujson>=5.10.0.20250822",
 ]
+
+[tool.pyright]
+include = ["app"]
+venvPath = "."
+venv = ".venv"
 
 [tool.uv]
 default-groups = []

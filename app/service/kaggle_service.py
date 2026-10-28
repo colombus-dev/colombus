@@ -52,6 +52,7 @@ def get_kaggle_api_and_client():
             status_code=400,
             detail=f"Kaggle is not configured. Please set KAGGLE_USERNAME and KAGGLE_KEY in your .env file. Import error (if any): {kaggle_import_error}",
         )
+    assert KaggleApi is not None
     api = KaggleApi()
     api.authenticate()
     client = api.build_kaggle_client()
@@ -157,7 +158,7 @@ async def list_kaggle_competition_notebooks(
     next_page_token = None
     try:
         client._http_client._init_session()
-        client._http_client._session.timeout = 5.0
+        client._http_client._session.timeout = 5.0  # pyright: ignore[reportOptionalMemberAccess, reportAttributeAccessIssue]
         resp = client.search.search_api_client.list_entities(req)
         if resp and resp.documents:
             all_documents.extend(resp.documents)
