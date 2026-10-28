@@ -60,6 +60,7 @@ services:
 
 networks:
   colombus-net:
+    external: true
     name: colombus-net
 
 volumes:
