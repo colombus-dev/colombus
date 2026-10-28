@@ -7,7 +7,7 @@ packages = ["app"]
 
 [project]
 name = "colombus"
-version = "0.1.0"
+version = "0.3.8"
 description = "Colombus - The ML pipelines exploration platform"
 authors = [
     { name = "Nicolas Lacroix", email = "nicolas.lacroix@univ-cotedazur.fr" }
