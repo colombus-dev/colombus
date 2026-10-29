@@ -44,7 +44,10 @@ repos:
     language: system
     files: ^ui/src/.*\.(ts|tsx|js|jsx|css|json)$
     pass_filenames: false
-  - id: pytest-check
-    name: pytest-check
-    entry: bash -c 'python3 -m pytest'
+  - id: pytest
+    name: pytest
+    entry: ./.venv/bin/pytest tests
     language: system
+    types: [python]
+    pass_filenames: false
+    always_run: true
