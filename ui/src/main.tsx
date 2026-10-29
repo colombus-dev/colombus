@@ -19,6 +19,7 @@ const NotFound = () => (
 async function bootstrap() {
 	const { auth_required, google_client_id } = await getAuthConfig();
 
+	// biome-ignore lint/style/noNonNullAssertion: standard react code
 	createRoot(document.getElementById("root")!).render(
 		<StrictMode>
 			<GoogleOAuthProvider clientId={google_client_id}>

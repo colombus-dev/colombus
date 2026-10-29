@@ -48,7 +48,6 @@ export default function usePatternActions({
 				.then((p) => {
 					setCurrentPattern({ ...p, dsl_content: content });
 				})
-				// biome-ignore lint/suspicious/noExplicitAny: error handling
 				.catch((error: any) => {
 					console.error("Parse pattern error:", error);
 					let detail = error?.response?.data?.detail;
@@ -98,13 +97,11 @@ export default function usePatternActions({
 					setAllSavedPatterns(all);
 					toast.success("Pattern saved successfully!");
 				})
-				// biome-ignore lint/suspicious/noExplicitAny: error handling
 				.catch((error: any) => {
 					console.error("Parse pattern error:", error);
 					let detail = error?.response?.data?.detail;
 					if (Array.isArray(detail)) {
 						detail = detail
-							// biome-ignore lint/suspicious/noExplicitAny: error handling
 							.map((d: any) => d.msg || JSON.stringify(d))
 							.join(", ");
 					} else if (typeof detail === "object" && detail !== null) {

@@ -90,7 +90,7 @@ export default function ExplorerProjectIdPage() {
 	}, [projectValidity, navigate]);
 
 	// TODO
-	// biome-ignore lint/correctness/useExhaustiveDependencies: we should refactor this file
+	// todobiome-ignore lint/correctness/useExhaustiveDependencies: we should refactor this file
 	useEffect(() => {
 		if (!projectId || projectValidity !== "valid") {
 			return;
