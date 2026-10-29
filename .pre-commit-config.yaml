@@ -46,5 +46,5 @@ repos:
     pass_filenames: false
   - id: pytest-check
     name: pytest-check
-    entry: bash -c 'pytest'
+    entry: bash -c 'python3 -m pytest'
     language: system
