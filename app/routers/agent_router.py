@@ -53,9 +53,11 @@ import uuid
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ValidationError
 from pydantic_ai import Agent, DeferredToolRequests, Tool
+from pydantic_ai.capabilities import LocalWorkspace
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
+from pydantic_ai_harness import Skills
 from starlette.requests import Request
 from starlette.responses import Response
 
@@ -69,7 +71,7 @@ settings = get_settings()
 provider = OpenAIProvider(
     base_url=f"{settings.llm_base_url}/v1", api_key=settings.llm_api_key
 )
-agent_model = OpenAIChatModel(settings.llm_model_name, provider=provider)
+agent_model = OpenAIChatModel(settings.llm_model_name or "", provider=provider)
 
 
 my_agent = Agent(
@@ -81,6 +83,7 @@ my_agent = Agent(
     instructions=[
         "You are an expert Data Scientist, with extensive knowledge in good practices in Machine Learning."
     ],
+    capabilities=[LocalWorkspace("."), Skills(".agents/skills")],
 )
 
 

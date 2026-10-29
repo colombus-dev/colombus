@@ -71,7 +71,7 @@
 import uuid
 from dataclasses import dataclass
 
-from pydantic_ai import ApprovalRequired, RunContext
+from pydantic_ai import RunContext
 from sqlmodel import text
 
 from app.dependencies import get_session

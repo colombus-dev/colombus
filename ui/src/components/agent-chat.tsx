@@ -94,7 +94,7 @@ function ToolLine({ part, streaming }: { part: any; streaming: boolean }) {
 export function AgentChat() {
 	const { projectId } = useParams<{ projectId: string }>();
 	const { messages, sendMessage, status, addToolApprovalResponse } = useChat({
-		api: `${import.meta.env.BASE_URL}chat`,
+		api: `${import.meta.env.BASE_URL}chat`, // @ts-ignore
 		sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
 	});
 	const [input, setInput] = useState("");
