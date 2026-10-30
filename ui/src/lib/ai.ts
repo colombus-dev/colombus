@@ -15,6 +15,12 @@ export function getMessageText(message: Pick<UIMessage, "parts">) {
 	);
 }
 
+export const DEMO_SUGGESTIONS = [
+	"Describe the pattern",
+	"Refine the pattern",
+	"Execute the pattern",
+];
+
 export const DEMO_CHAT = createChat<ChatMessage>()
 	.user("Add a dark mode toggle to the settings page.")
 	.sleep(600)

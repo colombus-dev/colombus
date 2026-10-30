@@ -39,7 +39,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Trace } from "@/components/ui/trace";
-import { DEMO_CHAT, getMessageText } from "@/lib/ai";
+import { DEMO_CHAT, DEMO_SUGGESTIONS, getMessageText } from "@/lib/ai";
 import { MESSAGE_ANIMATION } from "@/lib/message-animation";
 import { cn } from "@/lib/utils";
 import { ContextUsageCard } from "./chat/context-usage-card";
@@ -214,6 +214,22 @@ export function ChatDemo() {
 							)}
 						</div>
 						<div>
+							<div className="flex scroll-fade-x scrollbar-none gap-2 overflow-x-auto overscroll-x-contain">
+								{DEMO_SUGGESTIONS.map((suggestion) => (
+									<Button
+										key={suggestion}
+										variant="outline"
+										size="sm"
+										className="shrink-0"
+										disabled={!canSend}
+										onClick={() =>
+											void sendMessage({ text: suggestion.trim() })
+										}
+									>
+										{suggestion}
+									</Button>
+								))}
+							</div>
 							<form ref={formRef} onSubmit={onSubmit} className="w-full">
 								<InputGroup>
 									<InputGroupTextarea
