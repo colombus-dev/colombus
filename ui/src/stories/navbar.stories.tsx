@@ -1,10 +1,11 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { BrowserRouter } from "react-router";
 import { Navbar } from "@/components/navbar";
 
 const meta: Meta<typeof Navbar> = {
 	title: "Components/Navbar",
 	component: Navbar,
+	tags: ["autodocs"],
 	parameters: {
 		layout: "fullscreen",
 	},
@@ -15,7 +16,6 @@ const meta: Meta<typeof Navbar> = {
 			</BrowserRouter>
 		),
 	],
-	tags: ["autodocs"],
 };
 
 export default meta;

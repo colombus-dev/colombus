@@ -1,98 +1,19 @@
+import { Input as InputPrimitive } from "@base-ui/react/input";
+import { cn } from "cn";
 import * as React from "react";
 
-import { cn } from "@/lib/utils";
-
-interface InputProps extends React.ComponentProps<"input"> {
-	fileButtonText?: string;
-	noFileText?: string;
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+	return (
+		<InputPrimitive
+			type={type}
+			data-slot="input"
+			className={cn(
+				"h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-2.5 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+				className,
+			)}
+			{...props}
+		/>
+	);
 }
-
-const Input = React.forwardRef<HTMLInputElement, InputProps>(
-	(
-		{
-			className,
-			type,
-			fileButtonText = "Choose files",
-			noFileText = "No file chosen",
-			onChange,
-			...props
-		},
-		ref,
-	) => {
-		const internalRef = React.useRef<HTMLInputElement>(null);
-		const [fileLabel, setFileLabel] = React.useState(noFileText);
-
-		React.useImperativeHandle(
-			ref,
-			() => internalRef.current as HTMLInputElement,
-		);
-
-		React.useEffect(() => {
-			if (type === "file") {
-				const form = internalRef.current?.closest("form");
-				if (form) {
-					const handleReset = () => setFileLabel(noFileText);
-					form.addEventListener("reset", handleReset);
-					return () => form.removeEventListener("reset", handleReset);
-				}
-			}
-		}, [type, noFileText]);
-
-		if (type === "file") {
-			const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-				const files = e.target.files;
-				if (!files || files.length === 0) {
-					setFileLabel(noFileText);
-				} else if (files.length === 1) {
-					setFileLabel(files[0].name);
-				} else {
-					setFileLabel(`${files.length} files selected`);
-				}
-				onChange?.(e);
-			};
-
-			return (
-				<div
-					className={cn(
-						"flex items-center gap-2 h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-within:ring-1 focus-within:ring-ring md:text-sm overflow-hidden",
-						className,
-					)}
-				>
-					<input
-						type="file"
-						className="sr-only"
-						ref={internalRef}
-						onChange={handleChange}
-						{...props}
-					/>
-					<button
-						type="button"
-						className="shrink-0 rounded bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground hover:bg-secondary/80 transition-colors"
-						onClick={() => internalRef.current?.click()}
-					>
-						{fileButtonText}
-					</button>
-					<span className="text-xs text-muted-foreground truncate flex-1 text-left min-w-0">
-						{fileLabel}
-					</span>
-				</div>
-			);
-		}
-
-		return (
-			<input
-				type={type}
-				className={cn(
-					"flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-					className,
-				)}
-				ref={internalRef}
-				onChange={onChange}
-				{...props}
-			/>
-		);
-	},
-);
-Input.displayName = "Input";
 
 export { Input };

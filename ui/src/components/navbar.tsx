@@ -17,7 +17,7 @@ export const Navbar = ({
 	onLogout,
 }: NavbarProps) => {
 	return (
-		<header className="border-grid sticky top-0 z-50 w-full border-b bg-white">
+		<header className="border-grid sticky top-0 z-50 w-full border-b">
 			<div className="flex h-14 items-center px-6 gap-4 w-full">
 				<img
 					src={`${import.meta.env.BASE_URL}logo.png`}
@@ -28,7 +28,7 @@ export const Navbar = ({
 				<div className="flex items-center gap-3 text-sm">
 					<Link
 						to={PATH.HOME}
-						className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors font-medium"
+						className="flex items-center gap-2 transition-colors font-medium"
 					>
 						<Folder className="w-4 h-4" />
 						<span>Projects</span>
@@ -36,10 +36,8 @@ export const Navbar = ({
 
 					{isOnProject && (
 						<>
-							<span className="text-slate-300 font-light">/</span>
-							<span className="font-semibold text-slate-700">
-								{projectName}
-							</span>
+							<span className="font-light">/</span>
+							<span className="font-semibold">{projectName}</span>
 						</>
 					)}
 				</div>
@@ -48,7 +46,7 @@ export const Navbar = ({
 					<Button
 						variant="ghost"
 						size="sm"
-						className="ml-auto text-slate-500 hover:text-slate-900"
+						className="ml-auto"
 						onClick={onLogout}
 					>
 						Logout

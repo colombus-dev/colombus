@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
 	Tooltip,
 	TooltipContent,
-	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -19,51 +18,51 @@ export default function GraphControls({
 }: GraphControlsProps) {
 	return (
 		<div {...divProps} className={cn("flex flex-col", divProps.className)}>
-			<TooltipProvider>
-				<Tooltip>
-					<TooltipTrigger asChild>
+			<Tooltip>
+				<TooltipTrigger
+					render={
 						<Button
 							variant="ghost"
 							onClick={() => graphRenderer?.getCamera().animatedReset()}
 						>
 							<LocateFixed />
 						</Button>
-					</TooltipTrigger>
-					<TooltipContent>
-						<p>Reset zoom</p>
-					</TooltipContent>
-				</Tooltip>
-			</TooltipProvider>
-			<TooltipProvider>
-				<Tooltip>
-					<TooltipTrigger asChild>
+					}
+				/>
+				<TooltipContent>
+					<p>Reset zoom</p>
+				</TooltipContent>
+			</Tooltip>
+			<Tooltip>
+				<TooltipTrigger
+					render={
 						<Button
 							variant="ghost"
 							onClick={() => graphRenderer?.getCamera().animatedZoom()}
 						>
 							<ZoomIn />
 						</Button>
-					</TooltipTrigger>
-					<TooltipContent>
-						<p>Zoom In</p>
-					</TooltipContent>
-				</Tooltip>
-			</TooltipProvider>
-			<TooltipProvider>
-				<Tooltip>
-					<TooltipTrigger asChild>
+					}
+				/>
+				<TooltipContent>
+					<p>Zoom In</p>
+				</TooltipContent>
+			</Tooltip>
+			<Tooltip>
+				<TooltipTrigger
+					render={
 						<Button
 							variant="ghost"
 							onClick={() => graphRenderer?.getCamera().animatedUnzoom()}
 						>
 							<ZoomOut />
 						</Button>
-					</TooltipTrigger>
-					<TooltipContent>
-						<p>Zoom Out</p>
-					</TooltipContent>
-				</Tooltip>
-			</TooltipProvider>
+					}
+				/>
+				<TooltipContent>
+					<p>Zoom Out</p>
+				</TooltipContent>
+			</Tooltip>
 		</div>
 	);
 }

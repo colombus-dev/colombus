@@ -1,44 +1,44 @@
 // AgentChat.tsx
 
 import { useChat } from "@ai-sdk/react";
-import { useState } from "react";
+import { lastAssistantMessageIsCompleteWithApprovalResponses } from "ai";
 import { TerminalIcon } from "lucide-react";
-import {
-	MessageScrollerProvider,
-	MessageScroller,
-	MessageScrollerViewport,
-	MessageScrollerContent,
-	MessageScrollerItem,
-	MessageScrollerButton,
-} from "@/components/ui/message-scroller";
-import { Message, MessageContent } from "@/components/ui/message";
+import { useState } from "react";
+import { useParams } from "react-router";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
+import { Button } from "@/components/ui/button";
+import { CodeBlock, CodeBlockContent } from "@/components/ui/code-block";
 import {
 	InputGroup,
-	InputGroupTextarea,
 	InputGroupButton,
+	InputGroupTextarea,
 } from "@/components/ui/input-group";
+import {
+	Item,
+	ItemActions,
+	ItemContent,
+	ItemMedia,
+	ItemTitle,
+} from "@/components/ui/item";
+import { Message, MessageContent } from "@/components/ui/message";
+import {
+	MessageScroller,
+	MessageScrollerButton,
+	MessageScrollerContent,
+	MessageScrollerItem,
+	MessageScrollerProvider,
+	MessageScrollerViewport,
+} from "@/components/ui/message-scroller";
 import {
 	Trace,
 	TraceCollapsible,
-	TraceCollapsibleTrigger,
 	TraceCollapsibleContent,
+	TraceCollapsibleTrigger,
 	TraceIcon,
 	TraceLine,
 	TraceTitle,
 } from "@/components/ui/trace";
-import { CodeBlock, CodeBlockContent } from "@/components/ui/code-block";
-import {
-	Item,
-	ItemMedia,
-	ItemContent,
-	ItemTitle,
-	ItemActions,
-} from "@/components/ui/item";
-import { Button } from "@/components/ui/button";
-import { lastAssistantMessageIsCompleteWithApprovalResponses } from "ai";
 import { cn } from "@/lib/utils";
-import { useParams } from "react-router";
 
 function ToolLine({ part, streaming }: { part: any; streaming: boolean }) {
 	const command = part.input?.command;
@@ -94,7 +94,8 @@ function ToolLine({ part, streaming }: { part: any; streaming: boolean }) {
 export function AgentChat() {
 	const { projectId } = useParams<{ projectId: string }>();
 	const { messages, sendMessage, status, addToolApprovalResponse } = useChat({
-		api: `${import.meta.env.BASE_URL}chat`, // @ts-ignore
+		// @ts-expect-error
+		api: `${import.meta.env.BASE_URL}chat`,
 		sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
 	});
 	const [input, setInput] = useState("");
@@ -128,6 +129,7 @@ export function AgentChat() {
 												if (part.type === "text") {
 													return (
 														<Bubble
+															// biome-ignore lint/suspicious/noArrayIndexKey: TODO
 															key={i}
 															align={m.role === "user" ? "end" : "start"}
 															variant="muted"
@@ -142,6 +144,7 @@ export function AgentChat() {
 													part.state === "approval-requested"
 												) {
 													return (
+														// biome-ignore lint/suspicious/noArrayIndexKey: TODO
 														<Item key={i} variant="outline" size="sm">
 															<ItemMedia variant="icon">
 																<TerminalIcon />
@@ -192,6 +195,7 @@ export function AgentChat() {
 
 												if (part.type?.startsWith("tool-")) {
 													return (
+														// biome-ignore lint/suspicious/noArrayIndexKey: TODO
 														<Trace key={i}>
 															<ToolLine part={part} streaming={streaming} />
 														</Trace>
@@ -214,11 +218,12 @@ export function AgentChat() {
 				<InputGroupTextarea
 					value={input}
 					onChange={(e) => setInput(e.target.value)}
-					onKeyDown={(e) =>
-						e.key === "Enter" &&
-						!e.shiftKey &&
-						(e.preventDefault(), handleSend())
-					}
+					onKeyDown={(e) => {
+						if (e.key === "Enter" && !e.shiftKey) {
+							e.preventDefault();
+							handleSend();
+						}
+					}}
 					placeholder="Ask agent..."
 					disabled={streaming}
 				/>

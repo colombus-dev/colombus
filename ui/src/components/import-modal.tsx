@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import type { KaggleNotebookList } from "@/lib/types";
+import { Label } from "./ui/label";
 
 interface ImportModalProps {
 	onImport: (files: File[]) => Promise<void>;
@@ -40,7 +41,7 @@ interface ImportModalProps {
 		search: string,
 	) => Promise<{ ref: string; title: string; description: string }[]>;
 	isImporting: boolean;
-	children: React.ReactNode;
+	render: React.ReactElement;
 }
 
 export default function ImportModal({
@@ -49,7 +50,7 @@ export default function ImportModal({
 	onSearchKaggle,
 	onSearchKaggleCompetitions,
 	isImporting,
-	children,
+	render,
 }: ImportModalProps) {
 	const [open, setOpen] = useState(false);
 	const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -285,8 +286,8 @@ export default function ImportModal({
 
 	return (
 		<Dialog open={open} onOpenChange={handleOpenChange}>
-			<DialogTrigger asChild>{children}</DialogTrigger>
-			<DialogContent className="max-w-[90vw] w-full max-h-[90vh] h-[90vh] flex flex-col">
+			<DialogTrigger render={render} />
+			<DialogContent className="min-w-11/12 min-h-6/12">
 				<DialogHeader>
 					<DialogTitle>Import Notebooks</DialogTitle>
 					<DialogDescription>
@@ -295,7 +296,7 @@ export default function ImportModal({
 				</DialogHeader>
 
 				{isImporting ? (
-					<div className="flex-1 flex flex-col items-center justify-center min-h-[300px] px-8">
+					<div className="flex-1 flex flex-col items-center justify-center min-h-75 px-8">
 						<Loader2 className="w-12 h-12 text-slate-400 animate-spin mb-4" />
 						<p className="text-lg font-medium text-slate-600 dark:text-slate-300">
 							Importing your files...
@@ -336,7 +337,7 @@ export default function ImportModal({
 							<>
 								<div
 									{...getRootProps()}
-									className={`flex-1 min-h-[250px] border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center transition-colors cursor-pointer ${
+									className={`flex-1 min-h-62.5 border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center transition-colors cursor-pointer ${
 										isDragActive
 											? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20"
 											: (dropError || serverError)
@@ -376,7 +377,7 @@ export default function ImportModal({
 											Selected Files ({selectedFiles.length})
 										</h4>
 										{selectedFiles.map((file, index) => (
-											<div
+											<div // biome-ignore lint/suspicious/noArrayIndexKey: TODO
 												key={`${file.name}-${index}`}
 												className="flex items-center justify-between p-3 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-lg shadow-sm"
 											>
@@ -422,14 +423,14 @@ export default function ImportModal({
 								</div>
 							</>
 						) : (
-							<div className="flex-1 flex flex-col mt-4 min-h-[250px]">
+							<div className="flex-1 flex flex-col mt-4 min-h-62.5">
 								<div className="flex-1">
-									<label
+									<Label
 										htmlFor="competition-name"
 										className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
 									>
 										Competition Name
-									</label>
+									</Label>
 									<div className="relative flex items-center">
 										<Input
 											id="competition-name"
@@ -525,7 +526,7 @@ export default function ImportModal({
 														Found {filteredNotebooks?.length || 0} notebooks
 														{isFetchingNextPage && " (loading more...)"}
 													</p>
-													<label className="flex items-center space-x-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+													<Label className="flex items-center space-x-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
 														<input
 															type="checkbox"
 															className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -586,7 +587,7 @@ export default function ImportModal({
 																<Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
 															)}
 														</span>
-													</label>
+													</Label>
 												</div>
 												<div className="relative">
 													<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
@@ -647,7 +648,7 @@ export default function ImportModal({
 												}}
 											>
 												{filteredNotebooks?.slice(0, displayLimit).map((nb) => (
-													<label
+													<Label
 														key={nb.ref}
 														className="flex items-start px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors group cursor-pointer"
 													>
@@ -691,7 +692,7 @@ export default function ImportModal({
 																<span className="font-mono">{nb.ref}</span>
 															</p>
 														</div>
-													</label>
+													</Label>
 												))}
 											</div>
 										</div>

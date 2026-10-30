@@ -6,14 +6,20 @@ services:
       networks:
         - colombus-dev_network
       volumes:
-        - ./ui/:/app:rw
+        - ./ui/src:/app/src:rw
+        - ./ui/public:/app/public:rw
+        - ./ui/index.html:/app/index.html:rw
+        - ./ui/vite.config.ts:/app/vite.config.ts:rw
         - ui_node_modules:/app/node_modules
       environment:
         VITE_PROXY_TARGET: http://colombus_app:8180
       depends_on:
         - colombus_app
   colombus_app:
-    build: .
+    build:
+      context: "."
+      platforms:
+          - "linux/amd64"
     ports:
       - "8180:8180"
     networks:
