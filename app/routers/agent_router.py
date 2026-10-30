@@ -52,11 +52,12 @@ import uuid
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ValidationError
-from pydantic_ai import Agent, DeferredToolRequests, Tool
+from pydantic_ai import Agent, AgentRunResult, DeferredToolRequests, Tool
 from pydantic_ai.capabilities import LocalWorkspace
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
+from pydantic_ai.ui.vercel_ai.response_types import BaseChunk, MessageMetadataChunk
 from pydantic_ai_harness import Skills
 from starlette.requests import Request
 from starlette.responses import Response
@@ -87,6 +88,19 @@ my_agent = Agent(
 )
 
 
+async def on_complete(result: AgentRunResult[BaseChunk]):
+    # TODO: to check
+    yield MessageMetadataChunk(
+        message_metadata={
+            "usage": {
+                "inputTokens": result.usage.input_tokens,
+                "outputTokens": result.usage.output_tokens,
+                "outputReasoningTokens": result.usage.output_reasoning_tokens,
+            }
+        }
+    )
+
+
 class ChatRequestContext(BaseModel):
     projectId: uuid.UUID
 
@@ -111,5 +125,6 @@ async def chat(request: Request) -> Response:
         request,
         agent=my_agent,
         deps=deps,
+        on_complete=on_complete,
         sdk_version=6,
     )

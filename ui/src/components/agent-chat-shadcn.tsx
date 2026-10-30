@@ -41,6 +41,7 @@ import { Trace } from "@/components/ui/trace";
 import { DEMO_CHAT, getMessageText } from "@/lib/ai";
 import { MESSAGE_ANIMATION } from "@/lib/message-animation";
 import { cn } from "@/lib/utils";
+import { ContextUsageCard } from "./chat/context-usage-card";
 
 const initialMessages = DEMO_CHAT.get(0);
 const transport = DEMO_CHAT.transport({
@@ -85,8 +86,8 @@ export function ChatDemo() {
 			)}
 		>
 			<MessageScrollerProvider>
-				<div className="relative flex w-full flex-col gap-4 [[data-slot=preview]:has(&)]:bg-background [[data-slot=preview]:has(&)>div]:p-0!">
-					<div className="flex h-200 w-full flex-col gap-4">
+				<div className="relative flex h-full w-full flex-col gap-4 [[data-slot=preview]:has(&)]:bg-background [[data-slot=preview]:has(&)>div]:p-0!">
+					<div className="flex h-full w-full flex-col gap-4">
 						<div className="flex items-start justify-between gap-4 p-8 pb-4">
 							<div className="flex flex-col gap-1">
 								{/**PereyBot named after Marguerite Perey (https://en.wikipedia.org/wiki/Marguerite_Perey)*/}
@@ -201,7 +202,7 @@ export function ChatDemo() {
 								</MessageScroller>
 							)}
 						</div>
-						<div className="p-8 pt-0">
+						<div>
 							<form ref={formRef} onSubmit={onSubmit} className="w-full">
 								<InputGroup>
 									<InputGroupTextarea
@@ -218,6 +219,8 @@ export function ChatDemo() {
 										}}
 									/>
 									<InputGroupAddon align="block-end" className="pt-1">
+										{/** TODO: pass usage to card component inputTokens={messages[messages.length - 1]?.metadata?.usage?.inputTokens} */}
+										<ContextUsageCard />
 										<InputGroupButton
 											type="submit"
 											variant="default"
