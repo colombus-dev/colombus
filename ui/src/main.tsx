@@ -1,44 +1,50 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import "@/index.css";
-import { GoogleOAuthProvider } from "@react-oauth/google";
-import { BrowserRouter, Route, Routes } from "react-router";
-import App from "@/App.tsx";
-import { getAuthConfig } from "@/api/client";
-import Home from "@/components/home.tsx";
-import { PATH } from "@/lib/constants";
-import ExplorerProjectIdPage from "@/pages/explorer/:projectId";
+import App from "@/App.tsx"
+import { getAuthConfig } from "@/api/client"
+import Home from "@/components/home.tsx"
+import { ThemeProvider } from "@/components/theme-provider"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import "@/index.css"
+import { GoogleOAuthProvider } from "@react-oauth/google"
+import { StrictMode } from "react"
+import { createRoot } from "react-dom/client"
+import { BrowserRouter, Route, Routes } from "react-router"
+import { PATH } from "@/lib/constants"
+import ExplorerProjectIdPage from "@/pages/explorer/:projectId"
 
 const NotFound = () => (
-	<div className="flex flex-col items-center justify-center h-full space-y-4">
-		<h1 className="text-4xl font-bold">404</h1>
-		<p className="text-lg text-slate-500">Page not found</p>
-	</div>
-);
+  <div className="flex flex-col items-center justify-center h-full space-y-4">
+    <h1 className="text-4xl font-bold">404</h1>
+    <p className="text-lg text-slate-500">Page not found</p>
+  </div>
+)
 
 async function bootstrap() {
-	const { auth_required, google_client_id } = await getAuthConfig();
+  const { auth_required, google_client_id } = await getAuthConfig()
 
-	// biome-ignore lint/style/noNonNullAssertion: standard react code
-	createRoot(document.getElementById("root")!).render(
-		<StrictMode>
-			<GoogleOAuthProvider clientId={google_client_id}>
-				<BrowserRouter basename={import.meta.env.BASE_URL}>
-					<Routes>
-						<Route element={<App authRequired={auth_required} />}>
-							<Route index element={<Home />} />
-							<Route path={PATH.HOME} element={<Home />} />
-							<Route
-								path={`${PATH.EXPLORER}/:projectId`}
-								element={<ExplorerProjectIdPage />}
-							/>
-							<Route path="*" element={<NotFound />} />
-						</Route>
-					</Routes>
-				</BrowserRouter>
-			</GoogleOAuthProvider>
-		</StrictMode>,
-	);
+  // biome-ignore lint/style/noNonNullAssertion: standard react code
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <ThemeProvider>
+        <TooltipProvider>
+          <GoogleOAuthProvider clientId={google_client_id}>
+            <BrowserRouter basename={import.meta.env.BASE_URL}>
+              <Routes>
+                <Route element={<App authRequired={auth_required} />}>
+                  <Route index element={<Home />} />
+                  <Route path={PATH.HOME} element={<Home />} />
+                  <Route
+                    path={`${PATH.EXPLORER}/:projectId`}
+                    element={<ExplorerProjectIdPage />}
+                  />
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </GoogleOAuthProvider>
+        </TooltipProvider>
+      </ThemeProvider>
+    </StrictMode>
+  )
 }
 
-bootstrap();
+bootstrap()

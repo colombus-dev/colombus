@@ -1,191 +1,189 @@
-import type { StateCreator } from "zustand";
-import { create } from "zustand";
-import { devtools, persist } from "zustand/middleware";
-import { postDiffSort } from "@/api/client";
-import type { PpmNodesDisplayMode } from "@/configuration";
-import type { DiffResult, Pattern, PpmResult } from "@/lib/types";
+import type { StateCreator } from "zustand"
+import { create } from "zustand"
+import { devtools, persist } from "zustand/middleware"
+import { postDiffSort } from "@/api/client"
+import type { PpmNodesDisplayMode } from "@/configuration"
+import type { DiffResult, Pattern, PpmResult } from "@/lib/types"
 
 interface AuthSlice {
-	jwtToken?: string;
-	jwtExpiry?: number;
-	setJwtToken: (token: string | undefined, expiry?: number) => void;
+  jwtToken?: string
+  jwtExpiry?: number
+  setJwtToken: (token: string | undefined, expiry?: number) => void
 }
 
 interface DiffSlice {
-	referenceDiffProfile?: string;
-	diffResults: DiffResult[];
-	setReferenceDiffProfile: (r: string) => void;
-	resetReferenceDiffProfile: () => void;
+  referenceDiffProfile?: string
+  diffResults: DiffResult[]
+  setReferenceDiffProfile: (r: string) => void
+  resetReferenceDiffProfile: () => void
 }
 
 interface PatternSlice {
-	currentPattern?: Pattern;
-	setCurrentPattern: (p: Pattern) => void;
-	resetCurrentPattern: () => void;
-	allSavedPatterns: Pattern[];
-	setAllSavedPatterns: (p: Pattern[]) => void;
+  currentPattern?: Pattern
+  setCurrentPattern: (p: Pattern) => void
+  resetCurrentPattern: () => void
+  allSavedPatterns: Pattern[]
+  setAllSavedPatterns: (p: Pattern[]) => void
 }
 
 interface GraphCustomizationSlice {
-	displayedLevel: number; // default 2
-	setDisplayedLevel: (level: number) => void;
-	useWeightedNodes: boolean; // default true
-	setUseWeightedNodes: (uwn: boolean) => void;
-	patternCapturedNodesDisplayMode: PpmNodesDisplayMode;
-	setPatternCapturedNodesDisplayMode: (mode: PpmNodesDisplayMode) => void;
+  displayedLevel: number // default 2
+  setDisplayedLevel: (level: number) => void
+  useWeightedNodes: boolean // default true
+  setUseWeightedNodes: (uwn: boolean) => void
+  patternCapturedNodesDisplayMode: PpmNodesDisplayMode
+  setPatternCapturedNodesDisplayMode: (mode: PpmNodesDisplayMode) => void
 }
 
 interface ProfilesSlice {
-	availableProfilesNames: string[];
-	setAvailableProfilesNames: (profiles: string[]) => void;
-	availableProfilesWithPpmData: PpmResult[];
-	setAvailableProfilesWithPpmData: (data: PpmResult[]) => void;
-	filteredProfilesNames: string[];
-	setFilteredProfilesNames: (profiles: string[]) => void;
-	profilesScores: Record<string, number | null | undefined>;
-	setProfilesScores: (
-		scores: Record<string, number | null | undefined>,
-	) => void;
-	selectedProfileNodeId: string | null;
-	setSelectedProfileNodeId: (id: string | null) => void;
-	selectedProfileName: string | null;
-	setSelectedProfileName: (name: string | null) => void;
+  availableProfilesNames: string[]
+  setAvailableProfilesNames: (profiles: string[]) => void
+  availableProfilesWithPpmData: PpmResult[]
+  setAvailableProfilesWithPpmData: (data: PpmResult[]) => void
+  filteredProfilesNames: string[]
+  setFilteredProfilesNames: (profiles: string[]) => void
+  profilesScores: Record<string, number | null | undefined>
+  setProfilesScores: (scores: Record<string, number | null | undefined>) => void
+  selectedProfileNodeId: string | null
+  setSelectedProfileNodeId: (id: string | null) => void
+  selectedProfileName: string | null
+  setSelectedProfileName: (name: string | null) => void
 }
 
 interface ProjectSlice {
-	projectName?: string;
-	setProjectName: (name?: string) => void;
+  projectName?: string
+  setProjectName: (name?: string) => void
 }
 
 interface ColombusStore
-	extends AuthSlice,
-		DiffSlice,
-		PatternSlice,
-		GraphCustomizationSlice,
-		ProfilesSlice,
-		ProjectSlice {}
+  extends AuthSlice,
+    DiffSlice,
+    PatternSlice,
+    GraphCustomizationSlice,
+    ProfilesSlice,
+    ProjectSlice {}
 
 const createDiffSlice: StateCreator<ColombusStore, [], [], DiffSlice> = (
-	set,
-	get,
+  set,
+  get
 ) => ({
-	referenceDiffProfile: undefined,
-	diffResults: [],
-	setReferenceDiffProfile: async (p) => {
-		/**
-		 * Set the reference diff profile and query/update the results.
-		 */
-		const availableProfilesNames = get().availableProfilesNames;
-		const diffResults = await postDiffSort([
-			p,
-			...availableProfilesNames.filter((n) => n !== p),
-		]);
-		set((state) => ({
-			...state,
-			referenceDiffProfile: p,
-			diffResults,
-			availableProfilesNames: diffResults.map((r) => r.profile_name),
-			availableProfilesWithPpmData: diffResults.map(
-				({ profile_name, results }) => ({ profile_name, results }),
-			),
-		}));
-	},
-	resetReferenceDiffProfile: () =>
-		set((state) => ({
-			...state,
-			referenceDiffProfile: undefined,
-			diffResults: [],
-		})),
-});
+  referenceDiffProfile: undefined,
+  diffResults: [],
+  setReferenceDiffProfile: async (p) => {
+    /**
+     * Set the reference diff profile and query/update the results.
+     */
+    const availableProfilesNames = get().availableProfilesNames
+    const diffResults = await postDiffSort([
+      p,
+      ...availableProfilesNames.filter((n) => n !== p),
+    ])
+    set((state) => ({
+      ...state,
+      referenceDiffProfile: p,
+      diffResults,
+      availableProfilesNames: diffResults.map((r) => r.profile_name),
+      availableProfilesWithPpmData: diffResults.map(
+        ({ profile_name, results }) => ({ profile_name, results })
+      ),
+    }))
+  },
+  resetReferenceDiffProfile: () =>
+    set((state) => ({
+      ...state,
+      referenceDiffProfile: undefined,
+      diffResults: [],
+    })),
+})
 
 const createPatternSlice: StateCreator<ColombusStore, [], [], PatternSlice> = (
-	set,
+  set
 ) => ({
-	currentPattern: undefined,
-	setCurrentPattern: (p) => set((state) => ({ ...state, currentPattern: p })),
-	resetCurrentPattern: () =>
-		set((state) => ({ ...state, currentPattern: undefined })),
-	allSavedPatterns: [],
-	setAllSavedPatterns: (p) =>
-		set((state) => ({ ...state, allSavedPatterns: p })),
-});
+  currentPattern: undefined,
+  setCurrentPattern: (p) => set((state) => ({ ...state, currentPattern: p })),
+  resetCurrentPattern: () =>
+    set((state) => ({ ...state, currentPattern: undefined })),
+  allSavedPatterns: [],
+  setAllSavedPatterns: (p) =>
+    set((state) => ({ ...state, allSavedPatterns: p })),
+})
 
 const createAuthSlice: StateCreator<ColombusStore, [], [], AuthSlice> = (
-	set,
+  set
 ) => ({
-	jwtToken: undefined,
-	jwtExpiry: undefined,
-	setJwtToken: (token, expiry) => {
-		set((state) => ({ ...state, jwtToken: token, jwtExpiry: expiry }));
-	},
-});
+  jwtToken: undefined,
+  jwtExpiry: undefined,
+  setJwtToken: (token, expiry) => {
+    set((state) => ({ ...state, jwtToken: token, jwtExpiry: expiry }))
+  },
+})
 
 const createGraphCustomizationSlice: StateCreator<
-	ColombusStore,
-	[],
-	[],
-	GraphCustomizationSlice
+  ColombusStore,
+  [],
+  [],
+  GraphCustomizationSlice
 > = (set) => ({
-	displayedLevel: 2,
-	setDisplayedLevel: (level) =>
-		set((state) => ({ ...state, displayedLevel: level })),
-	useWeightedNodes: true,
-	setUseWeightedNodes: (uwn) =>
-		set((state) => ({ ...state, useWeightedNodes: uwn })),
-	patternCapturedNodesDisplayMode: "show-variable",
-	setPatternCapturedNodesDisplayMode: (mode) =>
-		set((state) => ({ ...state, patternCapturedNodesDisplayMode: mode })),
-});
+  displayedLevel: 2,
+  setDisplayedLevel: (level) =>
+    set((state) => ({ ...state, displayedLevel: level })),
+  useWeightedNodes: true,
+  setUseWeightedNodes: (uwn) =>
+    set((state) => ({ ...state, useWeightedNodes: uwn })),
+  patternCapturedNodesDisplayMode: "show-variable",
+  setPatternCapturedNodesDisplayMode: (mode) =>
+    set((state) => ({ ...state, patternCapturedNodesDisplayMode: mode })),
+})
 
 const createProfilesSlice: StateCreator<
-	ColombusStore,
-	[],
-	[],
-	ProfilesSlice
+  ColombusStore,
+  [],
+  [],
+  ProfilesSlice
 > = (set) => ({
-	availableProfilesNames: [],
-	setAvailableProfilesNames: (profiles) =>
-		set((state) => ({ ...state, availableProfilesNames: profiles })),
-	availableProfilesWithPpmData: [],
-	setAvailableProfilesWithPpmData: (data) =>
-		set((state) => ({ ...state, availableProfilesWithPpmData: data })),
-	filteredProfilesNames: [],
-	setFilteredProfilesNames: (profiles) =>
-		set((state) => ({ ...state, filteredProfilesNames: profiles })),
-	profilesScores: {},
-	setProfilesScores: (scores) =>
-		set((state) => ({ ...state, profilesScores: scores })),
-	selectedProfileNodeId: null,
-	setSelectedProfileNodeId: (id) =>
-		set((state) => ({ ...state, selectedProfileNodeId: id })),
-	selectedProfileName: null,
-	setSelectedProfileName: (name) =>
-		set((state) => ({ ...state, selectedProfileName: name })),
-});
+  availableProfilesNames: [],
+  setAvailableProfilesNames: (profiles) =>
+    set((state) => ({ ...state, availableProfilesNames: profiles })),
+  availableProfilesWithPpmData: [],
+  setAvailableProfilesWithPpmData: (data) =>
+    set((state) => ({ ...state, availableProfilesWithPpmData: data })),
+  filteredProfilesNames: [],
+  setFilteredProfilesNames: (profiles) =>
+    set((state) => ({ ...state, filteredProfilesNames: profiles })),
+  profilesScores: {},
+  setProfilesScores: (scores) =>
+    set((state) => ({ ...state, profilesScores: scores })),
+  selectedProfileNodeId: null,
+  setSelectedProfileNodeId: (id) =>
+    set((state) => ({ ...state, selectedProfileNodeId: id })),
+  selectedProfileName: null,
+  setSelectedProfileName: (name) =>
+    set((state) => ({ ...state, selectedProfileName: name })),
+})
 
 const createProjectSlice: StateCreator<ColombusStore, [], [], ProjectSlice> = (
-	set,
+  set
 ) => ({
-	projectName: undefined,
-	setProjectName(name) {
-		set((state) => ({ ...state, projectName: name }));
-	},
-});
+  projectName: undefined,
+  setProjectName(name) {
+    set((state) => ({ ...state, projectName: name }))
+  },
+})
 
 export const useColombusStore = create<ColombusStore>()(
-	devtools(
-		persist(
-			(...a) => ({
-				...createAuthSlice(...a),
-				...createDiffSlice(...a),
-				...createPatternSlice(...a),
-				...createGraphCustomizationSlice(...a),
-				...createProfilesSlice(...a),
-				...createProjectSlice(...a),
-			}),
-			{
-				name: "colombus-storage",
-			},
-		),
-	),
-);
+  devtools(
+    persist(
+      (...a) => ({
+        ...createAuthSlice(...a),
+        ...createDiffSlice(...a),
+        ...createPatternSlice(...a),
+        ...createGraphCustomizationSlice(...a),
+        ...createProfilesSlice(...a),
+        ...createProjectSlice(...a),
+      }),
+      {
+        name: "colombus-storage",
+      }
+    )
+  )
+)

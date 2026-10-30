@@ -1,733 +1,734 @@
-import debounce from "lodash/debounce";
+import debounce from "lodash/debounce"
 import {
-	CloudDownload,
-	FileJson,
-	Link,
-	Loader2,
-	Monitor,
-	Search,
-	Upload,
-	X,
-} from "lucide-react";
-import type React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useDropzone } from "react-dropzone";
-import { NotebookFileExtension } from "@/api/client";
-import { Button } from "@/components/ui/button";
+  CloudDownload,
+  FileJson,
+  Link,
+  Loader2,
+  Monitor,
+  Search,
+  Upload,
+  X,
+} from "lucide-react"
+import type React from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { useDropzone } from "react-dropzone"
+import { NotebookFileExtension } from "@/api/client"
+import { Button } from "@/components/ui/button"
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import type { KaggleNotebookList } from "@/lib/types";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import type { KaggleNotebookList } from "@/lib/types"
+import { Label } from "./ui/label"
 
 interface ImportModalProps {
-	onImport: (files: File[]) => Promise<void>;
-	onImportKaggle?: (payload: {
-		competition?: string;
-		slugs?: string[];
-		scores?: Record<string, number>;
-	}) => Promise<void>;
-	onSearchKaggle?: (
-		competition: string,
-		pageToken?: string,
-	) => Promise<KaggleNotebookList>;
-	onSearchKaggleCompetitions?: (
-		search: string,
-	) => Promise<{ ref: string; title: string; description: string }[]>;
-	isImporting: boolean;
-	children: React.ReactNode;
+  onImport: (files: File[]) => Promise<void>
+  onImportKaggle?: (payload: {
+    competition?: string
+    slugs?: string[]
+    scores?: Record<string, number>
+  }) => Promise<void>
+  onSearchKaggle?: (
+    competition: string,
+    pageToken?: string
+  ) => Promise<KaggleNotebookList>
+  onSearchKaggleCompetitions?: (
+    search: string
+  ) => Promise<{ ref: string; title: string; description: string }[]>
+  isImporting: boolean
+  render: React.ReactElement
 }
 
 export default function ImportModal({
-	onImport,
-	onImportKaggle,
-	onSearchKaggle,
-	onSearchKaggleCompetitions,
-	isImporting,
-	children,
+  onImport,
+  onImportKaggle,
+  onSearchKaggle,
+  onSearchKaggleCompetitions,
+  isImporting,
+  render,
 }: ImportModalProps) {
-	const [open, setOpen] = useState(false);
-	const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-	const [dropError, setDropError] = useState(false);
-	const [serverError, setServerError] = useState<string | null>(null);
-	const [tab, setTab] = useState<"pc" | "kaggle">("pc");
-	const [competition, setCompetition] = useState("");
-	const [searchedCompetitions, setSearchedCompetitions] = useState<
-		{ ref: string; title: string; description: string }[] | null
-	>(null);
-	const [selectedCompetition, setSelectedCompetition] = useState<{
-		ref: string;
-		title: string;
-	} | null>(null);
-	const [searchedNotebooks, setSearchedNotebooks] = useState<
-		KaggleNotebookList["notebooks"] | null
-	>(null);
-	const [selectedNotebookSlugs, setSelectedNotebookSlugs] = useState<string[]>(
-		[],
-	);
-	const [isSearching, setIsSearching] = useState(false);
-	const [displayLimit, setDisplayLimit] = useState(20);
-	const [notebookSearch, setNotebookSearch] = useState("");
-	const [nextPageToken, setNextPageToken] = useState<string | null>(null);
-	const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
+  const [open, setOpen] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [dropError, setDropError] = useState(false)
+  const [serverError, setServerError] = useState<string | null>(null)
+  const [tab, setTab] = useState<"pc" | "kaggle">("pc")
+  const [competition, setCompetition] = useState("")
+  const [searchedCompetitions, setSearchedCompetitions] = useState<
+    { ref: string; title: string; description: string }[] | null
+  >(null)
+  const [selectedCompetition, setSelectedCompetition] = useState<{
+    ref: string
+    title: string
+  } | null>(null)
+  const [searchedNotebooks, setSearchedNotebooks] = useState<
+    KaggleNotebookList["notebooks"] | null
+  >(null)
+  const [selectedNotebookSlugs, setSelectedNotebookSlugs] = useState<string[]>(
+    []
+  )
+  const [isSearching, setIsSearching] = useState(false)
+  const [displayLimit, setDisplayLimit] = useState(20)
+  const [notebookSearch, setNotebookSearch] = useState("")
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null)
+  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false)
 
-	const filteredNotebooks = useMemo(() => {
-		if (!searchedNotebooks) return null;
-		if (!notebookSearch.trim()) return searchedNotebooks;
-		const lowerSearch = notebookSearch.toLowerCase();
-		return searchedNotebooks.filter(
-			(nb) =>
-				nb.title.toLowerCase().includes(lowerSearch) ||
-				nb.author.toLowerCase().includes(lowerSearch) ||
-				nb.ref.toLowerCase().includes(lowerSearch),
-		);
-	}, [searchedNotebooks, notebookSearch]);
+  const filteredNotebooks = useMemo(() => {
+    if (!searchedNotebooks) return null
+    if (!notebookSearch.trim()) return searchedNotebooks
+    const lowerSearch = notebookSearch.toLowerCase()
+    return searchedNotebooks.filter(
+      (nb) =>
+        nb.title.toLowerCase().includes(lowerSearch) ||
+        nb.author.toLowerCase().includes(lowerSearch) ||
+        nb.ref.toLowerCase().includes(lowerSearch)
+    )
+  }, [searchedNotebooks, notebookSearch])
 
-	const filteredCompetitions = useMemo(() => {
-		if (!searchedCompetitions) return null;
-		if (!competition.trim()) return searchedCompetitions;
-		const lowerSearch = competition.toLowerCase();
-		return searchedCompetitions.filter(
-			(c) =>
-				c.title.toLowerCase().includes(lowerSearch) ||
-				c.ref.toLowerCase().includes(lowerSearch) ||
-				c.description.toLowerCase().includes(lowerSearch),
-		);
-	}, [searchedCompetitions, competition]);
+  const filteredCompetitions = useMemo(() => {
+    if (!searchedCompetitions) return null
+    if (!competition.trim()) return searchedCompetitions
+    const lowerSearch = competition.toLowerCase()
+    return searchedCompetitions.filter(
+      (c) =>
+        c.title.toLowerCase().includes(lowerSearch) ||
+        c.ref.toLowerCase().includes(lowerSearch) ||
+        c.description.toLowerCase().includes(lowerSearch)
+    )
+  }, [searchedCompetitions, competition])
 
-	const debouncedSearch = useMemo(
-		() =>
-			debounce(
-				(searchComp: string, callback: (comp: string) => Promise<any>) => {
-					setIsSearching(true);
-					callback(searchComp)
-						.then((results) => {
-							setSearchedCompetitions(results);
-						})
-						.catch((error: any) => {
-							setServerError(error.message || "An error occurred");
-						})
-						.finally(() => setIsSearching(false));
-				},
-				1000,
-			),
-		[],
-	);
+  const debouncedSearch = useMemo(
+    () =>
+      debounce(
+        (searchComp: string, callback: (comp: string) => Promise<any>) => {
+          setIsSearching(true)
+          callback(searchComp)
+            .then((results) => {
+              setSearchedCompetitions(results)
+            })
+            .catch((error: any) => {
+              setServerError(error.message || "An error occurred")
+            })
+            .finally(() => setIsSearching(false))
+        },
+        1000
+      ),
+    []
+  )
 
-	useEffect(() => {
-		if (!onSearchKaggleCompetitions || !competition.trim()) {
-			return;
-		}
-		const compSlug = competition.match(/kaggle\.com\/competitions\/([^/?#]+)/);
-		const finalComp = compSlug ? compSlug[1] : competition.trim();
-		if (finalComp.length < 2) return;
+  useEffect(() => {
+    if (!onSearchKaggleCompetitions || !competition.trim()) {
+      return
+    }
+    const compSlug = competition.match(/kaggle\.com\/competitions\/([^/?#]+)/)
+    const finalComp = compSlug ? compSlug[1] : competition.trim()
+    if (finalComp.length < 2) return
 
-		debouncedSearch(finalComp, onSearchKaggleCompetitions);
+    debouncedSearch(finalComp, onSearchKaggleCompetitions)
 
-		return () => {
-			debouncedSearch.cancel();
-		};
-	}, [competition, onSearchKaggleCompetitions, debouncedSearch]);
+    return () => {
+      debouncedSearch.cancel()
+    }
+  }, [competition, onSearchKaggleCompetitions, debouncedSearch])
 
-	const handleSelectCompetition = (comp: { ref: string; title: string }) => {
-		if (!onSearchKaggle) return;
-		setSelectedCompetition(comp);
-		setSearchedCompetitions(null);
-		setIsSearching(true);
-		setServerError(null);
-		setDisplayLimit(20);
-		setNotebookSearch("");
+  const handleSelectCompetition = (comp: { ref: string; title: string }) => {
+    if (!onSearchKaggle) return
+    setSelectedCompetition(comp)
+    setSearchedCompetitions(null)
+    setIsSearching(true)
+    setServerError(null)
+    setDisplayLimit(20)
+    setNotebookSearch("")
 
-		onSearchKaggle(comp.ref)
-			.then((result) => {
-				setSearchedNotebooks(result.notebooks);
-				setNextPageToken(result.next_page_token);
-				setSelectedNotebookSlugs([]);
-			})
-			.catch((error: any) => {
-				setServerError(error.message);
-			})
-			.finally(() => {
-				setIsSearching(false);
-			});
-	};
+    onSearchKaggle(comp.ref)
+      .then((result) => {
+        setSearchedNotebooks(result.notebooks)
+        setNextPageToken(result.next_page_token)
+        setSelectedNotebookSlugs([])
+      })
+      .catch((error: any) => {
+        setServerError(error.message)
+      })
+      .finally(() => {
+        setIsSearching(false)
+      })
+  }
 
-	const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
-		const manuallyAccepted = fileRejections
-			.map((r) => r.file)
-			.filter((f) => f.name.toLowerCase().endsWith(NotebookFileExtension));
+  const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
+    const manuallyAccepted = fileRejections
+      .map((r) => r.file)
+      .filter((f) => f.name.toLowerCase().endsWith(NotebookFileExtension))
 
-		const allValidFiles = [...acceptedFiles, ...manuallyAccepted];
+    const allValidFiles = [...acceptedFiles, ...manuallyAccepted]
 
-		if (allValidFiles.length === 0 && fileRejections.length > 0) {
-			setDropError(true);
-		} else {
-			setDropError(false);
-			setSelectedFiles((prev) => {
-				// Prevent duplicates
-				const newFiles = allValidFiles.filter(
-					(newFile) => !prev.some((existing) => existing.name === newFile.name),
-				);
-				return [...prev, ...newFiles];
-			});
-		}
-		setServerError(null);
-	}, []);
+    if (allValidFiles.length === 0 && fileRejections.length > 0) {
+      setDropError(true)
+    } else {
+      setDropError(false)
+      setSelectedFiles((prev) => {
+        // Prevent duplicates
+        const newFiles = allValidFiles.filter(
+          (newFile) => !prev.some((existing) => existing.name === newFile.name)
+        )
+        return [...prev, ...newFiles]
+      })
+    }
+    setServerError(null)
+  }, [])
 
-	const onDropRejected = useCallback((fileRejections: any[]) => {
-		const hasValidExtension = fileRejections.some((r) =>
-			r.file.name.toLowerCase().endsWith(NotebookFileExtension),
-		);
-		if (!hasValidExtension) {
-			setDropError(true);
-		}
-	}, []);
+  const onDropRejected = useCallback((fileRejections: any[]) => {
+    const hasValidExtension = fileRejections.some((r) =>
+      r.file.name.toLowerCase().endsWith(NotebookFileExtension)
+    )
+    if (!hasValidExtension) {
+      setDropError(true)
+    }
+  }, [])
 
-	const onDragEnter = useCallback(() => {
-		setDropError(false);
-		setServerError(null);
-	}, []);
+  const onDragEnter = useCallback(() => {
+    setDropError(false)
+    setServerError(null)
+  }, [])
 
-	const { getRootProps, getInputProps, isDragActive } = useDropzone({
-		onDrop,
-		onDropRejected,
-		onDragEnter,
-		accept: {
-			"application/json": [NotebookFileExtension],
-			"application/x-ipynb+json": [NotebookFileExtension],
-			"text/plain": [NotebookFileExtension],
-			"*/*": [NotebookFileExtension],
-		},
-	});
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    onDropRejected,
+    onDragEnter,
+    accept: {
+      "application/json": [NotebookFileExtension],
+      "application/x-ipynb+json": [NotebookFileExtension],
+      "text/plain": [NotebookFileExtension],
+      "*/*": [NotebookFileExtension],
+    },
+  })
 
-	const handleRemoveFile = (index: number) => {
-		setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-	};
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index))
+  }
 
-	const handleImportClick = () => {
-		if (selectedFiles.length === 0) return;
-		onImport(selectedFiles)
-			.then(() => {
-				setOpen(false);
-				setSelectedFiles([]);
-				setServerError(null);
-			})
-			.catch((error: any) => {
-				setServerError(error.message);
-			});
-	};
+  const handleImportClick = () => {
+    if (selectedFiles.length === 0) return
+    onImport(selectedFiles)
+      .then(() => {
+        setOpen(false)
+        setSelectedFiles([])
+        setServerError(null)
+      })
+      .catch((error: any) => {
+        setServerError(error.message)
+      })
+  }
 
-	const handleKaggleImportClick = () => {
-		if (!onImportKaggle) return;
+  const handleKaggleImportClick = () => {
+    if (!onImportKaggle) return
 
-		let importPromise: Promise<void>;
+    let importPromise: Promise<void>
 
-		if (searchedNotebooks) {
-			if (selectedNotebookSlugs.length === 0) return;
-			const scoresToSubmit = Object.fromEntries(
-				searchedNotebooks
-					.filter(
-						(nb) =>
-							selectedNotebookSlugs.includes(nb.ref) &&
-							nb.score !== undefined &&
-							nb.score !== null,
-					)
-					.map((nb) => [nb.ref, nb.score as number]),
-			);
-			importPromise = onImportKaggle({
-				slugs: selectedNotebookSlugs,
-				scores: scoresToSubmit,
-			});
-		} else {
-			const targetComp = selectedCompetition
-				? selectedCompetition.ref
-				: competition;
-			if (!targetComp) return;
-			const compSlug = targetComp.match(/kaggle\.com\/competitions\/([^/?#]+)/);
-			const finalComp = compSlug ? compSlug[1] : targetComp.trim();
-			importPromise = onImportKaggle({ competition: finalComp });
-		}
+    if (searchedNotebooks) {
+      if (selectedNotebookSlugs.length === 0) return
+      const scoresToSubmit = Object.fromEntries(
+        searchedNotebooks
+          .filter(
+            (nb) =>
+              selectedNotebookSlugs.includes(nb.ref) &&
+              nb.score !== undefined &&
+              nb.score !== null
+          )
+          .map((nb) => [nb.ref, nb.score as number])
+      )
+      importPromise = onImportKaggle({
+        slugs: selectedNotebookSlugs,
+        scores: scoresToSubmit,
+      })
+    } else {
+      const targetComp = selectedCompetition
+        ? selectedCompetition.ref
+        : competition
+      if (!targetComp) return
+      const compSlug = targetComp.match(/kaggle\.com\/competitions\/([^/?#]+)/)
+      const finalComp = compSlug ? compSlug[1] : targetComp.trim()
+      importPromise = onImportKaggle({ competition: finalComp })
+    }
 
-		importPromise
-			.then(() => {
-				setOpen(false);
-				setCompetition("");
-				setSearchedNotebooks(null);
-				setSearchedCompetitions(null);
-				setSelectedCompetition(null);
-				setServerError(null);
-			})
-			.catch((error: any) => {
-				setServerError(error.message);
-			});
-	};
+    importPromise
+      .then(() => {
+        setOpen(false)
+        setCompetition("")
+        setSearchedNotebooks(null)
+        setSearchedCompetitions(null)
+        setSelectedCompetition(null)
+        setServerError(null)
+      })
+      .catch((error: any) => {
+        setServerError(error.message)
+      })
+  }
 
-	const handleOpenChange = (newOpen: boolean) => {
-		if (!isImporting) {
-			setOpen(newOpen);
-			if (!newOpen) {
-				setSelectedFiles([]);
-				setDropError(false);
-				setServerError(null);
-				setCompetition("");
-				setSearchedNotebooks(null);
-				setSearchedCompetitions(null);
-				setSelectedCompetition(null);
-				setSelectedNotebookSlugs([]);
-			}
-		}
-	};
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!isImporting) {
+      setOpen(newOpen)
+      if (!newOpen) {
+        setSelectedFiles([])
+        setDropError(false)
+        setServerError(null)
+        setCompetition("")
+        setSearchedNotebooks(null)
+        setSearchedCompetitions(null)
+        setSelectedCompetition(null)
+        setSelectedNotebookSlugs([])
+      }
+    }
+  }
 
-	return (
-		<Dialog open={open} onOpenChange={handleOpenChange}>
-			<DialogTrigger asChild>{children}</DialogTrigger>
-			<DialogContent className="max-w-[90vw] w-full max-h-[90vh] h-[90vh] flex flex-col">
-				<DialogHeader>
-					<DialogTitle>Import Notebooks</DialogTitle>
-					<DialogDescription>
-						Drag and drop your JSON files here, or click to browse.
-					</DialogDescription>
-				</DialogHeader>
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger render={render} />
+      <DialogContent className="min-w-11/12 min-h-6/12">
+        <DialogHeader>
+          <DialogTitle>Import Notebooks</DialogTitle>
+          <DialogDescription>
+            Drag and drop your JSON files here, or click to browse.
+          </DialogDescription>
+        </DialogHeader>
 
-				{isImporting ? (
-					<div className="flex-1 flex flex-col items-center justify-center min-h-[300px] px-8">
-						<Loader2 className="w-12 h-12 text-slate-400 animate-spin mb-4" />
-						<p className="text-lg font-medium text-slate-600 dark:text-slate-300">
-							Importing your files...
-						</p>
-					</div>
-				) : (
-					<div className="flex-1 flex flex-col min-h-0">
-						{onImportKaggle && (
-							<div className="flex p-1 space-x-1 bg-slate-100 dark:bg-slate-800 rounded-lg mb-4 shrink-0">
-								<button
-									type="button"
-									onClick={() => setTab("pc")}
-									className={`flex-1 flex items-center justify-center py-2 px-3 text-sm font-medium rounded-md transition-all ${
-										tab === "pc"
-											? "bg-white text-slate-900 shadow-sm dark:bg-slate-950 dark:text-slate-100"
-											: "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-									}`}
-								>
-									<Monitor className="w-4 h-4 mr-2" />
-									From My PC
-								</button>
-								<button
-									type="button"
-									onClick={() => setTab("kaggle")}
-									className={`flex-1 flex items-center justify-center py-2 px-3 text-sm font-medium rounded-md transition-all ${
-										tab === "kaggle"
-											? "bg-white text-slate-900 shadow-sm dark:bg-slate-950 dark:text-slate-100"
-											: "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-									}`}
-								>
-									<CloudDownload className="w-4 h-4 mr-2" />
-									Kaggle
-								</button>
-							</div>
-						)}
+        {isImporting ? (
+          <div className="flex-1 flex flex-col items-center justify-center min-h-75 px-8">
+            <Loader2 className="w-12 h-12 text-slate-400 animate-spin mb-4" />
+            <p className="text-lg font-medium text-slate-600 dark:text-slate-300">
+              Importing your files...
+            </p>
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col min-h-0">
+            {onImportKaggle && (
+              <div className="flex p-1 space-x-1 bg-slate-100 dark:bg-slate-800 rounded-lg mb-4 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setTab("pc")}
+                  className={`flex-1 flex items-center justify-center py-2 px-3 text-sm font-medium rounded-md transition-all ${
+                    tab === "pc"
+                      ? "bg-white text-slate-900 shadow-sm dark:bg-slate-950 dark:text-slate-100"
+                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                  }`}
+                >
+                  <Monitor className="w-4 h-4 mr-2" />
+                  From My PC
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab("kaggle")}
+                  className={`flex-1 flex items-center justify-center py-2 px-3 text-sm font-medium rounded-md transition-all ${
+                    tab === "kaggle"
+                      ? "bg-white text-slate-900 shadow-sm dark:bg-slate-950 dark:text-slate-100"
+                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                  }`}
+                >
+                  <CloudDownload className="w-4 h-4 mr-2" />
+                  Kaggle
+                </button>
+              </div>
+            )}
 
-						{tab === "pc" ? (
-							<>
-								<div
-									{...getRootProps()}
-									className={`flex-1 min-h-[250px] border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center transition-colors cursor-pointer ${
-										isDragActive
-											? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20"
-											: (dropError || serverError)
-												? "border-red-500 bg-red-50/50 dark:border-red-500/50 dark:bg-red-900/20"
-												: "border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800"
-									}`}
-								>
-									<input {...getInputProps()} />
-									<div
-										className={`p-4 rounded-full shadow-sm mb-4 ${dropError || serverError ? "bg-red-100 dark:bg-red-950/50" : "bg-white dark:bg-slate-950"}`}
-									>
-										<Upload
-											className={`w-8 h-8 ${dropError || serverError ? "text-red-500" : "text-slate-500"}`}
-										/>
-									</div>
-									<p
-										className={`text-sm font-medium mb-1 ${dropError || serverError ? "text-red-500" : "text-slate-900 dark:text-slate-100"}`}
-									>
-										{isDragActive
-											? "Drop files here..."
-											: dropError
-												? "Invalid file format."
-												: serverError
-													? serverError
-													: "Click or drag files to upload"}
-									</p>
-									<p
-										className={`text-xs ${dropError || serverError ? "text-red-500/80" : "text-slate-500"}`}
-									>
-										Supported formats: {NotebookFileExtension}
-									</p>
-								</div>
+            {tab === "pc" ? (
+              <>
+                <div
+                  {...getRootProps()}
+                  className={`flex-1 min-h-62.5 border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center transition-colors cursor-pointer ${
+                    isDragActive
+                      ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20"
+                      : (dropError || serverError)
+                        ? "border-red-500 bg-red-50/50 dark:border-red-500/50 dark:bg-red-900/20"
+                        : "border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <input {...getInputProps()} />
+                  <div
+                    className={`p-4 rounded-full shadow-sm mb-4 ${dropError || serverError ? "bg-red-100 dark:bg-red-950/50" : "bg-white dark:bg-slate-950"}`}
+                  >
+                    <Upload
+                      className={`w-8 h-8 ${dropError || serverError ? "text-red-500" : "text-slate-500"}`}
+                    />
+                  </div>
+                  <p
+                    className={`text-sm font-medium mb-1 ${dropError || serverError ? "text-red-500" : "text-slate-900 dark:text-slate-100"}`}
+                  >
+                    {isDragActive
+                      ? "Drop files here..."
+                      : dropError
+                        ? "Invalid file format."
+                        : serverError
+                          ? serverError
+                          : "Click or drag files to upload"}
+                  </p>
+                  <p
+                    className={`text-xs ${dropError || serverError ? "text-red-500/80" : "text-slate-500"}`}
+                  >
+                    Supported formats: {NotebookFileExtension}
+                  </p>
+                </div>
 
-								{selectedFiles.length > 0 && (
-									<div className="mt-6 space-y-2 max-h-48 overflow-y-auto pr-2 shrink-0">
-										<h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
-											Selected Files ({selectedFiles.length})
-										</h4>
-										{selectedFiles.map((file, index) => (
-											<div
-												key={`${file.name}-${index}`}
-												className="flex items-center justify-between p-3 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-lg shadow-sm"
-											>
-												<div className="flex items-center space-x-3 overflow-hidden">
-													<div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-md shrink-0">
-														<FileJson className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-													</div>
-													<span className="text-sm font-medium truncate text-slate-700 dark:text-slate-300">
-														{file.name}
-													</span>
-												</div>
-												<button
-													type="button"
-													onClick={(e) => {
-														e.stopPropagation();
-														handleRemoveFile(index);
-													}}
-													className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
-													title="Remove file"
-												>
-													<X className="w-4 h-4" />
-												</button>
-											</div>
-										))}
-									</div>
-								)}
+                {selectedFiles.length > 0 && (
+                  <div className="mt-6 space-y-2 max-h-48 overflow-y-auto pr-2 shrink-0">
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
+                      Selected Files ({selectedFiles.length})
+                    </h4>
+                    {selectedFiles.map((file, index) => (
+                      <div // biome-ignore lint/suspicious/noArrayIndexKey: TODO
+                        key={`${file.name}-${index}`}
+                        className="flex items-center justify-between p-3 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-lg shadow-sm"
+                      >
+                        <div className="flex items-center space-x-3 overflow-hidden">
+                          <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-md shrink-0">
+                            <FileJson className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <span className="text-sm font-medium truncate text-slate-700 dark:text-slate-300">
+                            {file.name}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRemoveFile(index)
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                          title="Remove file"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-								<div className="mt-auto pt-6 flex justify-end space-x-3 shrink-0">
-									<Button
-										variant="outline"
-										onClick={() => handleOpenChange(false)}
-										disabled={isImporting}
-									>
-										Cancel
-									</Button>
-									<Button
-										onClick={handleImportClick}
-										disabled={selectedFiles.length === 0 || isImporting}
-										className="bg-slate-900 hover:bg-slate-800 text-white"
-									>
-										Import Files
-									</Button>
-								</div>
-							</>
-						) : (
-							<div className="flex-1 flex flex-col mt-4 min-h-[250px]">
-								<div className="flex-1">
-									<label
-										htmlFor="competition-name"
-										className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-									>
-										Competition Name
-									</label>
-									<div className="relative flex items-center">
-										<Input
-											id="competition-name"
-											placeholder="e.g. titanic, playground-series-s6e7"
-											value={competition}
-											onChange={(e) => {
-												setCompetition(e.target.value);
-												setSearchedNotebooks(null);
-												setSelectedCompetition(null);
-												setSelectedNotebookSlugs([]);
-												setDisplayLimit(20);
-												setNotebookSearch("");
-											}}
-											className="w-full"
-										/>
-									</div>
-									<p className="mt-2 text-xs text-slate-500">
-										Enter the exact slug of the Kaggle competition (found in the
-										competition URL). Requires a verified Kaggle account.
-									</p>
+                <div className="mt-auto pt-6 flex justify-end space-x-3 shrink-0">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleOpenChange(false)}
+                    disabled={isImporting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleImportClick}
+                    disabled={selectedFiles.length === 0 || isImporting}
+                    className="bg-slate-900 hover:bg-slate-800 text-white"
+                  >
+                    Import Files
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex flex-col mt-4 min-h-62.5">
+                <div className="flex-1">
+                  <Label
+                    htmlFor="competition-name"
+                    className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                  >
+                    Competition Name
+                  </Label>
+                  <div className="relative flex items-center">
+                    <Input
+                      id="competition-name"
+                      placeholder="e.g. titanic, playground-series-s6e7"
+                      value={competition}
+                      onChange={(e) => {
+                        setCompetition(e.target.value)
+                        setSearchedNotebooks(null)
+                        setSelectedCompetition(null)
+                        setSelectedNotebookSlugs([])
+                        setDisplayLimit(20)
+                        setNotebookSearch("")
+                      }}
+                      className="w-full"
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Enter the exact slug of the Kaggle competition (found in the
+                    competition URL). Requires a verified Kaggle account.
+                  </p>
 
-									{isSearching && (
-										<div className="flex flex-col items-center justify-center min-h-[200px] mt-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-slate-900/50">
-											<Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-4" />
-											<p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-												Searching notebooks...
-											</p>
-										</div>
-									)}
+                  {isSearching && (
+                    <div className="flex flex-col items-center justify-center min-h-[200px] mt-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-slate-900/50">
+                      <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-4" />
+                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                        Searching notebooks...
+                      </p>
+                    </div>
+                  )}
 
-									{filteredCompetitions &&
-										!selectedCompetition &&
-										!isSearching && (
-											<div className="mt-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950 max-h-48 overflow-y-auto">
-												<div className="sticky top-0 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 py-2 flex justify-between items-center">
-													<p className="text-xs font-medium text-slate-600 dark:text-slate-400">
-														Found {filteredCompetitions.length} competitions
-													</p>
-												</div>
-												<div className="divide-y divide-slate-100 dark:divide-slate-800">
-													{filteredCompetitions.map((comp) => (
-														<button
-															key={comp.ref}
-															type="button"
-															onClick={() => handleSelectCompetition(comp)}
-															className="w-full text-left block px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors group"
-														>
-															<p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
-																{comp.title}
-															</p>
-															<p className="text-xs text-slate-500 truncate mt-0.5">
-																{comp.description} &bull;{" "}
-																<span className="font-mono">{comp.ref}</span>
-															</p>
-														</button>
-													))}
-												</div>
-											</div>
-										)}
+                  {filteredCompetitions &&
+                    !selectedCompetition &&
+                    !isSearching && (
+                      <div className="mt-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950 max-h-48 overflow-y-auto">
+                        <div className="sticky top-0 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 py-2 flex justify-between items-center">
+                          <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                            Found {filteredCompetitions.length} competitions
+                          </p>
+                        </div>
+                        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                          {filteredCompetitions.map((comp) => (
+                            <button
+                              key={comp.ref}
+                              type="button"
+                              onClick={() => handleSelectCompetition(comp)}
+                              className="w-full text-left block px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors group"
+                            >
+                              <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                                {comp.title}
+                              </p>
+                              <p className="text-xs text-slate-500 truncate mt-0.5">
+                                {comp.description} &bull;{" "}
+                                <span className="font-mono">{comp.ref}</span>
+                              </p>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-									{selectedCompetition && (
-										<div className="mt-4">
-											<div className="flex justify-between items-center mb-2">
-												<p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-													Selected:{" "}
-													<span className="font-bold">
-														{selectedCompetition.title}
-													</span>
-												</p>
-												<button
-													type="button"
-													onClick={() => {
-														setSelectedCompetition(null);
-														setSearchedNotebooks(null);
-														setSelectedNotebookSlugs([]);
-													}}
-													className="text-xs text-blue-600 hover:underline"
-												>
-													Change
-												</button>
-											</div>
-										</div>
-									)}
+                  {selectedCompetition && (
+                    <div className="mt-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                          Selected:{" "}
+                          <span className="font-bold">
+                            {selectedCompetition.title}
+                          </span>
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedCompetition(null)
+                            setSearchedNotebooks(null)
+                            setSelectedNotebookSlugs([])
+                          }}
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          Change
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
-									{searchedNotebooks && !isSearching && (
-										<div
-											className="mt-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950 flex flex-col min-h-0"
-											style={{ maxHeight: "400px" }}
-										>
-											<div className="sticky top-0 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-3 flex flex-col space-y-3 z-10 shrink-0">
-												<div className="flex justify-between items-center">
-													<p className="text-xs font-medium text-slate-600 dark:text-slate-400">
-														Found {filteredNotebooks?.length || 0} notebooks
-														{isFetchingNextPage && " (loading more...)"}
-													</p>
-													<label className="flex items-center space-x-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
-														<input
-															type="checkbox"
-															className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
-															disabled={isFetchingNextPage}
-															checked={
-																(filteredNotebooks?.length || 0) > 0 &&
-																selectedNotebookSlugs.length ===
-																	filteredNotebooks?.length
-															}
-															onChange={async (e) => {
-																if (e.target.checked && filteredNotebooks) {
-																	if (
-																		nextPageToken &&
-																		selectedCompetition &&
-																		onSearchKaggle
-																	) {
-																		setIsFetchingNextPage(true);
-																		try {
-																			let currentToken: string | null =
-																				nextPageToken;
-																			let allNbs = [
-																				...(searchedNotebooks || []),
-																			];
-																			while (currentToken) {
-																				const result = await onSearchKaggle(
-																					selectedCompetition.ref,
-																					currentToken,
-																				);
-																				allNbs = [
-																					...allNbs,
-																					...result.notebooks,
-																				];
-																				currentToken = result.next_page_token;
-																			}
-																			setSearchedNotebooks(allNbs);
-																			setNextPageToken(null);
-																			setSelectedNotebookSlugs(
-																				allNbs.map((nb) => nb.ref),
-																			);
-																		} catch (err) {
-																			console.error(err);
-																		} finally {
-																			setIsFetchingNextPage(false);
-																		}
-																	} else {
-																		setSelectedNotebookSlugs(
-																			filteredNotebooks.map((nb) => nb.ref),
-																		);
-																	}
-																} else {
-																	setSelectedNotebookSlugs([]);
-																}
-															}}
-														/>
-														<span className="flex items-center space-x-1">
-															<span>Select All</span>
-															{isFetchingNextPage && (
-																<Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
-															)}
-														</span>
-													</label>
-												</div>
-												<div className="relative">
-													<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-													<Input
-														placeholder="Search notebooks by title, author, or id..."
-														value={notebookSearch}
-														onChange={(e) => {
-															setNotebookSearch(e.target.value);
-															setDisplayLimit(20); // Reset scroll limit on search
-														}}
-														className="h-9 pl-9 text-sm bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-700 shadow-sm focus-visible:ring-blue-500"
-													/>
-												</div>
-											</div>
-											<div
-												className="divide-y divide-slate-100 dark:divide-slate-800 overflow-y-auto flex-1"
-												onScroll={(e) => {
-													const { scrollTop, scrollHeight, clientHeight } =
-														e.currentTarget;
-													if (scrollHeight - scrollTop <= clientHeight + 50) {
-														if (
-															displayLimit >=
-																(filteredNotebooks?.length || 0) &&
-															nextPageToken &&
-															!isFetchingNextPage &&
-															selectedCompetition &&
-															onSearchKaggle &&
-															!notebookSearch.trim()
-														) {
-															setIsFetchingNextPage(true);
-															onSearchKaggle(
-																selectedCompetition.ref,
-																nextPageToken,
-															)
-																.then((result) => {
-																	setSearchedNotebooks((prev) => [
-																		...(prev || []),
-																		...result.notebooks,
-																	]);
-																	setNextPageToken(result.next_page_token);
-																	setDisplayLimit((prev) => prev + 20);
-																})
-																.catch((error: any) => {
-																	setServerError(
-																		error.message || "An error occurred",
-																	);
-																})
-																.finally(() => setIsFetchingNextPage(false));
-														} else {
-															setDisplayLimit((prev) =>
-																Math.min(
-																	prev + 20,
-																	filteredNotebooks?.length || 0,
-																),
-															);
-														}
-													}
-												}}
-											>
-												{filteredNotebooks?.slice(0, displayLimit).map((nb) => (
-													<label
-														key={nb.ref}
-														className="flex items-start px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors group cursor-pointer"
-													>
-														<div className="mt-0.5 mr-3 shrink-0">
-															<input
-																type="checkbox"
-																className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
-																checked={selectedNotebookSlugs.includes(nb.ref)}
-																onChange={(e) => {
-																	if (e.target.checked) {
-																		setSelectedNotebookSlugs((prev) => [
-																			...prev,
-																			nb.ref,
-																		]);
-																	} else {
-																		setSelectedNotebookSlugs((prev) =>
-																			prev.filter((slug) => slug !== nb.ref),
-																		);
-																	}
-																}}
-															/>
-														</div>
-														<div className="min-w-0 flex-1">
-															<div className="flex items-center">
-																<p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
-																	{nb.title}
-																</p>
-																<a
-																	href={`https://www.kaggle.com/code/${nb.ref}`}
-																	target="_blank"
-																	rel="noreferrer"
-																	className="ml-2 text-slate-400 hover:text-blue-500 transition-colors"
-																	onClick={(e) => e.stopPropagation()}
-																	title="View on Kaggle"
-																>
-																	<Link className="w-3.5 h-3.5" />
-																</a>
-															</div>
-															<p className="text-xs text-slate-500 truncate mt-0.5">
-																by {nb.author} &bull;{" "}
-																<span className="font-mono">{nb.ref}</span>
-															</p>
-														</div>
-													</label>
-												))}
-											</div>
-										</div>
-									)}
-									{serverError && (
-										<p className="mt-4 text-sm font-medium text-red-500 p-3 bg-red-50 dark:bg-red-900/20 rounded-md border border-red-200 dark:border-red-900/50">
-											{serverError}
-										</p>
-									)}
-								</div>
+                  {searchedNotebooks && !isSearching && (
+                    <div
+                      className="mt-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950 flex flex-col min-h-0"
+                      style={{ maxHeight: "400px" }}
+                    >
+                      <div className="sticky top-0 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-3 flex flex-col space-y-3 z-10 shrink-0">
+                        <div className="flex justify-between items-center">
+                          <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                            Found {filteredNotebooks?.length || 0} notebooks
+                            {isFetchingNextPage && " (loading more...)"}
+                          </p>
+                          <Label className="flex items-center space-x-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                              disabled={isFetchingNextPage}
+                              checked={
+                                (filteredNotebooks?.length || 0) > 0 &&
+                                selectedNotebookSlugs.length ===
+                                  filteredNotebooks?.length
+                              }
+                              onChange={async (e) => {
+                                if (e.target.checked && filteredNotebooks) {
+                                  if (
+                                    nextPageToken &&
+                                    selectedCompetition &&
+                                    onSearchKaggle
+                                  ) {
+                                    setIsFetchingNextPage(true)
+                                    try {
+                                      let currentToken: string | null =
+                                        nextPageToken
+                                      let allNbs = [
+                                        ...(searchedNotebooks || []),
+                                      ]
+                                      while (currentToken) {
+                                        const result = await onSearchKaggle(
+                                          selectedCompetition.ref,
+                                          currentToken
+                                        )
+                                        allNbs = [
+                                          ...allNbs,
+                                          ...result.notebooks,
+                                        ]
+                                        currentToken = result.next_page_token
+                                      }
+                                      setSearchedNotebooks(allNbs)
+                                      setNextPageToken(null)
+                                      setSelectedNotebookSlugs(
+                                        allNbs.map((nb) => nb.ref)
+                                      )
+                                    } catch (err) {
+                                      console.error(err)
+                                    } finally {
+                                      setIsFetchingNextPage(false)
+                                    }
+                                  } else {
+                                    setSelectedNotebookSlugs(
+                                      filteredNotebooks.map((nb) => nb.ref)
+                                    )
+                                  }
+                                } else {
+                                  setSelectedNotebookSlugs([])
+                                }
+                              }}
+                            />
+                            <span className="flex items-center space-x-1">
+                              <span>Select All</span>
+                              {isFetchingNextPage && (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
+                              )}
+                            </span>
+                          </Label>
+                        </div>
+                        <div className="relative">
+                          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                          <Input
+                            placeholder="Search notebooks by title, author, or id..."
+                            value={notebookSearch}
+                            onChange={(e) => {
+                              setNotebookSearch(e.target.value)
+                              setDisplayLimit(20) // Reset scroll limit on search
+                            }}
+                            className="h-9 pl-9 text-sm bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-700 shadow-sm focus-visible:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+                      <div
+                        className="divide-y divide-slate-100 dark:divide-slate-800 overflow-y-auto flex-1"
+                        onScroll={(e) => {
+                          const { scrollTop, scrollHeight, clientHeight } =
+                            e.currentTarget
+                          if (scrollHeight - scrollTop <= clientHeight + 50) {
+                            if (
+                              displayLimit >=
+                                (filteredNotebooks?.length || 0) &&
+                              nextPageToken &&
+                              !isFetchingNextPage &&
+                              selectedCompetition &&
+                              onSearchKaggle &&
+                              !notebookSearch.trim()
+                            ) {
+                              setIsFetchingNextPage(true)
+                              onSearchKaggle(
+                                selectedCompetition.ref,
+                                nextPageToken
+                              )
+                                .then((result) => {
+                                  setSearchedNotebooks((prev) => [
+                                    ...(prev || []),
+                                    ...result.notebooks,
+                                  ])
+                                  setNextPageToken(result.next_page_token)
+                                  setDisplayLimit((prev) => prev + 20)
+                                })
+                                .catch((error: any) => {
+                                  setServerError(
+                                    error.message || "An error occurred"
+                                  )
+                                })
+                                .finally(() => setIsFetchingNextPage(false))
+                            } else {
+                              setDisplayLimit((prev) =>
+                                Math.min(
+                                  prev + 20,
+                                  filteredNotebooks?.length || 0
+                                )
+                              )
+                            }
+                          }
+                        }}
+                      >
+                        {filteredNotebooks?.slice(0, displayLimit).map((nb) => (
+                          <Label
+                            key={nb.ref}
+                            className="flex items-start px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors group cursor-pointer"
+                          >
+                            <div className="mt-0.5 mr-3 shrink-0">
+                              <input
+                                type="checkbox"
+                                className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                                checked={selectedNotebookSlugs.includes(nb.ref)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedNotebookSlugs((prev) => [
+                                      ...prev,
+                                      nb.ref,
+                                    ])
+                                  } else {
+                                    setSelectedNotebookSlugs((prev) =>
+                                      prev.filter((slug) => slug !== nb.ref)
+                                    )
+                                  }
+                                }}
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center">
+                                <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                                  {nb.title}
+                                </p>
+                                <a
+                                  href={`https://www.kaggle.com/code/${nb.ref}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="ml-2 text-slate-400 hover:text-blue-500 transition-colors"
+                                  onClick={(e) => e.stopPropagation()}
+                                  title="View on Kaggle"
+                                >
+                                  <Link className="w-3.5 h-3.5" />
+                                </a>
+                              </div>
+                              <p className="text-xs text-slate-500 truncate mt-0.5">
+                                by {nb.author} &bull;{" "}
+                                <span className="font-mono">{nb.ref}</span>
+                              </p>
+                            </div>
+                          </Label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {serverError && (
+                    <p className="mt-4 text-sm font-medium text-red-500 p-3 bg-red-50 dark:bg-red-900/20 rounded-md border border-red-200 dark:border-red-900/50">
+                      {serverError}
+                    </p>
+                  )}
+                </div>
 
-								<div className="mt-auto pt-6 flex justify-end space-x-3 shrink-0">
-									<Button
-										variant="outline"
-										onClick={() => handleOpenChange(false)}
-										disabled={isImporting}
-									>
-										Cancel
-									</Button>
-									<Button
-										onClick={handleKaggleImportClick}
-										disabled={
-											(searchedNotebooks
-												? selectedNotebookSlugs.length === 0
-												: !competition) || isImporting
-										}
-										className="bg-slate-900 hover:bg-slate-800 text-white"
-									>
-										Import from Kaggle
-									</Button>
-								</div>
-							</div>
-						)}
-					</div>
-				)}
-			</DialogContent>
-		</Dialog>
-	);
+                <div className="mt-auto pt-6 flex justify-end space-x-3 shrink-0">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleOpenChange(false)}
+                    disabled={isImporting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleKaggleImportClick}
+                    disabled={
+                      (searchedNotebooks
+                        ? selectedNotebookSlugs.length === 0
+                        : !competition) || isImporting
+                    }
+                    className="bg-slate-900 hover:bg-slate-800 text-white"
+                  >
+                    Import from Kaggle
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  )
 }

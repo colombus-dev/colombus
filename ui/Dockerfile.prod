@@ -1,8 +1,8 @@
 FROM node:22-alpine AS builder
 
-RUN corepack enable
+ENV YARN_VERSION=4.18.1
 
-RUN yarn set version 4.18.1
+RUN corepack enable && corepack prepare yarn@${YARN_VERSION}
 
 WORKDIR /app
 

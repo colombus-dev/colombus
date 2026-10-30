@@ -1,13 +1,14 @@
 FROM node:22-alpine3.22
 
-RUN corepack enable
+ENV YARN_VERSION=4.18.1
 
-RUN yarn set version 4.18.1
+RUN corepack enable && corepack prepare yarn@${YARN_VERSION}
 
 WORKDIR /app
 
-COPY package.json yarn.lock ./
+COPY package.json yarn.lock .yarnrc.yml ./
 
-RUN --mount=type=cache,target=/root/.cache/yarn yarn install --frozen-lockfile
+RUN --mount=type=cache,target=/root/.cache/yarn \
+    yarn install --immutable
 
-CMD ["yarn", "vite", "--host"]
+CMD ["yarn", "dev"]
