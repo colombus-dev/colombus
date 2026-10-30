@@ -27,6 +27,11 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Setup Yarn
+        run: |
+          corepack enable
+          corepack prepare yarn@4.18.1
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
