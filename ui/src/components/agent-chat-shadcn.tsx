@@ -1,4 +1,5 @@
 import { useChat } from "@ai-sdk/react";
+import { lastAssistantMessageIsCompleteWithApprovalResponses } from "ai";
 import {
 	ArrowUpIcon,
 	MessageCircleDashedIcon,
@@ -53,9 +54,16 @@ const transport = DEMO_CHAT.transport({
 const MotionMessageScrollerItem = motion.create(MessageScrollerItem);
 
 export function ChatDemo() {
-	const { messages, sendMessage, setMessages, status } = useChat({
+	const {
+		messages,
+		sendMessage,
+		setMessages,
+		status,
+		addToolApprovalResponse,
+	} = useChat({
 		messages: initialMessages,
 		transport,
+		sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
 	});
 	const [draft, setDraft] = React.useState<string | null>(null);
 	const formRef = React.useRef<HTMLFormElement>(null);
@@ -186,6 +194,9 @@ export function ChatDemo() {
 																				key={index}
 																				part={part}
 																				streaming={streaming}
+																				addToolApprovalResponse={
+																					addToolApprovalResponse
+																				}
 																			/>
 																		))}
 																	</Trace>

@@ -47,23 +47,20 @@ pattern NoPrep = [step="Data Modeling"] -> [step!="Model Evaluation"]* -> end
 			"The default theme lives on the ThemeProvider. I should check what it is set to now.",
 		);
 		writer.sleep(400);
-		writer
-			.tool("runCommand", {
-				input: { command: "rg -n defaultTheme app/layout.tsx" },
-			})
-			.sleep(800)
-			.output({
-				stdout: '12:  <ThemeProvider attribute="class" defaultTheme="light">',
-			});
+		writer.tool("runCommand", {
+			input: { command: "rg -n defaultTheme app/layout.tsx" },
+			needsApproval: true,
+			output: { stdout: "" },
+		});
 		writer.sleep(500);
-		writer.text(`It was set to \`light\`. I updated the \`ThemeProvider\` in \`app/layout.tsx\`:
-
-\`\`\`tsx
-<ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-\`\`\`
-
-New visitors now get the theme from their OS. The toggle also has a **System** option, so anyone who picked Light or Dark can switch back.
-`);
+	})
+	.assistant(({ writer, toolCall }) => {
+		writer.sleep(600);
+		writer.text(
+			toolCall?.approved
+				? "Removed the dist folder."
+				: "Okay, I left the dist folder in place.",
+		);
 	})
 	.user("Run the build before I ship it.")
 	.sleep(600)
