@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12.0, <4.0"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -349,6 +349,7 @@ wheels = [
 name = "colombus"
 version = "0.1.0"
 source = { editable = "." }
+default-groups = []
 dependencies = [
     { name = "canopus-dsl" },
     { name = "fastapi", extra = ["standard"] },
@@ -374,6 +375,7 @@ dependencies = [
 dev = [
     { name = "jupyterlab" },
     { name = "pre-commit" },
+    { name = "pyright" },
     { name = "types-ujson" },
 ]
 
@@ -403,6 +405,7 @@ requires-dist = [
 dev = [
     { name = "jupyterlab", specifier = ">=4.4.7" },
     { name = "pre-commit", specifier = ">=3.7" },
+    { name = "pyright", specifier = ">=1.1.414" },
     { name = "types-ujson", specifier = ">=5.10.0.20250822" },
 ]
 
@@ -2259,6 +2262,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f2/a5/181488fc2b9d093e3972d2a472855aae8a03f000592dbfce716a512b3359/pyparsing-3.2.5.tar.gz", hash = "sha256:2df8d5b7b2802ef88e8d016a2eb9c7aeaa923529cd251ed0fe4608275d4105b6", size = 1099274, upload-time = "2025-09-21T04:11:06.277Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/10/5e/1aa9a93198c6b64513c9d7752de7422c06402de6600a8767da1524f9570b/pyparsing-3.2.5-py3-none-any.whl", hash = "sha256:e38a4f02064cf41fe6593d328d0512495ad1f3d8a91c4f73fc401b3079a59a5e", size = 113890, upload-time = "2025-09-21T04:11:04.117Z" },
+]
+
+[[package]]
+name = "pyright"
+version = "1.1.414"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "nodeenv" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e1/1b/244c7b710031ada80f27e579ec20d28a2285dfc318fed0339866b1047f12/pyright-1.1.414.tar.gz", hash = "sha256:523c0a97c60da6333234955c277730c9cf4f5bd6d5399e7b7d2b0fc5d3599524", size = 4154638, upload-time = "2026-09-10T12:26:53.181Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d7/ba/18b6e682ead424ad24bcc134339ae5d1b931cd9ae260540592a058a91279/pyright-1.1.414-py3-none-any.whl", hash = "sha256:2a6b4b3298c9eec174c5ed83bd338de6eee82df2992f3e1930e6199d381be36f", size = 6225049, upload-time = "2026-09-10T12:26:51.427Z" },
 ]
 
 [[package]]

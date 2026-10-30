@@ -6,16 +6,6 @@ repos:
     args: [--fix, --select, "I"]
   - id: ruff-format
 
-- repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.10.0
-  hooks:
-  - id: mypy
-    additional_dependencies:
-    - fastapi
-    - pydantic
-    - types-ujson
-    - sqlmodel
-
 - repo: https://github.com/hadolint/hadolint
   rev: v2.12.0
   hooks:
@@ -36,6 +26,12 @@ repos:
 
 - repo: local
   hooks:
+  - id: pyright
+    name: pyright
+    entry: uv run --group dev pyright
+    language: system
+    types: [python]
+    pass_filenames: false
   - id: typescript-check
     name: TypeScript type check (UI)
     entry: bash -c 'cd ui && ([ -d node_modules ] || yarn install --immutable) && yarn tsc -b'

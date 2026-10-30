@@ -22,12 +22,12 @@ def convert_pattern_to_legacy(
     strict_start = False
     for i, group in enumerate(last_pattern.sequence):
         if "name" in dir(group):
-            if group.name == "#start":
+            if group.name == "#start":  # pyright: ignore[reportAttributeAccessIssue]
                 strict_start = True
                 continue
-            elif group.name == "#end":
+            elif group.name == "#end":  # pyright: ignore[reportAttributeAccessIssue]
                 colombus_pattern.groups[-1].metaCharacters.endsWith = True
-            elif group.name == "*":
+            elif group.name == "*":  # pyright: ignore[reportAttributeAccessIssue]
                 colombus_pattern.groups.append(
                     PatternGroup(
                         name=f"group_{i}",
@@ -42,18 +42,22 @@ def convert_pattern_to_legacy(
                     )
                 )
             else:
-                retrieved_pattern = imported_patterns_dict.get(group.name)
+                retrieved_pattern = imported_patterns_dict.get(
+                    group.name  # pyright: ignore[reportAttributeAccessIssue]
+                )
                 if retrieved_pattern:
                     colombus_pattern.groups.extend(retrieved_pattern.groups or [])
                     continue
                 referenced_patterns = [
                     (i, p)
                     for i, p in enumerate(preceding_patterns)
-                    if p.name == group.name
+                    if p.name == group.name  # pyright: ignore[reportAttributeAccessIssue]
                 ]
                 # TODO: properly manage error case
                 if not referenced_patterns:
-                    raise Exception(f"Unknown pattern {group.name}")
+                    raise Exception(
+                        f"Unknown pattern {group.name}"  # pyright: ignore[reportAttributeAccessIssue]
+                    )
                 ref_pattern_index, ref_pattern = referenced_patterns[-1]
                 nested_groups = (
                     convert_pattern_to_legacy(
@@ -78,7 +82,7 @@ def convert_pattern_to_legacy(
                 steps = [
                     c.value
                     for a in group.alternatives
-                    for c in a.conditions
+                    for c in a.conditions  # pyright: ignore[reportAttributeAccessIssue]
                     if c.key == "step"
                 ]
             colombus_pattern.groups.append(
@@ -96,7 +100,7 @@ def convert_pattern_to_legacy(
                     ],  # TODO
                     metaCharacters=PatternMetaCharacters(
                         startsWith=strict_start and i == 1,
-                        endsWith="name" in dir(group) and group.name == "#end",
+                        endsWith="name" in dir(group) and group.name == "#end",  # pyright: ignore[reportAttributeAccessIssue]
                         negate=group.conditions[0].op == "!="
                         if is_element_expr
                         else False,

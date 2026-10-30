@@ -86,7 +86,7 @@ def get_frequent_patterns_matrix(
         for m in r.results
     }
 
-    columns_matches = []
+    columns_matches: list[str] = []
 
     PERCENTAGE_TICK = 1
 
@@ -116,7 +116,7 @@ def get_frequent_patterns_matrix(
 
     print("errors=", errors)
 
-    df = pd.DataFrame(matrix, index=columns_matches)
+    df = pd.DataFrame(matrix, index=pd.Index(columns_matches))
     df.columns = [f"{i*PERCENTAGE_TICK}%" for i in range(num_buckets)]
 
     return df.reindex(df.iloc[:, :-1].max(1).sort_values(ascending=False).index)

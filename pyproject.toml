@@ -7,7 +7,7 @@ packages = ["app"]
 
 [project]
 name = "colombus"
-version = "0.1.0"
+version = "0.3.8"
 description = "Colombus - The ML pipelines exploration platform"
 authors = [
     { name = "Nicolas Lacroix", email = "nicolas.lacroix@univ-cotedazur.fr" }
@@ -39,8 +39,14 @@ dependencies = [
 dev = [
     "jupyterlab>=4.4.7",
     "pre-commit>=3.7",
+    "pyright>=1.1.414",
     "types-ujson>=5.10.0.20250822",
 ]
+
+[tool.pyright]
+include = ["app"]
+venvPath = "."
+venv = ".venv"
 
 [tool.uv]
 default-groups = []

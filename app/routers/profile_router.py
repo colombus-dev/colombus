@@ -91,9 +91,9 @@ def get_all_nodes(
         ProfileNodes(
             id=profile.id,
             name=profile.name,
-            steps=profile.steps,
-            meta_instructions=profile.meta_instructions,
-            codes=profile.codes,
+            steps=profile.steps,  # pyright: ignore[reportArgumentType]
+            meta_instructions=profile.meta_instructions,  # pyright: ignore[reportArgumentType]
+            codes=profile.codes,  # pyright: ignore[reportArgumentType]
         )
         for profile in results
     ]
@@ -112,9 +112,11 @@ async def get_profile(
     ).one_or_none()
     if not profile:
         raise ElementNotFoundException("profile")
-    return JsonProfile(
+    return JsonProfile(  # pyright: ignore[reportCallIssue]
         name=profile.name,
-        steps=[s for s in sorted(profile.steps, key=lambda step: step.position)],
+        steps=[  # pyright: ignore[reportCallIssue]
+            s for s in sorted(profile.steps, key=lambda step: step.position)
+        ],
     )
 
 
@@ -191,7 +193,7 @@ async def search_kaggle_competitions(
 
     try:
         client._http_client._init_session()
-        client._http_client._session.timeout = 5.0
+        client._http_client._session.timeout = 5.0  # pyright: ignore[reportOptionalMemberAccess, reportAttributeAccessIssue]
         resp = client.search.search_api_client.list_entities(req)
     except (ValueError, OSError, RuntimeError) as e:
         raise HTTPException(
