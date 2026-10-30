@@ -1,67 +1,69 @@
+import { shikiToMonaco } from "@shikijs/monaco";
 import { CommonTokenStream, InputStream } from "antlr4";
 import type * as monaco_editor from "monaco-editor";
 import { MarkerSeverity } from "monaco-editor";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
+import { createHighlighterCore } from "shiki/core";
+import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 import { supportedSteps } from "@/configuration";
 // @ts-expect-error: Canopus typing issue
 import CanopusDSLLexer from "@/hooks/editor/CanopusDSLLexer.js";
 // @ts-expect-error: Canopus typing issue
 import CanopusDSLParser from "@/hooks/editor/CanopusDSLParser.js";
 import { EDITOR_LANGUAGE_ID } from "@/lib/constants";
+import { languages } from "@/lib/highlighter";
 import type { MonacoEditor } from "@/lib/types";
 
-const canopusGrammarLanguage: monaco_editor.languages.IMonarchLanguage = {
-	tokenizer: {
-		root: [
-			// Handle comments
-			[/#.*/, "comment"],
+let highlighterPromise: ReturnType<typeof createHighlighterCore> | null = null;
 
-			// Handle strings
-			[/"[^"\n]*"/, "string"],
-
-			// Handle keywords
-			[/\b(import|pattern|start|end)\b/, "keyword"],
-
-			// Handle operators
-			[/->/, "connector"],
-			[/\*|\+/, "operator"],
-
-			// Handle delimiters
-			[/\(|\)|\[|\]|,/, "delimiter"],
-
-			// Handle delimiters
-			[/[a-z][A-Za-z0-9_]*/, "key"],
-		],
-	},
-};
+function getHighlighter() {
+	if (!highlighterPromise) {
+		highlighterPromise = createHighlighterCore({
+			themes: [
+				import("@shikijs/themes/light-plus"),
+				import("@shikijs/themes/dark-plus"),
+			],
+			langs: [languages[EDITOR_LANGUAGE_ID]],
+			engine: createJavaScriptRegexEngine({ forgiving: true }),
+		});
+	}
+	return highlighterPromise;
+}
 
 export default function useCanopusGrammar(monaco: MonacoEditor | null) {
-	useEffect(() => {
-		if (!monaco) {
-			return;
-		}
-		monaco.languages.register({ id: EDITOR_LANGUAGE_ID });
+	const handleBeforeEditorMount = useCallback(
+		async (monacoInstance: MonacoEditor) => {
+			if (
+				!monacoInstance.languages
+					.getLanguages()
+					.some((l) => l.id === EDITOR_LANGUAGE_ID)
+			) {
+				monacoInstance.languages.register({ id: EDITOR_LANGUAGE_ID });
+			}
 
-		monaco.languages.setMonarchTokensProvider(
-			EDITOR_LANGUAGE_ID,
-			canopusGrammarLanguage,
-		);
+			monacoInstance.languages.setLanguageConfiguration(EDITOR_LANGUAGE_ID, {
+				comments: { lineComment: "#" },
+				brackets: [
+					["[", "]"],
+					["(", ")"],
+				],
+				autoClosingPairs: [
+					{ open: "(", close: ")" },
+					{ open: "[", close: "]" },
+					{ open: '"', close: '"' },
+				],
+				surroundingPairs: [
+					{ open: "(", close: ")" },
+					{ open: "[", close: "]" },
+					{ open: '"', close: '"' },
+				],
+			});
 
-		monaco.languages.setLanguageConfiguration(EDITOR_LANGUAGE_ID, {
-			comments: {
-				lineComment: "#",
-			},
-			brackets: [
-				["[", "]"],
-				["(", ")"],
-			],
-			autoClosingPairs: [
-				{ open: "(", close: ")" },
-				{ open: "[", close: "]" },
-				{ open: '"', close: '"' },
-			],
-		});
-	}, [monaco]);
+			const highlighter = await getHighlighter();
+			shikiToMonaco(highlighter, monacoInstance);
+		},
+		[],
+	);
 
 	const validateGrammarModel = useCallback(
 		(model: monaco_editor.editor.ITextModel) => {
@@ -134,5 +136,5 @@ export default function useCanopusGrammar(monaco: MonacoEditor | null) {
 		[monaco],
 	);
 
-	return { validateGrammarModel };
+	return { handleBeforeEditorMount, validateGrammarModel };
 }

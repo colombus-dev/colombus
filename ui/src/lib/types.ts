@@ -1,3 +1,4 @@
+import type { UIDataTypes, UIMessage } from "ai";
 import type * as monaco_editor from "monaco-editor";
 import { z } from "zod";
 
@@ -111,3 +112,15 @@ export type KaggleNotebookList = {
 	}[];
 	next_page_token: string | null;
 };
+
+// agent chat
+export type ChatMessage = UIMessage<
+	unknown,
+	UIDataTypes,
+	{
+		runCommand: {
+			input: { command: string };
+			output: { stdout: string };
+		};
+	}
+>;

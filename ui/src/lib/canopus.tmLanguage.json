@@ -1,0 +1,29 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "canopus",
+	"scopeName": "source.canopus",
+	"patterns": [
+		{ "include": "#comments" },
+		{ "include": "#strings" },
+		{ "include": "#keywords" },
+		{ "include": "#connector" },
+		{ "include": "#operators" },
+		{ "include": "#delimiters" },
+		{ "include": "#key" }
+	],
+	"repository": {
+		"comments": { "match": "#.*$", "name": "comment.line.number-sign" },
+		"strings": { "match": "\"[^\"\\n]*\"", "name": "string.quoted.double" },
+		"keywords": {
+			"match": "\\b(import|pattern|start|end)\\b",
+			"name": "keyword.control"
+		},
+		"connector": { "match": "->", "name": "keyword.operator.arrow" },
+		"operators": { "match": "\\*|\\+", "name": "keyword.operator" },
+		"delimiters": {
+			"match": "\\(|\\)|\\[|\\]|,",
+			"name": "punctuation.separator"
+		},
+		"key": { "match": "\\b[a-z][A-Za-z0-9_]*\\b", "name": "variable.other" }
+	}
+}

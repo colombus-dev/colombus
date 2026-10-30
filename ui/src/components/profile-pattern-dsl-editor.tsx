@@ -3,11 +3,9 @@ import Editor, { useMonaco } from "@monaco-editor/react";
 import _ from "lodash";
 import type * as monaco_editor from "monaco-editor";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BounceLoader } from "react-spinners";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
 import useCanopusCompletion from "@/hooks/editor/useCanopusCompletion";
 import useCanopusGrammar from "@/hooks/editor/useCanopusGrammar";
-import useCanopusTheme from "@/hooks/editor/useCanopusTheme";
 import useCompletionActions from "@/hooks/editor/useCompletionActions";
 import useEditorErrorHandling from "@/hooks/editor/useEditorErrorHandling";
 import { DEFAULT_DSL_CODE, EDITOR_LANGUAGE_ID } from "@/lib/constants";
@@ -38,8 +36,8 @@ export default function PatternDslEditor({
 		(state) => state.currentPattern?.dsl_content,
 	);
 
-	const { validateGrammarModel } = useCanopusGrammar(monaco);
-	const { themeName } = useCanopusTheme(monaco);
+	const { handleBeforeEditorMount, validateGrammarModel } =
+		useCanopusGrammar(monaco);
 	useCanopusCompletion(monaco);
 	useCompletionActions(monaco, onSubmitted);
 
@@ -95,10 +93,6 @@ export default function PatternDslEditor({
 		[validateGrammarModel],
 	);
 
-	if (!themeName) {
-		return <BounceLoader color="green" loading={true} />;
-	}
-
 	return (
 		<div
 			{...props}
@@ -128,12 +122,13 @@ export default function PatternDslEditor({
 				}}
 			/>
 			<Editor
-				className="border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] overflow-hidden"
-				theme={themeName}
-				defaultLanguage={EDITOR_LANGUAGE_ID}
+				className="border rounded-2xl overflow-hidden"
+				theme="light-plus" // dark-plus
+				language={EDITOR_LANGUAGE_ID}
 				defaultValue={currentPatternContent ?? DEFAULT_DSL_CODE}
 				onChange={onModelContentChange}
 				onMount={handleEditorDidMount}
+				beforeMount={handleBeforeEditorMount}
 				options={{
 					minimap: { enabled: false },
 					fontSize: 14,

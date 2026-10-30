@@ -1,4 +1,4 @@
-export const EDITOR_LANGUAGE_ID = "Canopus";
+export const EDITOR_LANGUAGE_ID = "canopus";
 export const DEFAULT_DSL_CODE = "";
 
 export const PATH = {

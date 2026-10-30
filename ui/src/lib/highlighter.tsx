@@ -5,9 +5,10 @@ import {
 	type HighlighterCore,
 } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
+import { EDITOR_LANGUAGE_ID } from "@/lib/constants";
 
 // Add the languages you need. Each one loads the first time it is used.
-const languages = {
+export const languages = {
 	bash: () => import("shiki/langs/shellscript.mjs"),
 	css: () => import("shiki/langs/css.mjs"),
 	diff: () => import("shiki/langs/diff.mjs"),
@@ -21,6 +22,7 @@ const languages = {
 	tsx: () => import("shiki/langs/tsx.mjs"),
 	typescript: () => import("shiki/langs/typescript.mjs"),
 	yaml: () => import("shiki/langs/yaml.mjs"),
+	[EDITOR_LANGUAGE_ID]: () => import("./canopus.tmLanguage.json"),
 };
 
 const aliases: Record<string, keyof typeof languages> = {
@@ -40,8 +42,8 @@ let highlighter: Promise<HighlighterCore> | undefined;
 function getHighlighter() {
 	highlighter ??= createHighlighterCore({
 		themes: [
-			import("shiki/themes/github-light.mjs"),
-			import("shiki/themes/github-dark.mjs"),
+			import("@shikijs/themes/light-plus"),
+			import("@shikijs/themes/dark-plus"),
 		],
 		langs: [],
 		engine: createJavaScriptRegexEngine({ forgiving: true }),
@@ -86,7 +88,7 @@ export async function loadHighlighter(language: string) {
 			const tokenize = (text: string) =>
 				shiki.codeToTokens(text, {
 					lang,
-					themes: { light: "github-light", dark: "github-dark" },
+					themes: { light: "light-plus", dark: "dark-plus" },
 					defaultColor: false,
 					grammarState: state,
 				}).tokens;

@@ -11,7 +11,8 @@ import {
 	postApplyPpmFilterByName,
 	postNotebookOrProfiles,
 } from "@/api/client";
-import { AgentChat } from "@/components/agent-chat";
+// import { AgentChat } from "@/components/agent-chat";
+import { ChatDemo } from "@/components/agent-chat-shadcn";
 import GraphContainer from "@/components/graph-container";
 import ImportModal from "@/components/import-modal";
 import ProfileCodeViewer from "@/components/profile-code-viewer";
@@ -482,7 +483,8 @@ export default function ExplorerProjectIdPage() {
 				</ResizablePanel>
 			</ResizablePanelGroup>
 			<div className="col-span-2 flex flex-col h-full space-y-4 p-2 min-h-0">
-				<AgentChat />
+				{/* <AgentChat /> */}
+				<ChatDemo />
 			</div>
 		</section>
 	) : (

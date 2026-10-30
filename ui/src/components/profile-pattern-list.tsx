@@ -10,7 +10,6 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import useCanopusGrammar from "@/hooks/editor/useCanopusGrammar";
-import useCanopusTheme from "@/hooks/editor/useCanopusTheme";
 import { EDITOR_LANGUAGE_ID } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
@@ -29,8 +28,8 @@ const ProfilePatternList: React.FunctionComponent<
 	const { projectId } = useParams<{ projectId: string }>();
 
 	const monaco = useMonaco();
-	const { themeName } = useCanopusTheme(monaco);
-	useCanopusGrammar(monaco);
+	// const { themeName } = useCanopusTheme(monaco);
+	const { handleBeforeEditorMount } = useCanopusGrammar(monaco);
 
 	useEffect(() => {
 		if (!projectId) {
@@ -77,30 +76,29 @@ const ProfilePatternList: React.FunctionComponent<
 										className="w-125 relative"
 										style={{ height: `${editorHeight}px` }}
 									>
-										{themeName && (
-											<Editor
-												theme={themeName}
-												defaultLanguage={EDITOR_LANGUAGE_ID}
-												value={dsl_content}
-												options={{
-													readOnly: true,
-													minimap: { enabled: false },
-													lineNumbers: "on",
-													scrollBeyondLastLine: false,
-													wordWrap: "on",
-													overviewRulerLanes: 0,
-													hideCursorInOverviewRuler: true,
-													automaticLayout: true,
-													scrollbar: {
-														vertical: "auto",
-														horizontal: "hidden",
-													},
-													folding: false,
-													renderLineHighlight: "none",
-													contextmenu: false,
-												}}
-											/>
-										)}
+										<Editor
+											theme="light-plus" // dark-plus
+											language={EDITOR_LANGUAGE_ID}
+											value={dsl_content}
+											beforeMount={handleBeforeEditorMount}
+											options={{
+												readOnly: true,
+												minimap: { enabled: false },
+												lineNumbers: "on",
+												scrollBeyondLastLine: false,
+												wordWrap: "on",
+												overviewRulerLanes: 0,
+												hideCursorInOverviewRuler: true,
+												automaticLayout: true,
+												scrollbar: {
+													vertical: "auto",
+													horizontal: "hidden",
+												},
+												folding: false,
+												renderLineHighlight: "none",
+												contextmenu: false,
+											}}
+										/>
 									</div>
 								</TooltipContent>
 							</Tooltip>
