@@ -1,48 +1,48 @@
-import { BounceLoader } from "react-spinners"
-import type { Sigma } from "sigma"
-import GraphControls from "./graph-controls"
-import ProfileExplorerGraphSettingsBar from "./profile-explorer-graph-settings-bar"
+import { BounceLoader } from "react-spinners";
+import type { Sigma } from "sigma";
+import GraphControls from "./graph-controls";
+import ProfileExplorerGraphSettingsBar from "./profile-explorer-graph-settings-bar";
 
 interface GraphContainerProps {
-  containerId: string
-  isLoading: boolean
-  graphRenderer?: Sigma
-  errorMessage?: string | null
+	containerId: string;
+	isLoading: boolean;
+	graphRenderer?: Sigma;
+	errorMessage?: string | null;
 }
 
 export default function GraphContainer({
-  containerId,
-  isLoading,
-  graphRenderer,
-  errorMessage,
-  ...props
+	containerId,
+	isLoading,
+	graphRenderer,
+	errorMessage,
+	...props
 }: GraphContainerProps & React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div {...props} className={props.className}>
-      <div
-        className="w-full h-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] overflow-hidden"
-        id={containerId}
-      />
-      <BounceLoader
-        className="absolute top-1/2 right-1/2"
-        color="green"
-        cssOverride={{ position: "absolute" }}
-        loading={isLoading}
-      />
-      {errorMessage && !isLoading && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 font-bold text-xl bg-white p-4 rounded-lg shadow-lg border border-red-200 z-50">
-          {errorMessage}
-        </div>
-      )}
-      {!isLoading && !errorMessage && (
-        <>
-          <ProfileExplorerGraphSettingsBar className="absolute bottom-6 right-12 w-72 h-auto max-h-[calc(100%-3rem)] bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-[20px] p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] z-10" />
-          <GraphControls
-            graphRenderer={graphRenderer}
-            className="absolute bottom-6 right-88 bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-[20px] shadow-[0_10px_30px_rgba(15,23,42,0.06)] z-10"
-          />
-        </>
-      )}
-    </div>
-  )
+	return (
+		<div {...props} className={props.className}>
+			<div
+				className="w-full h-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] overflow-hidden"
+				id={containerId}
+			/>
+			<BounceLoader
+				className="absolute top-1/2 right-1/2"
+				color="green"
+				cssOverride={{ position: "absolute" }}
+				loading={isLoading}
+			/>
+			{errorMessage && !isLoading && (
+				<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-red-500 font-bold text-xl bg-white p-4 rounded-lg shadow-lg border border-red-200 z-50">
+					{errorMessage}
+				</div>
+			)}
+			{!isLoading && !errorMessage && (
+				<>
+					<ProfileExplorerGraphSettingsBar className="absolute bottom-6 right-12 w-72 h-auto max-h-[calc(100%-3rem)] bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-[20px] p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] z-10" />
+					<GraphControls
+						graphRenderer={graphRenderer}
+						className="absolute bottom-6 right-88 bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-[20px] shadow-[0_10px_30px_rgba(15,23,42,0.06)] z-10"
+					/>
+				</>
+			)}
+		</div>
+	);
 }

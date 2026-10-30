@@ -1,138 +1,138 @@
-import { CommonTokenStream, InputStream } from "antlr4"
-import type * as monaco_editor from "monaco-editor"
-import { MarkerSeverity } from "monaco-editor"
-import { useCallback, useEffect } from "react"
-import { supportedSteps } from "@/configuration"
+import { CommonTokenStream, InputStream } from "antlr4";
+import type * as monaco_editor from "monaco-editor";
+import { MarkerSeverity } from "monaco-editor";
+import { useCallback, useEffect } from "react";
+import { supportedSteps } from "@/configuration";
 // @ts-expect-error: Canopus typing issue
-import CanopusDSLLexer from "@/hooks/editor/CanopusDSLLexer.js"
+import CanopusDSLLexer from "@/hooks/editor/CanopusDSLLexer.js";
 // @ts-expect-error: Canopus typing issue
-import CanopusDSLParser from "@/hooks/editor/CanopusDSLParser.js"
-import { EDITOR_LANGUAGE_ID } from "@/lib/constants"
-import type { MonacoEditor } from "@/lib/types"
+import CanopusDSLParser from "@/hooks/editor/CanopusDSLParser.js";
+import { EDITOR_LANGUAGE_ID } from "@/lib/constants";
+import type { MonacoEditor } from "@/lib/types";
 
 const canopusGrammarLanguage: monaco_editor.languages.IMonarchLanguage = {
-  tokenizer: {
-    root: [
-      // Handle comments
-      [/#.*/, "comment"],
+	tokenizer: {
+		root: [
+			// Handle comments
+			[/#.*/, "comment"],
 
-      // Handle strings
-      [/"[^"\n]*"/, "string"],
+			// Handle strings
+			[/"[^"\n]*"/, "string"],
 
-      // Handle keywords
-      [/\b(import|pattern|start|end)\b/, "keyword"],
+			// Handle keywords
+			[/\b(import|pattern|start|end)\b/, "keyword"],
 
-      // Handle operators
-      [/->/, "connector"],
-      [/\*|\+/, "operator"],
+			// Handle operators
+			[/->/, "connector"],
+			[/\*|\+/, "operator"],
 
-      // Handle delimiters
-      [/\(|\)|\[|\]|,/, "delimiter"],
+			// Handle delimiters
+			[/\(|\)|\[|\]|,/, "delimiter"],
 
-      // Handle delimiters
-      [/[a-z][A-Za-z0-9_]*/, "key"],
-    ],
-  },
-}
+			// Handle delimiters
+			[/[a-z][A-Za-z0-9_]*/, "key"],
+		],
+	},
+};
 
 export default function useCanopusGrammar(monaco: MonacoEditor | null) {
-  useEffect(() => {
-    if (!monaco) {
-      return
-    }
-    monaco.languages.register({ id: EDITOR_LANGUAGE_ID })
+	useEffect(() => {
+		if (!monaco) {
+			return;
+		}
+		monaco.languages.register({ id: EDITOR_LANGUAGE_ID });
 
-    monaco.languages.setMonarchTokensProvider(
-      EDITOR_LANGUAGE_ID,
-      canopusGrammarLanguage
-    )
+		monaco.languages.setMonarchTokensProvider(
+			EDITOR_LANGUAGE_ID,
+			canopusGrammarLanguage,
+		);
 
-    monaco.languages.setLanguageConfiguration(EDITOR_LANGUAGE_ID, {
-      comments: {
-        lineComment: "#",
-      },
-      brackets: [
-        ["[", "]"],
-        ["(", ")"],
-      ],
-      autoClosingPairs: [
-        { open: "(", close: ")" },
-        { open: "[", close: "]" },
-        { open: '"', close: '"' },
-      ],
-    })
-  }, [monaco])
+		monaco.languages.setLanguageConfiguration(EDITOR_LANGUAGE_ID, {
+			comments: {
+				lineComment: "#",
+			},
+			brackets: [
+				["[", "]"],
+				["(", ")"],
+			],
+			autoClosingPairs: [
+				{ open: "(", close: ")" },
+				{ open: "[", close: "]" },
+				{ open: '"', close: '"' },
+			],
+		});
+	}, [monaco]);
 
-  const validateGrammarModel = useCallback(
-    (model: monaco_editor.editor.ITextModel) => {
-      if (!monaco) {
-        return
-      }
-      const code = model.getValue()
-      // If the editor is empty, clear any syntax errors and skip ANTLR validation
-      // to avoid showing unexpected EOF errors to the user.
-      if (!code.trim()) {
-        monaco.editor.setModelMarkers(model, "antlr", [])
-        return
-      }
-      const markers: monaco_editor.editor.IMarkerData[] = []
+	const validateGrammarModel = useCallback(
+		(model: monaco_editor.editor.ITextModel) => {
+			if (!monaco) {
+				return;
+			}
+			const code = model.getValue();
+			// If the editor is empty, clear any syntax errors and skip ANTLR validation
+			// to avoid showing unexpected EOF errors to the user.
+			if (!code.trim()) {
+				monaco.editor.setModelMarkers(model, "antlr", []);
+				return;
+			}
+			const markers: monaco_editor.editor.IMarkerData[] = [];
 
-      try {
-        const input = new InputStream(code)
-        const lexer = new CanopusDSLLexer(input)
-        const tokens = new CommonTokenStream(lexer)
-        const parser = new CanopusDSLParser(tokens)
+			try {
+				const input = new InputStream(code);
+				const lexer = new CanopusDSLLexer(input);
+				const tokens = new CommonTokenStream(lexer);
+				const parser = new CanopusDSLParser(tokens);
 
-        parser.removeErrorListeners()
-        parser.addErrorListener({
-          // @ts-expect-error: Canopus typing issue
-          syntaxError(_recognizer, _offendingSymbol, line, column, msg) {
-            markers.push({
-              severity: MarkerSeverity.Error,
-              message: msg,
-              startLineNumber: line,
-              startColumn: column + 1,
-              endLineNumber: line,
-              endColumn: column + 2,
-            })
-          },
-        })
+				parser.removeErrorListeners();
+				parser.addErrorListener({
+					// @ts-expect-error: Canopus typing issue
+					syntaxError(_recognizer, _offendingSymbol, line, column, msg) {
+						markers.push({
+							severity: MarkerSeverity.Error,
+							message: msg,
+							startLineNumber: line,
+							startColumn: column + 1,
+							endLineNumber: line,
+							endColumn: column + 2,
+						});
+					},
+				});
 
-        parser.program() // Parse using the root rule
-      } catch (e) {
-        console.error("Parse error:", e)
-      }
+				parser.program(); // Parse using the root rule
+			} catch (e) {
+				console.error("Parse error:", e);
+			}
 
-      // Semantic checks
-      const lines = code.split("\n")
-      lines.forEach((line, i) => {
-        // Skip comments
-        if (line.trim().startsWith("#")) return
+			// Semantic checks
+			const lines = code.split("\n");
+			lines.forEach((line, i) => {
+				// Skip comments
+				if (line.trim().startsWith("#")) return;
 
-        const regex = /step\s*=\s*"([^"]+)"/g
-        let match = regex.exec(line)
-        while (match !== null) {
-          const stepValue = match[1]
-          if (!supportedSteps.includes(stepValue)) {
-            const startCol = match.index + match[0].indexOf(`"${stepValue}"`)
-            markers.push({
-              severity: MarkerSeverity.Error,
-              message: `Execution error: Unknown step "${stepValue}"`,
-              startLineNumber: i + 1,
-              startColumn: startCol + 1,
-              endLineNumber: i + 1,
-              endColumn: startCol + 1 + stepValue.length + 2,
-            })
-          }
-          match = regex.exec(line)
-        }
-      })
+				const regex = /step\s*=\s*"([^"]+)"/g;
+				let match = regex.exec(line);
+				while (match !== null) {
+					const stepValue = match[1];
+					if (!supportedSteps.includes(stepValue)) {
+						const startCol = match.index + match[0].indexOf(`"${stepValue}"`);
+						markers.push({
+							severity: MarkerSeverity.Error,
+							message: `Execution error: Unknown step "${stepValue}"`,
+							startLineNumber: i + 1,
+							startColumn: startCol + 1,
+							endLineNumber: i + 1,
+							endColumn: startCol + 1 + stepValue.length + 2,
+						});
+					}
+					match = regex.exec(line);
+				}
+			});
 
-      // Apply markers to Monaco
-      monaco.editor.setModelMarkers(model, "antlr", markers)
-    },
-    [monaco]
-  )
+			// Apply markers to Monaco
+			monaco.editor.setModelMarkers(model, "antlr", markers);
+		},
+		[monaco],
+	);
 
-  return { validateGrammarModel }
+	return { validateGrammarModel };
 }
