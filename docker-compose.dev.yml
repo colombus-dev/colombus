@@ -34,6 +34,7 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
+      VESPUCCI_PARSER_API_URL_PREFIX: http://vespucci_parser_api:1701
       ML_PROFILER_API_URL_PREFIX: ${ML_PROFILER_API_URL_PREFIX}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       ALLOWED_GOOGLE_EMAILS: ${ALLOWED_GOOGLE_EMAILS}
@@ -91,6 +92,15 @@ services:
       start_period: 20s
     profiles:
       - pgadmin
+
+  vespucci_parser_api:
+    image: ghcr.io/mlprofile/fast-parsing-service:v0.1.1
+    working_dir: /opt/pharo
+    command: [ "--headless", "Pharo.image", "eval", "--no-quit", "Server start" ]
+    ports:
+      - "1701:1701"
+    networks:
+      - colombus-dev_network
 
 networks:
   colombus-dev_network:

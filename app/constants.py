@@ -1,6 +1,9 @@
+import os
 from pathlib import Path
 
 notebooks_storage_path = Path("./data/notebooks")
+
+PARSER_API_URL_PREFIX = os.environ["VESPUCCI_PARSER_API_URL_PREFIX"]
 
 PROFILE_FILE_EXTENSION = ".json"
 NOTEBOOK_FILE_EXTENSION = ".ipynb"

@@ -1,13 +1,35 @@
 # Colombus - The ML pipelines exploration platform
 
-Requires Docker and Docker Compose.
+This project requires Docker and Docker Compose.
 
-## Deploy
+## Development mode
 
+First run:
 ```bash
 git clone git@github.com:colombus-dev/colombus.git && cd colombus
-cp .env.sample.dev .env # then edit .env
-docker compose -f docker-compose.prod.yml up -d --build
+cp .env.sample.dev .env
+docker network create colombus-dev_network  # once
+```
+
+Then deploy the [MLProfiler](https://github.com/colombus-dev/mlprofiler) which has to be linked to Colombus.
+
+You must also complete the `.env` with at least:
+- `JWT_SECRET` a secret password of at least 16 characters
+- information about the database (name, username, password, host and port) which will be automatically deployed
+- `ML_PROFILER_API_URL_PREFIX` the url of the MLProfiler deployed. Warning: put the service name as host to reach it (ex: http://mlprofiler_api:8081)
+
+Finally, you can run:
+```bash
+docker compose -f docker-compose.dev.yml up --build
+```
+
+The application user interface must be accessible on http://localhost:5173 and the API at http://localhost:8180
+
+## Production mode
+
+```bash
+cp .env.sample.prod .env # then edit .env
+docker compose -f docker-compose.prod.yml up --build
 ```
 
 **Update:**
@@ -15,17 +37,6 @@ docker compose -f docker-compose.prod.yml up -d --build
 docker compose -f docker-compose.prod.yml pull colombus_app colombus_ui
 docker compose -f docker-compose.prod.yml up -d
 ```
-
-## Develop
-
-```bash
-cp .env.sample.dev .env # then edit .env
-docker network create colombus-dev_network  # once
-docker compose -f docker-compose.dev.yml up --build
-```
-
-UI → http://localhost:5173
-API → http://localhost:8180
 
 ## Configuration (.env)
 

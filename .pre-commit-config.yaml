@@ -23,7 +23,7 @@ repos:
     args: [--failure-threshold, error]
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.6.0
+  rev: v6.0.0
   hooks:
   - id: trailing-whitespace
   - id: end-of-file-fixer
@@ -48,3 +48,7 @@ repos:
     language: system
     files: ^ui/src/.*\.(ts|tsx|js|jsx|css|json)$
     pass_filenames: false
+  - id: pytest-check
+    name: pytest-check
+    entry: bash -c 'uv run pytest'
+    language: system
