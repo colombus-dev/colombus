@@ -21,7 +21,11 @@ import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-fr
 import ProfileScoreDistributionChart from "@/components/profile-score-distribution-chart";
 import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
 import { Button } from "@/components/ui/button";
-
+import {
+	ResizableHandle,
+	ResizablePanel,
+	ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import usePatternActions from "@/hooks/explorer/usePatternActions";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
@@ -369,9 +373,8 @@ export default function ExplorerProjectIdPage() {
 							isKaggleAvailable ? handleKaggleCompetitionsSearch : undefined
 						}
 						isImporting={isImporting}
-					>
-						<Button className="w-full">Import profiles</Button>
-					</ImportModal>
+						render={<Button className="w-full">Import profiles</Button>}
+					/>
 				</div>
 
 				<div className="flex flex-col flex-1 min-h-0">
@@ -382,16 +385,22 @@ export default function ExplorerProjectIdPage() {
 				</div>
 			</div>
 			<ProfileExplorerPpmResultsBar className="col-span-1" />
-			<div className="col-span-5 flex flex-col h-full space-y-4 relative min-h-0">
-				{projectId && (
-					<PatternDslEditor
-						isExecuting={isLoading}
-						onSubmitted={handleExecuteCodeSubmit}
-						onSave={handleSaveCodeSubmit}
-						backendError={backendError}
-					/>
-				)}
-
+			<ResizablePanelGroup
+				orientation="vertical"
+				className="col-span-5 flex flex-col space-y-4 relative"
+			>
+				<ResizablePanel defaultSize="25%">
+					{projectId && (
+						<PatternDslEditor
+							className="overflow-hidden"
+							isExecuting={isLoading}
+							onSubmitted={handleExecuteCodeSubmit}
+							onSave={handleSaveCodeSubmit}
+							backendError={backendError}
+						/>
+					)}
+				</ResizablePanel>
+				<ResizableHandle withHandle />
 				<div className="flex items-center justify-start py-2 border-b border-slate-100 dark:border-slate-800">
 					<div className="flex items-center space-x-2">
 						<button
@@ -429,48 +438,49 @@ export default function ExplorerProjectIdPage() {
 						</button>
 					</div>
 				</div>
+				<ResizablePanel defaultSize="75%">
+					<div
+						className={
+							activeTab === "explorer"
+								? "flex-1 grid grid-rows-10 items-center gap-4 h-full"
+								: "absolute left-[-9999px] top-[-9999px] invisible pointer-events-none w-full h-full grid grid-rows-10 items-center gap-4 min-h-0"
+						}
+					>
+						<GraphContainer
+							className="group relative row-span-10 h-full w-full overflow-hidden"
+							containerId={GRAPH_CONTAINER_ID}
+							isLoading={isLoading}
+							graphRenderer={renderer.current}
+						/>
+					</div>
 
-				<div
-					className={
-						activeTab === "explorer"
-							? "flex-1 grid grid-rows-10 items-center gap-4 min-h-0"
-							: "absolute left-[-9999px] top-[-9999px] invisible pointer-events-none w-full h-full grid grid-rows-10 items-center gap-4 min-h-0"
-					}
-				>
-					<GraphContainer
-						className="group relative row-span-10 h-full w-full"
-						containerId={GRAPH_CONTAINER_ID}
-						isLoading={isLoading}
-						graphRenderer={renderer.current}
-					/>
-				</div>
-
-				<div
-					className={
-						activeTab === "statistics"
-							? "flex-1 min-h-0 py-2"
-							: "absolute left-[-9999px] top-[-9999px] invisible pointer-events-none w-full h-full py-2"
-					}
-				>
-					<div className="group relative row-span-10 h-full w-full">
-						<div className="w-full h-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] p-6 overflow-y-auto relative">
-							<div className="grid grid-cols-2 gap-4 h-full items-center">
-								<ProfileScoreDistributionChart />
-								<div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] w-full h-full">
-									<ProfileStepsFrequencyChart />
+					<div
+						className={
+							activeTab === "statistics"
+								? "flex-1 min-h-0 py-2"
+								: "absolute left-[-9999px] top-[-9999px] invisible pointer-events-none w-full h-full py-2"
+						}
+					>
+						<div className="group relative row-span-10 h-full w-full">
+							<div className="w-full h-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] p-6 overflow-y-auto relative">
+								<div className="grid grid-cols-2 gap-4 h-full items-center">
+									<ProfileScoreDistributionChart />
+									<div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] w-full h-full">
+										<ProfileStepsFrequencyChart />
+									</div>
+									<ProfilePatternStatsFreqMatrix className="col-span-2" />
 								</div>
-								<ProfilePatternStatsFreqMatrix className="col-span-2" />
 							</div>
 						</div>
 					</div>
-				</div>
 
-				{activeTab === "code" && (
-					<div className="flex-1 min-h-0 py-2 h-full">
-						<ProfileCodeViewer nodes={filteredWorkflowsNodes} />
-					</div>
-				)}
-			</div>
+					{activeTab === "code" && (
+						<div className="flex-1 min-h-0 py-2 h-full">
+							<ProfileCodeViewer nodes={filteredWorkflowsNodes} />
+						</div>
+					)}
+				</ResizablePanel>
+			</ResizablePanelGroup>
 		</section>
 	) : (
 		<section>404</section>

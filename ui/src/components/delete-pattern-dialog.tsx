@@ -15,19 +15,20 @@ import { useColombusStore } from "@/store";
 
 interface DeletePatternDialogProps {
 	patternName?: string;
+	render: React.ReactElement;
 }
 
 export default function DeletePatternDialog({
 	patternName,
-	children,
-}: React.PropsWithChildren<DeletePatternDialogProps>) {
+	render,
+}: DeletePatternDialogProps) {
 	const resetCurrentPattern = useColombusStore(
 		(state) => state.resetCurrentPattern,
 	);
 	const { projectId } = useParams<{ projectId: string }>();
 	return (
 		<AlertDialog>
-			<AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+			<AlertDialogTrigger render={render} />
 			<AlertDialogContent>
 				<AlertDialogHeader>
 					<AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>

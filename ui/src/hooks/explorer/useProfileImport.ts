@@ -15,25 +15,22 @@ export default function useProfileImport({ projectId }: UseProfileImportProps) {
 				return Promise.resolve();
 			}
 			setIsImporting(true);
-			return (
-				postNotebookOrProfiles(projectId, files)
-					.then((r) => {
-						setPostedProfiles(r);
-					})
-					// biome-ignore lint/suspicious/noExplicitAny: error handling
-					.catch((error: any) => {
-						console.error("Failed to import profile(s)", error);
-						const detail = error?.response?.data?.detail;
-						throw new Error(
-							typeof detail === "string"
-								? detail
-								: "Failed to import file(s). Please check the file format.",
-						);
-					})
-					.finally(() => {
-						setIsImporting(false);
-					})
-			);
+			return postNotebookOrProfiles(projectId, files)
+				.then((r) => {
+					setPostedProfiles(r);
+				})
+				.catch((error: any) => {
+					console.error("Failed to import profile(s)", error);
+					const detail = error?.response?.data?.detail;
+					throw new Error(
+						typeof detail === "string"
+							? detail
+							: "Failed to import file(s). Please check the file format.",
+					);
+				})
+				.finally(() => {
+					setIsImporting(false);
+				});
 		},
 		[projectId],
 	);

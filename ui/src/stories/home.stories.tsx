@@ -1,10 +1,11 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { BrowserRouter } from "react-router";
 import Home from "@/components/home";
 
 const meta = {
 	title: "Pages/Home",
 	component: Home,
+	tags: ["autodocs"],
 	parameters: {
 		layout: "fullscreen",
 	},
