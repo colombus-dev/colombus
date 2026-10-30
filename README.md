@@ -20,7 +20,7 @@ You must also complete the `.env` with at least:
 
 Finally, you can run:
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.dev.yml up --build
 ```
 
 The application user interface must be accessible on http://localhost:5173 and the API at http://localhost:8180
@@ -29,7 +29,7 @@ The application user interface must be accessible on http://localhost:5173 and t
 
 ```bash
 cp .env.sample.prod .env # then edit .env
-docker compose -f docker-compose.dev.yml up --build
+docker compose -f docker-compose.prod.yml up --build
 ```
 
 **Update:**

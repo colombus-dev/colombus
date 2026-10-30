@@ -103,7 +103,7 @@ async def convert_to_profiles(
     ) as client:
         # TODO ymu: maybe create a shared client once at startup using fast API's lifespan for ex
 
-        list_of_notebook_information = get_notebooks_information(
+        list_of_notebook_information = await get_notebooks_information(
             list_of_notebooks, parser_name
         )
 
