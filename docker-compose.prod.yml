@@ -3,7 +3,8 @@ services:
     image: ghcr.io/colombus-dev/colombus-ui:latest
     restart: unless-stopped
     labels:
-      com.centurylinklabs.watchtower.enable: "true"
+      wud.watch: "true"
+      wud.watch.digest: "true"
     networks:
       - colombus-net
 
@@ -11,7 +12,8 @@ services:
     image: ghcr.io/colombus-dev/colombus-app:latest
     restart: unless-stopped
     labels:
-      com.centurylinklabs.watchtower.enable: "true"
+      wud.watch: "true"
+      wud.watch.digest: "true"
     environment:
       APP_HOST: https://${DOMAIN}
       APP_PORT: 443
