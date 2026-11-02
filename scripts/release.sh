@@ -7,7 +7,7 @@ uv version --bump "$BUMP"
 uv lock
 NEW_VERSION=$(uv version | awk '{print $NF}')
 
-(cd ui && yarn version --new-version "$NEW_VERSION" --no-git-tag-version)
+(cd ui && yarn version "$NEW_VERSION")
 
 git add pyproject.toml uv.lock ui/package.json
 git commit -m "chore(release): v${NEW_VERSION}"
