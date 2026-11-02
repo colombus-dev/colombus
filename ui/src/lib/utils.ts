@@ -1,17 +1,7 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
 import { metacharacterPLUS, metacharacterSTAR } from "@/configuration";
 import type { PatternGroup } from "@/lib/types";
 
-/**
- * Merge the given tailwind class values.
- *
- * @param inputs the class values
- * @returns the tailwind merged classes
- */
-export function cn(...inputs: ClassValue[]) {
-	return twMerge(clsx(inputs));
-}
+export { cn } from "cn";
 
 export function formatPatternGroup(pe: PatternGroup) {
 	let preprocessedName = pe.subpattern

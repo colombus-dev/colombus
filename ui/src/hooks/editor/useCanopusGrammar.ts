@@ -3,7 +3,9 @@ import type * as monaco_editor from "monaco-editor";
 import { MarkerSeverity } from "monaco-editor";
 import { useCallback, useEffect } from "react";
 import { supportedSteps } from "@/configuration";
+// @ts-expect-error: Canopus typing issue
 import CanopusDSLLexer from "@/hooks/editor/CanopusDSLLexer.js";
+// @ts-expect-error: Canopus typing issue
 import CanopusDSLParser from "@/hooks/editor/CanopusDSLParser.js";
 import { EDITOR_LANGUAGE_ID } from "@/lib/constants";
 import type { MonacoEditor } from "@/lib/types";
@@ -83,6 +85,7 @@ export default function useCanopusGrammar(monaco: MonacoEditor | null) {
 
 				parser.removeErrorListeners();
 				parser.addErrorListener({
+					// @ts-expect-error: Canopus typing issue
 					syntaxError(_recognizer, _offendingSymbol, line, column, msg) {
 						markers.push({
 							severity: MarkerSeverity.Error,

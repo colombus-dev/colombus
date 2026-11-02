@@ -89,13 +89,11 @@ export default function useProfileNodesFetcher({
 			setProfilesScores(scores);
 		});
 
-		// biome-ignore lint/suspicious/noExplicitAny: error handling
 		const handleError = (error: any) => {
 			console.error("Pattern execution error:", error);
 			setIsLoading(false);
 			let detail = error?.response?.data?.detail;
 			if (Array.isArray(detail)) {
-				// biome-ignore lint/suspicious/noExplicitAny: error handling
 				detail = detail.map((d: any) => d.msg || JSON.stringify(d)).join(", ");
 			} else if (typeof detail === "object" && detail !== null) {
 				detail = JSON.stringify(detail);

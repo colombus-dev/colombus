@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn, scoreToBandColor } from "@/lib/utils";
 import { useColombusStore } from "@/store";
@@ -114,7 +115,6 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 				onChange={(e) => setResultSearchFilter(e.target.value)}
 				className="mb-2"
 			/>
-
 			{/* biome-ignore lint/a11y/useSemanticElements: cannot use <button> here as Checkbox (Radix UI) renders a <button> internally, nesting buttons is invalid HTML */}
 			<div
 				role="button"
@@ -146,7 +146,7 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 								const isFocused = profile.name === selectedProfileName;
 
 								return (
-									<div
+									<div // biome-ignore lint/suspicious/noArrayIndexKey: TODO
 										key={`${profile.key}-${index}`}
 										id={`result-item-${profile.name}`}
 										className={`flex w-full items-center gap-2 rounded-md px-1 py-1 text-left transition-colors hover:bg-slate-50 ${isFocused ? "bg-slate-100 ring-1 ring-slate-300" : ""}`}
@@ -163,13 +163,12 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 												backgroundColor: scoreToBandColor(profile.score),
 											}}
 										/>
-										<label
+										<Label
 											htmlFor={`cb_${profile.key}-${index}`}
 											className="min-w-0 flex-1 truncate text-[11px] font-medium text-slate-700 cursor-pointer"
-											style={{ fontFamily: "JetBrains Mono, monospace" }}
 										>
 											{profile.name}
-										</label>
+										</Label>
 										<span className="shrink-0 text-[10px] font-bold text-slate-900">
 											{profile.score !== undefined && profile.score !== null
 												? profile.score.toFixed(2)

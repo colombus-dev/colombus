@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import BounceLoader from "react-spinners/BounceLoader";
+import { BounceLoader } from "react-spinners";
 import { Legend, PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
 import { postFrequentStepsData } from "@/api/client";
 import {
@@ -38,7 +38,7 @@ const ProfileStepsFrequencyChart: React.FunctionComponent<
 		}
 	}, [projectId, availableProfilesNames]);
 
-	if (!projectId || availableProfilesNames.length === 0) {
+	if (!projectId || availableProfilesNames.length === 0 || !frequentStepsData) {
 		return null;
 	}
 
@@ -56,7 +56,7 @@ const ProfileStepsFrequencyChart: React.FunctionComponent<
 				{isLoading ? (
 					<BounceLoader color="green" loading={isLoading} />
 				) : (
-					<ChartContainer config={chartConfig} className="w-full max-h-[500px]">
+					<ChartContainer config={chartConfig} className="w-full max-h-125">
 						<RadarChart data={frequentStepsData}>
 							<ChartTooltip cursor={false} content={<ChartTooltipContent />} />
 							<PolarGrid />

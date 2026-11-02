@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
 	Tooltip,
 	TooltipContent,
-	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import useCanopusGrammar from "@/hooks/editor/useCanopusGrammar";
@@ -42,19 +41,19 @@ const ProfilePatternList: React.FunctionComponent<
 
 	return (
 		<div {...divProps} className={cn("space-x-1", divProps.className)}>
-			<TooltipProvider>
-				<ul className="list-none space-y-1">
-					{availablePatterns.map(({ name, groups, dsl_content }) => {
-						const lineCount = (dsl_content || "").split("\n").length;
-						const editorHeight = Math.min(
-							Math.max(lineCount * 19 + 20, 100),
-							600,
-						);
+			<ul className="list-none space-y-1">
+				{availablePatterns.map(({ name, groups, dsl_content }) => {
+					const lineCount = (dsl_content || "").split("\n").length;
+					const editorHeight = Math.min(
+						Math.max(lineCount * 19 + 20, 100),
+						600,
+					);
 
-						return (
-							<li key={name} className="grid grid-cols-6 space-x-1">
-								<Tooltip>
-									<TooltipTrigger asChild>
+					return (
+						<li key={name} className="grid grid-cols-6 space-x-1">
+							<Tooltip>
+								<TooltipTrigger
+									render={
 										<Button
 											className="col-span-5 truncate justify-start"
 											key={name}
@@ -68,57 +67,60 @@ const ProfilePatternList: React.FunctionComponent<
 										>
 											{name}
 										</Button>
-									</TooltipTrigger>
-									<TooltipContent
-										side="right"
-										className="bg-white text-slate-900 border border-slate-200 shadow-md p-1 z-[100]"
+									}
+								/>
+								<TooltipContent
+									side="right"
+									className="bg-white text-slate-900 border border-slate-200 shadow-md p-1 z-100"
+								>
+									<div
+										className="w-125 relative"
+										style={{ height: `${editorHeight}px` }}
 									>
-										<div
-											className="w-[500px] relative"
-											style={{ height: `${editorHeight}px` }}
-										>
-											{themeName && (
-												<Editor
-													theme={themeName}
-													defaultLanguage={EDITOR_LANGUAGE_ID}
-													value={dsl_content}
-													options={{
-														readOnly: true,
-														minimap: { enabled: false },
-														lineNumbers: "on",
-														scrollBeyondLastLine: false,
-														wordWrap: "on",
-														overviewRulerLanes: 0,
-														hideCursorInOverviewRuler: true,
-														automaticLayout: true,
-														scrollbar: {
-															vertical: "auto",
-															horizontal: "hidden",
-														},
-														folding: false,
-														renderLineHighlight: "none",
-														contextmenu: false,
-													}}
-												/>
-											)}
-										</div>
-									</TooltipContent>
-								</Tooltip>
-								<DeletePatternDialog patternName={name}>
+										{themeName && (
+											<Editor
+												theme={themeName}
+												defaultLanguage={EDITOR_LANGUAGE_ID}
+												value={dsl_content}
+												options={{
+													readOnly: true,
+													minimap: { enabled: false },
+													lineNumbers: "on",
+													scrollBeyondLastLine: false,
+													wordWrap: "on",
+													overviewRulerLanes: 0,
+													hideCursorInOverviewRuler: true,
+													automaticLayout: true,
+													scrollbar: {
+														vertical: "auto",
+														horizontal: "hidden",
+													},
+													folding: false,
+													renderLineHighlight: "none",
+													contextmenu: false,
+												}}
+											/>
+										)}
+									</div>
+								</TooltipContent>
+							</Tooltip>
+							<DeletePatternDialog
+								patternName={name}
+								render={
 									<Button key={`delete-${name}`} className="col-span-1">
 										<Trash />
 									</Button>
-								</DeletePatternDialog>
-							</li>
-						);
-					})}
-					{availablePatterns.length === 0 && (
-						<p className="text-sm text-slate-500">
-							Saved patterns will be listed here...
-						</p>
-					)}
-				</ul>
-			</TooltipProvider>
+								}
+							/>
+						</li>
+					);
+				})}
+				{availablePatterns.length === 0 && (
+					<p className="text-sm text-slate-500">
+						Saved patterns will be listed here...
+					</p>
+				)}
+			</ul>
 		</div>
 	);
 };

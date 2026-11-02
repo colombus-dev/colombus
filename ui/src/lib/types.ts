@@ -41,13 +41,11 @@ const basePatternGroup = z.object({
 		.transform((x) => x ?? undefined)
 		.optional(),
 	multiplicity: z.enum(["*", "+", "1"]).default("1"),
-	metaCharacters: z
-		.object({
-			startsWith: z.boolean().default(false),
-			endsWith: z.boolean().default(false),
-			negate: z.boolean().default(false),
-		})
-		.default({}),
+	metaCharacters: z.object({
+		startsWith: z.boolean().default(false),
+		endsWith: z.boolean().default(false),
+		negate: z.boolean().default(false),
+	}),
 });
 
 const basePattern = z.object({

@@ -7,6 +7,7 @@ import { ProjectSearchInput } from "@/components/project-search-input";
 const meta = {
 	title: "Components/ProjectSearchInput",
 	component: ProjectSearchInput,
+	tags: ["autodocs"],
 	decorators: [
 		(Story) => (
 			<div className="p-6 bg-slate-50 min-h-screen">

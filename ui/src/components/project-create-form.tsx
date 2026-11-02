@@ -24,7 +24,6 @@ export const ProjectCreateForm: React.FunctionComponent<
 					toast.success("Project successfully created.");
 					navigate(`${PATH.EXPLORER}/${projectId}`);
 				})
-				// biome-ignore lint/suspicious/noExplicitAny: ignore
 				.catch((err: any) => {
 					const detail = err.response?.data?.detail;
 					toast.error(
