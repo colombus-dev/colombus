@@ -6,12 +6,10 @@ RUN corepack enable && corepack prepare yarn@${YARN_VERSION}
 
 WORKDIR /app
 
-COPY package.json yarn.lock ./
+COPY . .
 
 RUN --mount=type=cache,target=/root/.cache/yarn \
-    yarn install --frozen-lockfile
-
-COPY . .
+    yarn install --immutable --immutable-cache
 
 ARG VITE_BASE_PATH=/colombus/
 ENV VITE_BASE_PATH=$VITE_BASE_PATH
