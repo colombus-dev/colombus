@@ -32,6 +32,8 @@ services:
       ALLOWED_GOOGLE_EMAILS: ${ALLOWED_GOOGLE_EMAILS}
       KAGGLE_KEY: ${KAGGLE_KEY:-}
       KAGGLE_USERNAME: ${KAGGLE_USERNAME:-}
+      FLINK_DB_USERNAME: ${FLINK_DB_USERNAME:-}
+      FLINK_DB_PASSWORD: ${FLINK_DB_PASSWORD:-}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8180/health"]
       interval: 30s

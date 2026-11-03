@@ -43,6 +43,8 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       KAGGLE_KEY: ${KAGGLE_KEY:-}
       KAGGLE_USERNAME: ${KAGGLE_USERNAME:-}
+      FLINK_DB_USERNAME: ${FLINK_DB_USERNAME:-}
+      FLINK_DB_PASSWORD: ${FLINK_DB_PASSWORD:-}
     tty: true
     stdin_open: true
     healthcheck:

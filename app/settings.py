@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     kaggle_username: str | None = None
     kaggle_key: str | None = None
 
+    flink_db_username: str | None = None
+    flink_db_password: str | None = None
+
     @property
     def database_url(self) -> str:
         return (
