@@ -101,7 +101,7 @@ async def post_project_stats_patterns(
     MAX_NB_PATTERNS = 10
     matrix_top = freq_patterns_matrix[:MAX_NB_PATTERNS].copy()
 
-    full_labels = matrix_top.index.tolist()
+    full_labels = [str(label) for label in matrix_top.index.tolist()]
     matrix_top.index = full_labels
 
     hover_labels = ["<br>".join(wrap(label, width=50)) for label in full_labels]

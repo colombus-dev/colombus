@@ -2,12 +2,18 @@ services:
   colombus_ui:
     image: ghcr.io/colombus-dev/colombus-ui:latest
     restart: unless-stopped
+    labels:
+      wud.watch: "true"
+      wud.watch.digest: "true"
     networks:
       - colombus-net
 
   colombus_app:
     image: ghcr.io/colombus-dev/colombus-app:latest
     restart: unless-stopped
+    labels:
+      wud.watch: "true"
+      wud.watch.digest: "true"
     environment:
       APP_HOST: https://${DOMAIN}
       APP_PORT: 443
@@ -60,6 +66,7 @@ services:
 
 networks:
   colombus-net:
+    external: true
     name: colombus-net
 
 volumes:

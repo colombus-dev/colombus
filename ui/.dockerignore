@@ -1,6 +1,7 @@
 # Dependencies and build artefacts
 node_modules
 **/node_modules
+.yarn/
 dist
 build
 coverage

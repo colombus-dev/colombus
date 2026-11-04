@@ -6,7 +6,8 @@ Requires Docker and Docker Compose.
 
 ```bash
 git clone git@github.com:colombus-dev/colombus.git && cd colombus
-cp .env.sample.dev .env # then edit .env
+cp .env.sample.prod .env # then edit .env
+docker network create colombus-net
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
