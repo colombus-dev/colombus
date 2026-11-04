@@ -114,8 +114,19 @@ export type KaggleNotebookList = {
 };
 
 // agent chat
+
+// TODO: use zod for chat messages validation
+
+type ChatMessageMetadata = {
+	usage?: {
+		inputTokens: number;
+		outputTokens: number;
+		outputReasoningTokens: number;
+	};
+};
+
 export type ChatMessage = UIMessage<
-	unknown,
+	ChatMessageMetadata,
 	UIDataTypes,
 	{
 		runCommand: {

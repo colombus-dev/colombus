@@ -74,8 +74,10 @@ def save_notebook_as_sql(
         all_steps.append(new_step)
         previous_step = new_step
         all_profile_metainstructions.extend(all_metainstructions)
+
     profile = Profile(
         project_id=project_id,
+        score=json_profile.score,
         name=json_profile.name,
         steps=all_steps,
         encoded_profile=encode_profile([step.name for step in all_steps]),

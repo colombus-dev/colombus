@@ -8,7 +8,8 @@ WITH filtered_profiles AS (
     SELECT fp.*, ppm_to_regex('{{ regex_text }}', fp."encoded_profile") AS matching_groups
     FROM filtered_profiles AS fp
 )
-SELECT p."name"
+SELECT p."id",
+    p."name"
 {% for group in all_groups %}
     , array_agg(DISTINCT s{{ loop.index0 }}.id::text)
     {% set grouploop = loop %}
@@ -58,7 +59,7 @@ FROM filtered_profiles AS p
                 AND code_{{ grouploop.index0 }}_{{ loop.index0 }}."meta_instruction_id" = mi_{{ grouploop.index0 }}_{{ loop.index0 }}."id"
         {%- endfor %}
     {%- endfor %}
-GROUP BY p."name"
+GROUP BY p."id", p."name"
 {% for i in range(all_groups|count) %}
     , s{{ i }}.grp_id, s{{ i }}.match_id
 {%- endfor %}

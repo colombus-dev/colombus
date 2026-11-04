@@ -53,6 +53,7 @@ class ProfileBase(SQLModel):
 class Profile(ProfileBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     project_id: uuid.UUID = ProjectIdFk
+    score: float
     json_profile: dict[str, Any] = Field(sa_type=JSON)
     encoded_profile: str
 
@@ -167,6 +168,14 @@ class Pattern(SQLModel, table=True):
     dsl_content: str
 
     project: Project = Relationship(back_populates="patterns")
+
+
+# Query results-related tables
+
+
+class MatchingProfile(SQLModel, table=True):
+    pattern_hash: str = Field(primary_key=True)
+    profile_id: uuid.UUID = Field(primary_key=True, foreign_key="profile.id")
 
 
 engine = create_engine(

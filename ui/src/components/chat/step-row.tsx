@@ -1,6 +1,7 @@
 import type { ChatAddToolApproveResponseFunction } from "ai";
 import { CircleCheckIcon, LoaderCircleIcon, TerminalIcon } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { CodeBlock, CodeBlockContent } from "@/components/ui/code-block";
 import {
 	Item,
@@ -19,17 +20,18 @@ import {
 	TraceTitle,
 } from "@/components/ui/trace";
 import type { ChatMessage } from "@/lib/types";
-import { Button } from "../ui/button";
 
 type ChatPart = ChatMessage["parts"][number];
 
 interface StepRowProps {
+	projectId: string;
 	part: ChatPart;
 	streaming: boolean;
 	addToolApprovalResponse: ChatAddToolApproveResponseFunction;
 }
 
 export function StepRow({
+	projectId,
 	part,
 	streaming,
 	addToolApprovalResponse,
@@ -39,17 +41,25 @@ export function StepRow({
 			<ReasoningRow text={part.text} running={part.state === "streaming"} />
 		);
 	}
-
-	if (part.type === "tool-runCommand") {
+	if (part.type?.startsWith("tool-")) {
+		// @ts-expect-error
 		if (part.state === "approval-requested") {
 			return (
 				<ApprovalRequestRow
+					// @ts-expect-error
 					part={part}
 					addToolApprovalResponse={addToolApprovalResponse}
+					projectId={projectId}
 				/>
 			);
 		}
-		return <ToolRow part={part} streaming={streaming} />;
+		return (
+			<ToolRow
+				// @ts-expect-error
+				part={part}
+				streaming={streaming}
+			/>
+		);
 	}
 
 	return null;
@@ -84,9 +94,19 @@ type ToolPart = Extract<ChatPart, { type: "tool-runCommand" }>;
 function ToolRow({ part, streaming }: { part: ToolPart; streaming: boolean }) {
 	const command = part.input?.command;
 
+	if (part.state === "output-denied") {
+		return (
+			<TraceLine>
+				<TraceIcon>
+					<TerminalIcon />
+				</TraceIcon>
+				<TraceTitle>Denied {command}</TraceTitle>
+			</TraceLine>
+		);
+	}
+
 	if (part.state === "output-available" || part.state === "output-error") {
 		const failed = part.state === "output-error";
-
 		return (
 			<TraceCollapsible>
 				<TraceCollapsibleTrigger>
@@ -102,7 +122,7 @@ function ToolRow({ part, streaming }: { part: ToolPart; streaming: boolean }) {
 				<TraceCollapsibleContent>
 					<CodeBlock size="sm">
 						<CodeBlockContent wrap className="max-h-64">
-							{failed ? part.errorText : part.output.stdout}
+							{failed ? part.errorText : JSON.stringify(part.output)}
 						</CodeBlockContent>
 					</CodeBlock>
 				</TraceCollapsibleContent>
@@ -110,17 +130,13 @@ function ToolRow({ part, streaming }: { part: ToolPart; streaming: boolean }) {
 		);
 	}
 
-	const denied =
-		part.state === "output-denied" ||
-		(part.state === "approval-responded" && !part.approval.approved);
-
 	return (
 		<TraceLine status={streaming ? "running" : "error"}>
 			<TraceIcon>
 				<TerminalIcon />
 			</TraceIcon>
 			<TraceTitle>
-				{denied ? "Denied" : "Running"} {part.input?.command}
+				{streaming ? "Running" : "Failed to run"} {command}
 			</TraceTitle>
 		</TraceLine>
 	);
@@ -134,9 +150,11 @@ type ApprovalRequestPart = Extract<
 function ApprovalRequestRow({
 	part,
 	addToolApprovalResponse,
+	projectId,
 }: {
 	part: ApprovalRequestPart;
 	addToolApprovalResponse: ChatAddToolApproveResponseFunction;
+	projectId: string;
 }) {
 	return (
 		<Item key={part.toolCallId} variant="outline" size="sm">
@@ -144,7 +162,7 @@ function ApprovalRequestRow({
 				<TerminalIcon />
 			</ItemMedia>
 			<ItemContent>
-				<ItemTitle>Run {part.input.command}?</ItemTitle>
+				<ItemTitle>Run {part.type.replace("tool-", "")}?</ItemTitle>
 				<ItemDescription>The command runs in this project.</ItemDescription>
 			</ItemContent>
 			<ItemActions>
@@ -155,6 +173,11 @@ function ApprovalRequestRow({
 						addToolApprovalResponse({
 							id: part.approval.id,
 							approved: false,
+							options: {
+								body: {
+									projectId,
+								},
+							},
 						})
 					}
 				>
@@ -166,6 +189,11 @@ function ApprovalRequestRow({
 						addToolApprovalResponse({
 							id: part.approval.id,
 							approved: true,
+							options: {
+								body: {
+									projectId,
+								},
+							},
 						})
 					}
 				>

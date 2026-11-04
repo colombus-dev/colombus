@@ -67,8 +67,8 @@ async def execute_ppm(
     # TODO: improve this uuid conversion
     return [
         PpmResult(
-            profile_name=r[0],
-            results=[[e for e in f if e is not None] for f in r[1:] if f is not None],
+            profile_name=r[1],
+            results=[[e for e in f if e is not None] for f in r[2:] if f is not None],
         )
         for r in session.execute(text(query)).all()
     ]

@@ -42,13 +42,12 @@ services:
       LLM_API_KEY: ${LLM_API_KEY}
       LLM_MODEL_NAME: ${LLM_MODEL_NAME}
       ML_PROFILER_API_URL_PREFIX: ${ML_PROFILER_API_URL_PREFIX}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       ALLOWED_GOOGLE_EMAILS: ${ALLOWED_GOOGLE_EMAILS}
       JWT_SECRET: ${JWT_SECRET}
       KAGGLE_KEY: ${KAGGLE_KEY:-}
       KAGGLE_USERNAME: ${KAGGLE_USERNAME:-}
-    tty: true
-    stdin_open: true
     healthcheck:
       test: curl -f http://localhost:8180/health || exit 1
       interval: 5m
@@ -98,6 +97,16 @@ services:
       start_period: 20s
     profiles:
       - pgadmin
+  colombus_otel:
+    image: ymtdzzz/otel-tui:latest
+    ports:
+      - "4318:4318"
+    networks:
+      - colombus-dev_network
+    profiles:
+      - otel
+    stdin_open: true
+    tty: true
 
 networks:
   colombus-dev_network:

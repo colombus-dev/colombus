@@ -1,12 +1,9 @@
 import { useChat } from "@ai-sdk/react";
 import { lastAssistantMessageIsCompleteWithApprovalResponses } from "ai";
-import {
-	ArrowUpIcon,
-	MessageCircleDashedIcon,
-	RotateCwIcon,
-} from "lucide-react";
+import { ArrowUpIcon, DatabaseSearch, RotateCwIcon } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import * as React from "react";
+import { useParams } from "react-router";
 import { StepRow } from "@/components/chat/step-row";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { Button } from "@/components/ui/button";
@@ -39,52 +36,52 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Trace } from "@/components/ui/trace";
-import { DEMO_CHAT, DEMO_SUGGESTIONS, getMessageText } from "@/lib/ai";
+import { DEMO_SUGGESTIONS, getMessageText } from "@/lib/ai";
 import { MESSAGE_ANIMATION } from "@/lib/message-animation";
+import type { ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ContextUsageCard } from "./chat/context-usage-card";
-
-const initialMessages = DEMO_CHAT.get(0);
-const transport = DEMO_CHAT.transport({
-	delayMs: 16,
-	fallback:
-		"This demo only knows the scripted turns. Press reset to start over.",
-});
 
 const MotionMessageScrollerItem = motion.create(MessageScrollerItem);
 
 export function ChatDemo() {
+	const { projectId } = useParams<{ projectId: string }>();
 	const {
 		messages,
 		sendMessage,
 		setMessages,
 		status,
 		addToolApprovalResponse,
-	} = useChat({
-		messages: initialMessages,
-		transport,
+	} = useChat<ChatMessage>({
+		// @ts-expect-error
+		api: `${import.meta.env.BASE_URL}chat`,
 		sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
 	});
-	const [draft, setDraft] = React.useState<string | null>(null);
+	const [draft, setDraft] = React.useState<string>("");
 	const formRef = React.useRef<HTMLFormElement>(null);
 	const shouldReduceMotion = useReducedMotion();
-	const nextMessage = DEMO_CHAT.next(messages);
 	const busy = status === "submitted" || status === "streaming";
-	const text = draft ?? (nextMessage ? getMessageText(nextMessage) : "");
-	const canSend = text.trim().length > 0 && !busy;
+	const canSend = draft.trim().length > 0 && !busy;
 
 	function onSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		if (!canSend) {
-			return;
-		}
+		if (!canSend) return;
+		sendMessage({ text: draft }, { body: { projectId: projectId } });
+		setDraft("");
+	}
 
-		if (draft === null && nextMessage) {
-			void sendMessage(nextMessage);
-		} else {
-			void sendMessage({ text: text.trim() });
-		}
-		setDraft(null);
+	const lastMessageWithUsageMetadata = messages.findLast(
+		(msg) => msg.metadata?.usage,
+	);
+	const { inputTokens, outputTokens, outputReasoningTokens } =
+		lastMessageWithUsageMetadata?.metadata?.usage ?? {
+			inputTokens: 0,
+			outputTokens: 0,
+			outputReasoningTokens: 0,
+		};
+
+	if (!projectId) {
+		return <p>Choose a project first</p>;
 	}
 
 	return (
@@ -98,8 +95,7 @@ export function ChatDemo() {
 					<div className="flex h-full w-full flex-col gap-4">
 						<div className="flex items-start justify-between gap-4 p-8 pb-4">
 							<div className="flex flex-col gap-1">
-								{/**PereyBot named after Marguerite Perey (https://en.wikipedia.org/wiki/Marguerite_Perey)*/}
-								<div className="font-medium">Ask PereyBot</div>
+								<div className="font-medium">Ask Colombot</div>
 								<div className="text-sm text-muted-foreground">
 									An agent for identifying new patterns.
 								</div>
@@ -112,8 +108,8 @@ export function ChatDemo() {
 											size="icon"
 											aria-label="Reset conversation"
 											onClick={() => {
-												setMessages(initialMessages);
-												setDraft(null);
+												setMessages([]);
+												setDraft("");
 											}}
 											disabled={busy}
 										>
@@ -131,9 +127,9 @@ export function ChatDemo() {
 								<Empty className="h-full">
 									<EmptyHeader>
 										<EmptyMedia variant="icon">
-											<MessageCircleDashedIcon />
+											<DatabaseSearch />
 										</EmptyMedia>
-										<EmptyTitle>What should we build?</EmptyTitle>
+										<EmptyTitle>Let's analyze!</EmptyTitle>
 										<EmptyDescription>
 											The agent can generate, fix, execute patterns and explore
 											profiles.
@@ -175,7 +171,7 @@ export function ChatDemo() {
 												const steps = message.parts.filter(
 													(part) =>
 														part.type === "reasoning" ||
-														part.type === "tool-runCommand",
+														part.type?.startsWith("tool-"),
 												);
 												const reply = getMessageText(message);
 
@@ -192,6 +188,7 @@ export function ChatDemo() {
 																			<StepRow
 																				// biome-ignore lint/suspicious/noArrayIndexKey: TODO
 																				key={index}
+																				projectId={projectId}
 																				part={part}
 																				streaming={streaming}
 																				addToolApprovalResponse={
@@ -221,9 +218,12 @@ export function ChatDemo() {
 										variant="outline"
 										size="sm"
 										className="shrink-0"
-										disabled={!canSend}
+										disabled={busy}
 										onClick={() =>
-											void sendMessage({ text: suggestion.trim() })
+											void sendMessage(
+												{ text: suggestion.trim() },
+												{ body: { projectId: projectId } },
+											)
 										}
 									>
 										{suggestion}
@@ -233,7 +233,7 @@ export function ChatDemo() {
 							<form ref={formRef} onSubmit={onSubmit} className="w-full">
 								<InputGroup>
 									<InputGroupTextarea
-										value={text}
+										value={draft}
 										onChange={(event) => setDraft(event.target.value)}
 										placeholder="Ask the agent..."
 										aria-label="Message"
@@ -246,8 +246,12 @@ export function ChatDemo() {
 										}}
 									/>
 									<InputGroupAddon align="block-end" className="pt-1">
-										{/** TODO: pass usage to card component inputTokens={messages[messages.length - 1]?.metadata?.usage?.inputTokens} */}
-										<ContextUsageCard />
+										<ContextUsageCard
+											limit={65536}
+											inputTokens={inputTokens}
+											outputTokens={outputTokens}
+											outputReasoningTokens={outputReasoningTokens}
+										/>
 										<InputGroupButton
 											type="submit"
 											variant="default"
