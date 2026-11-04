@@ -189,7 +189,11 @@ def initialize():
         connection.execute(
             text(f"""
                 CREATE OR REPLACE VIEW {FLINK_STEP_WITH_PROJECT_VIEW} AS
-                SELECT step.profile_id, step.position, step.name, profile.project_id
+                SELECT
+                    step.profile_id::text AS profile_id,
+                    step.position,
+                    step.name,
+                    profile.project_id::text AS project_id
                 FROM step
                 JOIN profile ON profile.id = step.profile_id
             """)
@@ -198,13 +202,13 @@ def initialize():
             text(f"""
                 CREATE OR REPLACE VIEW {FLINK_METAINSTRUCTION_WITH_PROJECT_VIEW} AS
                 SELECT
-                    metainstruction.step_id,
-                    metainstruction.profile_id,
+                    metainstruction.step_id::text AS step_id,
+                    metainstruction.profile_id::text AS profile_id,
                     metainstruction."algoFamily",
                     metainstruction."algoName",
                     metainstruction.library,
                     metainstruction.function,
-                    profile.project_id
+                    profile.project_id::text AS project_id
                 FROM metainstruction
                 JOIN profile ON profile.id = metainstruction.profile_id
             """)

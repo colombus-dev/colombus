@@ -5,7 +5,7 @@ import pathlib
 import uuid
 
 from sqlalchemy import delete, insert
-from sqlmodel import Session, col, select
+from sqlmodel import Session, col, select, text
 
 from app.models.sql_model import Profile, Project, Step, engine
 from app.utils import encode_profile
@@ -29,6 +29,7 @@ def get_or_create_project(session: Session, reset: bool) -> Project:
             select(Profile.id).where(Profile.project_id == project.id)
         ).all()
         if profile_ids:
+            session.execute(text("SET LOCAL statement_timeout = 0"))
             session.execute(delete(Step).where(col(Step.profile_id).in_(profile_ids)))
             session.execute(
                 delete(Profile).where(col(Profile.project_id) == project.id)
