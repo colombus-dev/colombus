@@ -19,7 +19,9 @@ from app.settings import get_settings
 
 settings = get_settings()
 
-ProjectIdFk = Field(default=None, foreign_key="project.id", ondelete="CASCADE")
+ProjectIdFk = Field(
+    default=None, foreign_key="project.id", ondelete="CASCADE", index=True
+)
 ProfileIdFk = Field(
     default=None, foreign_key="profile.id", ondelete="CASCADE", index=True
 )
@@ -177,5 +179,33 @@ engine = create_engine(
 )
 
 
-def create_db_and_tables():
+FLINK_STEP_WITH_PROJECT_VIEW = "flink_step_with_project"
+FLINK_METAINSTRUCTION_WITH_PROJECT_VIEW = "flink_metainstruction_with_project"
+
+
+def initialize():
     SQLModel.metadata.create_all(engine)
+    with engine.begin() as connection:
+        connection.execute(
+            text(f"""
+                CREATE OR REPLACE VIEW {FLINK_STEP_WITH_PROJECT_VIEW} AS
+                SELECT step.profile_id, step.position, step.name, profile.project_id
+                FROM step
+                JOIN profile ON profile.id = step.profile_id
+            """)
+        )
+        connection.execute(
+            text(f"""
+                CREATE OR REPLACE VIEW {FLINK_METAINSTRUCTION_WITH_PROJECT_VIEW} AS
+                SELECT
+                    metainstruction.step_id,
+                    metainstruction.profile_id,
+                    metainstruction."algoFamily",
+                    metainstruction."algoName",
+                    metainstruction.library,
+                    metainstruction.function,
+                    profile.project_id
+                FROM metainstruction
+                JOIN profile ON profile.id = metainstruction.profile_id
+            """)
+        )
