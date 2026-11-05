@@ -193,7 +193,8 @@ def initialize():
                     step.profile_id::text AS profile_id,
                     step.position,
                     step.name,
-                    profile.project_id::text AS project_id
+                    profile.project_id::text AS project_id,
+                    MAX(step.position) OVER (PARTITION BY step.profile_id) AS max_position
                 FROM step
                 JOIN profile ON profile.id = step.profile_id
             """)
