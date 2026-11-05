@@ -180,7 +180,6 @@ engine = create_engine(
 
 
 FLINK_STEP_WITH_PROJECT_VIEW = "flink_step_with_project"
-FLINK_METAINSTRUCTION_WITH_PROJECT_VIEW = "flink_metainstruction_with_project"
 
 
 def initialize():
@@ -194,23 +193,14 @@ def initialize():
                     step.position,
                     step.name,
                     profile.project_id::text AS project_id,
-                    MAX(step.position) OVER (PARTITION BY step.profile_id) AS max_position
+                    MAX(step.position) OVER (PARTITION BY step.profile_id) AS max_position,
+                    array_remove(array_agg(DISTINCT metainstruction."algoFamily"), NULL) AS "algoFamily",
+                    array_remove(array_agg(DISTINCT metainstruction."algoName"), NULL) AS "algoName",
+                    array_remove(array_agg(DISTINCT metainstruction.library), NULL) AS library,
+                    array_remove(array_agg(DISTINCT metainstruction.function), NULL) AS function
                 FROM step
                 JOIN profile ON profile.id = step.profile_id
-            """)
-        )
-        connection.execute(
-            text(f"""
-                CREATE OR REPLACE VIEW {FLINK_METAINSTRUCTION_WITH_PROJECT_VIEW} AS
-                SELECT
-                    metainstruction.step_id::text AS step_id,
-                    metainstruction.profile_id::text AS profile_id,
-                    metainstruction."algoFamily",
-                    metainstruction."algoName",
-                    metainstruction.library,
-                    metainstruction.function,
-                    profile.project_id::text AS project_id
-                FROM metainstruction
-                JOIN profile ON profile.id = metainstruction.profile_id
+                LEFT JOIN metainstruction ON metainstruction.step_id = step.id
+                GROUP BY step.id, step.profile_id, step.position, step.name, profile.project_id
             """)
         )
