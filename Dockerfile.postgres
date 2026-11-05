@@ -3,5 +3,4 @@ FROM postgres:17.4
 RUN apt-get update && \
     apt-get install -y postgresql-plpython3-17
 
-COPY create_extension_plpython.sql /docker-entrypoint-initdb.d
-COPY ppm_to_regex_function.sql /docker-entrypoint-initdb.d
+COPY postgres/initdb/ /docker-entrypoint-initdb.d

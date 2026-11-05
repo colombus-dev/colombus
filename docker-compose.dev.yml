@@ -62,6 +62,8 @@ services:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
+      FLINK_DB_USERNAME: ${FLINK_DB_USERNAME:-}
+      FLINK_DB_PASSWORD: ${FLINK_DB_PASSWORD:-}
     ports:
       - 5433:5432
     networks:
