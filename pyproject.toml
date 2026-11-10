@@ -60,3 +60,13 @@ verbose = false
 
 [tool.pytest_env]
 VESPUCCI_PARSER_API_URL_PREFIX=""
+ENVIRONMENT="development"
+ALLOWED_GOOGLE_EMAILS=""
+GOOGLE_CLIENT_ID=""
+JWT_SECRET="dev-secret-at-least-16-chars"
+DB_NAME="colombus"
+DB_USERNAME="colombus"
+DB_PASSWORD="colombus"
+DB_HOST="localhost"
+DB_PORT=5433
+ML_PROFILER_API_URL_PREFIX="http://mlprofiler_api:8081"
