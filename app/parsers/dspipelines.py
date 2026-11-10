@@ -1,7 +1,11 @@
 import ast
 import uuid
 
-from app.models.parser import ParserSubgraph, ParserSubgraphLine
+from app.models.parser import (
+    ParserSubgraph,
+    ParserSubgraphCursor,
+    ParserSubgraphLine,
+)
 from app.parsers.base import BaseMLParser
 
 #### TODO: adapted from https://github.com/sumonbis/DS-Pipeline below
@@ -66,11 +70,14 @@ class DSPipelinesParser(BaseMLParser):
                     id=str(uuid.uuid4()),
                     library="",
                     function=splitted_libfunc[-1].split(" ")[0],
-                    value={},
                     source=ast.unparse(elem["node"]),
                     line=ParserSubgraphLine(
                         start=elem["node"].lineno,
                         end=elem["node"].end_lineno,
+                    ),
+                    cursor=ParserSubgraphCursor(
+                        start=elem["node"].col_offset,
+                        end=elem["node"].end_col_offset,
                     ),
                     step_name="",
                 )
