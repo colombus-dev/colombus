@@ -94,9 +94,7 @@ async def _run_ppm(
         except ValueError:
             detail = exc.response.text
         if exc.response.status_code == 400:
-            # Validation message written for the user, safe to show as is.
             raise InvalidPatternDefinitionException(detail)
-        # Anything else is internal, log it and keep the client message short.
         logger.error(f"Flink gateway error: {detail}")
         raise FlinkGatewayUnavailableException()
     except httpx.HTTPError as exc:

@@ -81,8 +81,7 @@ def resolve_group_meta_instructions(
         {**params, "step_ids": step_ids},
     ).all()
 
-    # Just like legacy multi-join the group matches as long as at least one of
-    # its steps carries the full ordered metainstruction chain.
+    # The group matches if one of its steps has every meta instruction of the group, in order.
     if not rows:
         return None
 
