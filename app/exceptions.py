@@ -37,8 +37,13 @@ class UnsupportedTaxonomyException(HTTPException):
 
 
 class InvalidPatternDefinitionException(HTTPException):
+    def __init__(self, detail: str = "Invalid pattern definition.") -> None:
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+
+
+class FlinkGatewayUnavailableException(HTTPException):
     def __init__(self) -> None:
         super().__init__(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid pattern definition.",
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Flink gateway is unavailable.",
         )

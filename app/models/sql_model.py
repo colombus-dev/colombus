@@ -185,17 +185,21 @@ FLINK_STEP_WITH_PROJECT_VIEW = "flink_step_with_project"
 def initialize():
     SQLModel.metadata.create_all(engine)
     with engine.begin() as connection:
+        connection.execute(text(f"DROP VIEW IF EXISTS {FLINK_STEP_WITH_PROJECT_VIEW}"))
         connection.execute(
             text(f"""
-                CREATE OR REPLACE VIEW {FLINK_STEP_WITH_PROJECT_VIEW} AS
+                CREATE VIEW {FLINK_STEP_WITH_PROJECT_VIEW} AS
                 SELECT
+                    step.id::text AS step_id,
                     step.profile_id::text AS profile_id,
                     step.position,
                     step.name,
                     profile.project_id::text AS project_id,
-                    MAX(step.position) OVER (PARTITION BY step.profile_id) AS max_position,
-                    array_remove(array_agg(DISTINCT metainstruction."algoFamily"), NULL) AS "algoFamily",
-                    array_remove(array_agg(DISTINCT metainstruction."algoName"), NULL) AS "algoName",
+                    MAX(step.position) OVER (
+                        PARTITION BY step.profile_id::text, profile.project_id::text
+                    ) AS max_position,
+                    array_remove(array_agg(DISTINCT metainstruction."algoFamily"), NULL) AS algofamily,
+                    array_remove(array_agg(DISTINCT metainstruction."algoName"), NULL) AS algoname,
                     array_remove(array_agg(DISTINCT metainstruction.library), NULL) AS library,
                     array_remove(array_agg(DISTINCT metainstruction.function), NULL) AS function
                 FROM step

@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     db_password: str = Field()
     db_name: str = Field()
 
+    flink_gateway_api_url_prefix: str = Field()
     ml_profiler_api_url_prefix: str = Field()
     google_client_id: str = Field()
 

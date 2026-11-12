@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
@@ -17,6 +18,8 @@ from app.routers import (
     utils_router,
 )
 from app.settings import get_settings
+
+logging.basicConfig(level=logging.INFO)
 
 settings = get_settings()
 
