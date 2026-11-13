@@ -47,7 +47,9 @@ export default function ExplorerProjectIdPage() {
 		GraphDefinition[] | undefined
 	>();
 	const [postedProfiles, setPostedProfiles] = useState<string[]>([]);
-	const [isKaggleAvailable, setIsKaggleAvailable] = useState(false);
+	const [isKaggleAvailable, setIsKaggleAvailable] = useState<
+		boolean | undefined
+	>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [backendError, setBackendError] = useState<string | null>(null);
 	const [isImporting, setIsImporting] = useState<boolean>(false);
@@ -135,10 +137,6 @@ export default function ExplorerProjectIdPage() {
 		setIsLoading(true);
 		setBackendError(null);
 
-		getProfilesScores(projectId).then((scores) => {
-			setProfilesScores(scores);
-		});
-
 		const handleError = (error: any) => {
 			console.error("Pattern execution error:", error);
 			setIsLoading(false);
@@ -194,8 +192,15 @@ export default function ExplorerProjectIdPage() {
 		setFilteredProfilesNames,
 		setAvailableProfilesNames,
 		setAvailableProfilesWithPpmData,
-		setProfilesScores,
 	]);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: refetch scores after an import
+	useEffect(() => {
+		if (!projectId || projectValidity !== "valid") {
+			return;
+		}
+		getProfilesScores(projectId).then(setProfilesScores);
+	}, [projectId, projectValidity, postedProfiles, setProfilesScores]);
 
 	useEffect(() => {
 		if (isLoading) {
@@ -241,11 +246,14 @@ export default function ExplorerProjectIdPage() {
 		[projectId],
 	);
 
-	useEffect(() => {
+	const handleImportOpen = useCallback(() => {
+		if (isKaggleAvailable !== undefined) {
+			return;
+		}
 		getKaggleStatus()
 			.then(setIsKaggleAvailable)
 			.catch(() => setIsKaggleAvailable(false));
-	}, []);
+	}, [isKaggleAvailable]);
 
 	useEffect(() => {
 		if (projectValidity === "valid") {
@@ -372,6 +380,7 @@ export default function ExplorerProjectIdPage() {
 						onSearchKaggleCompetitions={
 							isKaggleAvailable ? handleKaggleCompetitionsSearch : undefined
 						}
+						onOpen={handleImportOpen}
 						isImporting={isImporting}
 						render={<Button className="w-full">Import profiles</Button>}
 					/>
@@ -454,25 +463,21 @@ export default function ExplorerProjectIdPage() {
 						/>
 					</div>
 
-					<div
-						className={
-							activeTab === "statistics"
-								? "flex-1 min-h-0 py-2"
-								: "absolute left-[-9999px] top-[-9999px] invisible pointer-events-none w-full h-full py-2"
-						}
-					>
-						<div className="group relative row-span-10 h-full w-full">
-							<div className="w-full h-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] p-6 overflow-y-auto relative">
-								<div className="grid grid-cols-2 gap-4 h-full items-center">
-									<ProfileScoreDistributionChart />
-									<div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] w-full h-full">
-										<ProfileStepsFrequencyChart />
+					{activeTab === "statistics" && (
+						<div className="flex-1 min-h-0 py-2">
+							<div className="group relative row-span-10 h-full w-full">
+								<div className="w-full h-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] p-6 overflow-y-auto relative">
+									<div className="grid grid-cols-2 gap-4 h-full items-center">
+										<ProfileScoreDistributionChart />
+										<div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] w-full h-full">
+											<ProfileStepsFrequencyChart />
+										</div>
+										<ProfilePatternStatsFreqMatrix className="col-span-2" />
 									</div>
-									<ProfilePatternStatsFreqMatrix className="col-span-2" />
 								</div>
 							</div>
 						</div>
-					</div>
+					)}
 
 					{activeTab === "code" && (
 						<div className="flex-1 min-h-0 py-2 h-full">

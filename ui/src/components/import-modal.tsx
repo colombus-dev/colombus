@@ -40,6 +40,7 @@ interface ImportModalProps {
 	onSearchKaggleCompetitions?: (
 		search: string,
 	) => Promise<{ ref: string; title: string; description: string }[]>;
+	onOpen?: () => void;
 	isImporting: boolean;
 	render: React.ReactElement;
 }
@@ -49,6 +50,7 @@ export default function ImportModal({
 	onImportKaggle,
 	onSearchKaggle,
 	onSearchKaggleCompetitions,
+	onOpen,
 	isImporting,
 	render,
 }: ImportModalProps) {
@@ -271,6 +273,9 @@ export default function ImportModal({
 	const handleOpenChange = (newOpen: boolean) => {
 		if (!isImporting) {
 			setOpen(newOpen);
+			if (newOpen) {
+				onOpen?.();
+			}
 			if (!newOpen) {
 				setSelectedFiles([]);
 				setDropError(false);
