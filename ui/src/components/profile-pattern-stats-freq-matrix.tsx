@@ -3,6 +3,7 @@ import Plot from "react-plotly.js";
 import { useParams } from "react-router";
 import { BounceLoader } from "react-spinners";
 import { postFrequentPatternsMatrixPlotly } from "@/api/client";
+import { SectionHeading } from "@/components/section-heading";
 import { useColombusStore } from "@/store";
 
 const ProfilePatternStatsFreqMatrix: React.FunctionComponent<
@@ -74,17 +75,13 @@ const ProfilePatternStatsFreqMatrix: React.FunctionComponent<
 
 	return (
 		<div
-			className={`w-full h-full relative flex flex-col rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] min-h-125 ${className || ""}`}
+			className={`relative flex h-full min-h-125 w-full flex-col rounded-lg border p-4 ${className ?? ""}`}
 		>
-			<div className="mb-6 text-center w-full">
-				<h2 className="text-xl font-bold mb-1">
-					Frequent patterns matrix (top 10)
-				</h2>
-				<p className="text-xs font-medium">
-					Heatmap of patterns occurrences in the selected profiles. Hover over
-					blocks to see exact frequencies.
-				</p>
-			</div>
+			<SectionHeading
+				className="mb-4"
+				title="Frequent patterns (top 10)"
+				description="Pattern occurrences in the selected profiles. Hover a block for exact counts."
+			/>
 			<div className="flex-1 w-full h-full min-h-100 relative">
 				{isLoading ? (
 					<BounceLoader color="green" loading={isLoading} />
@@ -108,7 +105,7 @@ const ProfilePatternStatsFreqMatrix: React.FunctionComponent<
 						onUpdate={injectTooltips}
 					/>
 				) : (
-					<p className="text-subtle">
+					<p className="text-sm text-muted-foreground">
 						Not enough profiles to display the matrix.
 					</p>
 				)}

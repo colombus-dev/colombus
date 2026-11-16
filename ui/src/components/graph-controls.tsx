@@ -23,6 +23,8 @@ export default function GraphControls({
 					render={
 						<Button
 							variant="ghost"
+							size="icon-sm"
+							aria-label="Reset zoom"
 							onClick={() => graphRenderer?.getCamera().animatedReset()}
 						>
 							<LocateFixed />
@@ -38,6 +40,8 @@ export default function GraphControls({
 					render={
 						<Button
 							variant="ghost"
+							size="icon-sm"
+							aria-label="Zoom in"
 							onClick={() => graphRenderer?.getCamera().animatedZoom()}
 						>
 							<ZoomIn />
@@ -45,7 +49,7 @@ export default function GraphControls({
 					}
 				/>
 				<TooltipContent>
-					<p>Zoom In</p>
+					<p>Zoom in</p>
 				</TooltipContent>
 			</Tooltip>
 			<Tooltip>
@@ -53,6 +57,8 @@ export default function GraphControls({
 					render={
 						<Button
 							variant="ghost"
+							size="icon-sm"
+							aria-label="Zoom out"
 							onClick={() => graphRenderer?.getCamera().animatedUnzoom()}
 						>
 							<ZoomOut />
@@ -60,7 +66,7 @@ export default function GraphControls({
 					}
 				/>
 				<TooltipContent>
-					<p>Zoom Out</p>
+					<p>Zoom out</p>
 				</TooltipContent>
 			</Tooltip>
 		</div>

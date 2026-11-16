@@ -40,7 +40,7 @@ const ProfilePatternList: React.FunctionComponent<
 	}, [setAvailablePatterns, projectId]);
 
 	return (
-		<div {...divProps} className={cn("space-x-1", divProps.className)}>
+		<div {...divProps} className={cn(divProps.className)}>
 			<ul className="list-none space-y-1">
 				{availablePatterns.map(({ name, groups, dsl_content }) => {
 					const lineCount = (dsl_content || "").split("\n").length;
@@ -50,12 +50,14 @@ const ProfilePatternList: React.FunctionComponent<
 					);
 
 					return (
-						<li key={name} className="grid grid-cols-6 space-x-1">
+						<li key={name} className="flex items-center gap-1">
 							<Tooltip>
 								<TooltipTrigger
 									render={
 										<Button
-											className="col-span-5 truncate justify-start"
+											variant="outline"
+											size="sm"
+											className="min-w-0 flex-1 justify-start"
 											key={name}
 											onClick={() => {
 												setCurrentPattern({
@@ -65,7 +67,7 @@ const ProfilePatternList: React.FunctionComponent<
 												});
 											}}
 										>
-											{name}
+											<span className="truncate">{name}</span>
 										</Button>
 									}
 								/>
@@ -107,7 +109,13 @@ const ProfilePatternList: React.FunctionComponent<
 							<DeletePatternDialog
 								patternName={name}
 								render={
-									<Button key={`delete-${name}`} className="col-span-1">
+									<Button
+										key={`delete-${name}`}
+										variant="ghost"
+										size="icon-sm"
+										aria-label={`Delete pattern ${name}`}
+										className="text-muted-foreground hover:text-destructive"
+									>
 										<Trash />
 									</Button>
 								}
@@ -116,8 +124,8 @@ const ProfilePatternList: React.FunctionComponent<
 					);
 				})}
 				{availablePatterns.length === 0 && (
-					<p className="text-sm text-slate-500">
-						Saved patterns will be listed here...
+					<p className="text-xs text-muted-foreground">
+						No saved patterns yet.
 					</p>
 				)}
 			</ul>
