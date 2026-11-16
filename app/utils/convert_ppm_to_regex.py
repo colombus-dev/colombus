@@ -1,15 +1,6 @@
 from app.models.api_model import PatternGroup, PatternMetaInstruction
 from app.utils import format_template
-
-
-def flatten_pattern(pattern: list[PatternGroup]) -> list[PatternGroup]:
-    flattened_pattern = []
-    for group in pattern:
-        if group.subpattern and group.subpattern.groups:
-            flattened_pattern.extend(flatten_pattern(group.subpattern.groups))
-        else:
-            flattened_pattern.append(group)
-    return flattened_pattern
+from app.utils.flatten_pattern import flatten_pattern
 
 
 def convert_pattern_to_regex(pattern: list[PatternGroup]) -> str:
