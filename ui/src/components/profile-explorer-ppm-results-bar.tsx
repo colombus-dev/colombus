@@ -57,7 +57,15 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 	};
 
 	const toggleAll = () => {
-		setFilteredProfilesNames(allVisibleSelected ? [] : visibleNames);
+		const next = new Set(selectedNames);
+		for (const name of visibleNames) {
+			if (allVisibleSelected) {
+				next.delete(name);
+			} else {
+				next.add(name);
+			}
+		}
+		setFilteredProfilesNames([...next]);
 	};
 
 	React.useEffect(() => {

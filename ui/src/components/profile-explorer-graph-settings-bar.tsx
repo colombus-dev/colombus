@@ -15,6 +15,13 @@ import {
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 
+const DISPLAYED_LEVEL_ITEMS = [
+	{ value: "1", label: "Workflow" },
+	{ value: "2", label: "Step" },
+	{ value: "3", label: "MetaInstruction" },
+	{ value: "4", label: "Code" },
+];
+
 const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
 > = ({ ...divProps }) => {
@@ -50,6 +57,7 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 							setDisplayedLevel(Number.parseInt(v ?? "2", 10))
 						}
 						value={String(displayedLevel)}
+						items={DISPLAYED_LEVEL_ITEMS}
 					>
 						<SelectTrigger className="w-full">
 							<SelectValue placeholder="Level to display" />
@@ -57,18 +65,11 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 						<SelectContent>
 							<SelectGroup>
 								<SelectLabel>Level to display</SelectLabel>
-								<SelectItem key="1" value="1">
-									Workflow
-								</SelectItem>
-								<SelectItem key="2" value="2">
-									Step
-								</SelectItem>
-								<SelectItem key="3" value="3">
-									MetaInstruction
-								</SelectItem>
-								<SelectItem key="4" value="4">
-									Code
-								</SelectItem>
+								{DISPLAYED_LEVEL_ITEMS.map((item) => (
+									<SelectItem key={item.value} value={item.value}>
+										{item.label}
+									</SelectItem>
+								))}
 							</SelectGroup>
 						</SelectContent>
 					</Select>
