@@ -10,20 +10,35 @@ export default function useValidProject() {
 
 	const { projectId } = useParams<{ projectId: string }>();
 	const setProjectName = useColombusStore((state) => state.setProjectName);
+	const resetProjectState = useColombusStore(
+		(state) => state.resetProjectState,
+	);
 
 	useEffect(() => {
 		if (!projectId) {
 			setProjectValidity("invalid");
 			return;
 		}
-		setProjectName(undefined);
+		resetProjectState();
+		setProjectValidity("pending");
+		let cancelled = false;
 		postRetrieveProjectName(projectId)
 			.then((name) => {
+				if (cancelled) {
+					return;
+				}
 				setProjectName(name);
 				setProjectValidity("valid");
 			})
-			.catch(() => setProjectValidity("invalid"));
-	}, [projectId, setProjectName]);
+			.catch(() => {
+				if (!cancelled) {
+					setProjectValidity("invalid");
+				}
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [projectId, setProjectName, resetProjectState]);
 
 	const projectStatus = useMemo(
 		() => ({ validity: projectValidity, projectId }),
