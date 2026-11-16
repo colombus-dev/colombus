@@ -3,8 +3,8 @@ import uuid
 from sqlmodel import Session
 
 from app.models.api_model import PatternGroup
-from app.utils.resolve_meta_instructions import resolve_group_meta_instructions
-from app.utils.resolve_step_ids import group_matches_step
+from app.utils.flink_resolve_meta_instructions import resolve_group_meta_instructions
+from app.utils.flink_resolve_step_ids import group_matches_step
 
 
 def extend_trailing_group(
