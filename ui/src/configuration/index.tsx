@@ -51,9 +51,6 @@ export const stepsColorsMapping: { [stepName: string]: string } = {
 	"Save Results": "#8dd3c7",
 };
 
-export const getStepColor = (name: string) =>
-	stepsColorsMapping[name] ?? colors[2];
-
 const stepsIcons: { [stepName: string]: LucideIcon } = {
 	"Data Collection": Database,
 	"Data Preparation": Wrench,
