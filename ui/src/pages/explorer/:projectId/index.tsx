@@ -20,26 +20,29 @@ import ProfilePatternList from "@/components/profile-pattern-list";
 import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
 import ProfileScoreDistributionChart from "@/components/profile-score-distribution-chart";
 import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
+import { SectionHeading } from "@/components/section-heading";
 import { Button } from "@/components/ui/button";
-import {
-	ResizableHandle,
-	ResizablePanel,
-	ResizablePanelGroup,
-} from "@/components/ui/resizable";
 import usePatternActions from "@/hooks/explorer/usePatternActions";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import useValidProject from "@/hooks/useValidProject";
 import { PATH } from "@/lib/constants";
 import type { PpmResult } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 
 const GRAPH_CONTAINER_ID = "graph-container";
 
+type ExplorerTab = "code" | "explorer" | "statistics";
+
+const EXPLORER_TABS: { id: ExplorerTab; label: string }[] = [
+	{ id: "code", label: "Code" },
+	{ id: "explorer", label: "Explorer" },
+	{ id: "statistics", label: "Statistics" },
+];
+
 export default function ExplorerProjectIdPage() {
-	const [activeTab, setActiveTab] = useState<
-		"explorer" | "statistics" | "code"
-	>("explorer");
+	const [activeTab, setActiveTab] = useState<ExplorerTab>("explorer");
 	const [graphContainerId, setGraphContainerId] = useState<
 		string | undefined
 	>();
@@ -369,10 +372,10 @@ export default function ExplorerProjectIdPage() {
 	}
 
 	return projectValidity === "valid" ? (
-		<section className="grid grid-cols-7 gap-4 px-4 h-[calc(100vh-76px)] pb-4">
-			<div className="col-span-1 flex flex-col h-full space-y-4 p-2 min-h-0">
-				<div className="mb-4">
-					<p className="font-bold mb-2">Upload</p>
+		<section className="grid h-[calc(100vh-76px)] grid-cols-7 gap-4 px-4 pb-4">
+			<div className="col-span-1 flex h-full min-h-0 flex-col gap-6 p-2">
+				<div className="space-y-2">
+					<SectionHeading title="Import" />
 					<ImportModal
 						onImport={handleFilesImport}
 						onImportKaggle={isKaggleAvailable ? handleKaggleImport : undefined}
@@ -386,77 +389,60 @@ export default function ExplorerProjectIdPage() {
 					/>
 				</div>
 
-				<div className="flex flex-col flex-1 min-h-0">
-					<p className="font-bold shrink-0">Saved patterns</p>
-					<div className="flex-1 min-h-0 mt-2">
+				<div className="flex min-h-0 flex-1 flex-col gap-2">
+					<SectionHeading title="Saved patterns" />
+					<div className="min-h-0 flex-1 overflow-y-auto">
 						<ProfilePatternList />
 					</div>
 				</div>
 			</div>
-			<ProfileExplorerPpmResultsBar className="col-span-1" />
-			<ResizablePanelGroup
-				orientation="vertical"
-				className="col-span-5 flex flex-col space-y-4 relative"
-			>
-				<ResizablePanel defaultSize="25%">
-					{projectId && (
-						<PatternDslEditor
-							className="overflow-hidden"
-							isExecuting={isLoading}
-							onSubmitted={handleExecuteCodeSubmit}
-							onSave={handleSaveCodeSubmit}
-							backendError={backendError}
-						/>
-					)}
-				</ResizablePanel>
-				<ResizableHandle withHandle />
-				<div className="flex items-center justify-start py-2 border-b border-slate-100 dark:border-slate-800">
-					<div className="flex items-center space-x-2">
+			<ProfileExplorerPpmResultsBar
+				className="col-span-1"
+				isLoading={isLoading}
+			/>
+			<div className="col-span-5 flex min-h-0 flex-col gap-3">
+				{projectId && (
+					<PatternDslEditor
+						className="h-56 shrink-0"
+						isExecuting={isLoading}
+						onSubmitted={handleExecuteCodeSubmit}
+						onSave={handleSaveCodeSubmit}
+						backendError={backendError}
+					/>
+				)}
+				<div
+					role="tablist"
+					aria-label="Explorer views"
+					className="flex shrink-0 items-center gap-1 border-b pb-2"
+				>
+					{EXPLORER_TABS.map((tab) => (
 						<button
+							key={tab.id}
 							type="button"
-							onClick={() => setActiveTab("code")}
-							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${
-								activeTab === "code"
-									? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
-									: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-							}`}
+							role="tab"
+							aria-selected={activeTab === tab.id}
+							onClick={() => setActiveTab(tab.id)}
+							className={cn(
+								"cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+								activeTab === tab.id
+									? "bg-primary text-primary-foreground"
+									: "text-muted-foreground hover:bg-muted hover:text-foreground",
+							)}
 						>
-							Code
+							{tab.label}
 						</button>
-						<button
-							type="button"
-							onClick={() => setActiveTab("explorer")}
-							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${
-								activeTab === "explorer"
-									? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
-									: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-							}`}
-						>
-							Explorer
-						</button>
-						<button
-							type="button"
-							onClick={() => setActiveTab("statistics")}
-							className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-150 cursor-pointer ${
-								activeTab === "statistics"
-									? "bg-[#0f172a] text-white dark:bg-slate-100 dark:text-slate-950 shadow-sm"
-									: "bg-[#f8fafc] text-[#475569] hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-							}`}
-						>
-							Statistics
-						</button>
-					</div>
+					))}
 				</div>
-				<ResizablePanel defaultSize="75%">
+				<div className="relative min-h-0 flex-1">
 					<div
 						className={
 							activeTab === "explorer"
-								? "flex-1 grid grid-rows-10 items-center gap-4 h-full"
-								: "absolute left-[-9999px] top-[-9999px] invisible pointer-events-none w-full h-full grid grid-rows-10 items-center gap-4 min-h-0"
+								? "h-full"
+								: "invisible pointer-events-none absolute top-[-9999px] left-[-9999px] h-full w-full"
 						}
 					>
 						<GraphContainer
-							className="group relative row-span-10 h-full w-full overflow-hidden"
+							className="group relative h-full w-full overflow-hidden"
 							containerId={GRAPH_CONTAINER_ID}
 							isLoading={isLoading}
 							graphRenderer={renderer.current}
@@ -464,28 +450,22 @@ export default function ExplorerProjectIdPage() {
 					</div>
 
 					{activeTab === "statistics" && (
-						<div className="flex-1 min-h-0 py-2">
-							<div className="group relative row-span-10 h-full w-full">
-								<div className="w-full h-full border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] p-6 overflow-y-auto relative">
-									<div className="grid grid-cols-2 gap-4 h-full items-center">
-										<ProfileScoreDistributionChart />
-										<div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] w-full h-full">
-											<ProfileStepsFrequencyChart />
-										</div>
-										<ProfilePatternStatsFreqMatrix className="col-span-2" />
-									</div>
-								</div>
+						<div className="h-full overflow-y-auto rounded-xl border bg-card p-4">
+							<div className="grid grid-cols-2 gap-4">
+								<ProfileScoreDistributionChart />
+								<ProfileStepsFrequencyChart />
+								<ProfilePatternStatsFreqMatrix className="col-span-2" />
 							</div>
 						</div>
 					)}
 
 					{activeTab === "code" && (
-						<div className="flex-1 min-h-0 py-2 h-full">
+						<div className="h-full">
 							<ProfileCodeViewer nodes={filteredWorkflowsNodes} />
 						</div>
 					)}
-				</ResizablePanel>
-			</ResizablePanelGroup>
+				</div>
+			</div>
 		</section>
 	) : (
 		<section>404</section>

@@ -102,10 +102,9 @@ export default function PatternDslEditor({
 	return (
 		<div
 			{...props}
-			className={cn("flex flex-col space-y-4 h-full", props.className)}
+			className={cn("flex min-h-0 flex-col gap-2", props.className)}
 		>
 			<ProfilePatternActions
-				className="mb-4"
 				isExecuting={isExecuting}
 				isDirty={isDirty}
 				onExecute={() => {
@@ -127,22 +126,24 @@ export default function PatternDslEditor({
 					}
 				}}
 			/>
-			<Editor
-				className="border border-slate-200 bg-white rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.04)] overflow-hidden"
-				theme={themeName}
-				defaultLanguage={EDITOR_LANGUAGE_ID}
-				defaultValue={currentPatternContent ?? DEFAULT_DSL_CODE}
-				onChange={onModelContentChange}
-				onMount={handleEditorDidMount}
-				options={{
-					minimap: { enabled: false },
-					fontSize: 14,
-					wordWrap: "on",
-					automaticLayout: true,
-					wordBasedSuggestions: "off",
-					scrollBeyondLastLine: false,
-				}}
-			/>
+			<div className="min-h-0 flex-1 overflow-hidden rounded-xl border bg-card">
+				<Editor
+					height="100%"
+					theme={themeName}
+					defaultLanguage={EDITOR_LANGUAGE_ID}
+					defaultValue={currentPatternContent ?? DEFAULT_DSL_CODE}
+					onChange={onModelContentChange}
+					onMount={handleEditorDidMount}
+					options={{
+						minimap: { enabled: false },
+						fontSize: 14,
+						wordWrap: "on",
+						automaticLayout: true,
+						wordBasedSuggestions: "off",
+						scrollBeyondLastLine: false,
+					}}
+				/>
+			</div>
 		</div>
 	);
 }
