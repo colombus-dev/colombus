@@ -19,7 +19,9 @@ from app.settings import get_settings
 
 settings = get_settings()
 
-ProjectIdFk = Field(default=None, foreign_key="project.id", ondelete="CASCADE")
+ProjectIdFk = Field(
+    default=None, foreign_key="project.id", ondelete="CASCADE", index=True
+)
 ProfileIdFk = Field(
     default=None, foreign_key="profile.id", ondelete="CASCADE", index=True
 )
@@ -177,5 +179,32 @@ engine = create_engine(
 )
 
 
-def create_db_and_tables():
+FLINK_STEP_WITH_PROJECT_VIEW = "flink_step_with_project"
+
+
+def initialize():
     SQLModel.metadata.create_all(engine)
+    with engine.begin() as connection:
+        connection.execute(text(f"DROP VIEW IF EXISTS {FLINK_STEP_WITH_PROJECT_VIEW}"))
+        connection.execute(
+            text(f"""
+                CREATE VIEW {FLINK_STEP_WITH_PROJECT_VIEW} AS
+                SELECT
+                    step.id::text AS step_id,
+                    step.profile_id::text AS profile_id,
+                    step.position,
+                    step.name,
+                    profile.project_id::text AS project_id,
+                    MAX(step.position) OVER (
+                        PARTITION BY step.profile_id::text, profile.project_id::text
+                    ) AS max_position,
+                    array_remove(array_agg(DISTINCT metainstruction."algoFamily"), NULL) AS algofamily,
+                    array_remove(array_agg(DISTINCT metainstruction."algoName"), NULL) AS algoname,
+                    array_remove(array_agg(DISTINCT metainstruction.library), NULL) AS library,
+                    array_remove(array_agg(DISTINCT metainstruction.function), NULL) AS function
+                FROM step
+                JOIN profile ON profile.id = step.profile_id
+                LEFT JOIN metainstruction ON metainstruction.step_id = step.id
+                GROUP BY step.id, step.profile_id, step.position, step.name, profile.project_id
+            """)
+        )

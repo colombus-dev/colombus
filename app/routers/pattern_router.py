@@ -3,16 +3,19 @@ import uuid
 import canopus_dsl
 from fastapi import APIRouter
 from pydantic import BaseModel
-from sqlmodel import col, select, text
+from sqlmodel import col, select
 
 from app.dependencies import DatabaseSession
 from app.exceptions import ElementNotFoundException, InvalidPatternDefinitionException
 from app.models.api_model import Pattern as PatternApi
 from app.models.api_model import PatternGroup, PatternWithDSLApi, PpmResult
 from app.models.sql_model import Pattern
+from app.service.ppm_flink import run_ppm_flink
+from app.service.ppm_sql import run_ppm_sql, run_saved_ppm_sql
+from app.settings import get_settings
 from app.utils.convert_canopus_to_legacy import convert_pattern_to_legacy
-from app.utils.convert_ppm_to_sql import convert_ppm_to_sql_query
 
+settings = get_settings()
 router = APIRouter()
 
 # TODO: support multiple (sub)-patterns
@@ -77,15 +80,9 @@ async def execute_ppm(
     pattern: list[PatternGroup],
     session: DatabaseSession,
 ) -> list[PpmResult]:
-    query = convert_ppm_to_sql_query(project_id, pattern)
-    # TODO: improve this uuid conversion
-    return [
-        PpmResult(
-            profile_name=r[0],
-            results=[[e for e in f if e is not None] for f in r[1:] if f is not None],
-        )
-        for r in session.execute(text(query)).all()
-    ]
+    if settings.ppm_engine == "sql":
+        return run_ppm_sql(project_id, pattern, session)
+    return await run_ppm_flink(project_id, pattern, session)
 
 
 @router.post("/api/project/{project_id}/ppm/execute/{name}")
@@ -97,22 +94,9 @@ async def execute_ppm_with_name(
             (Pattern.project_id == project_id) & (Pattern.name == name)
         )
     ).one()
-    query = convert_ppm_to_sql_query(project_id, [PatternGroup(**ppm)])
-    # TODO: improve this uuid conversion
-    return [
-        PpmResult(
-            profile_name=r[0],
-            results=[
-                [
-                    (uuid.UUID(e) if isinstance(e, str) else e)
-                    for e in (f.split(",") if isinstance(f, str) else [f])
-                ]
-                for f in r[1:]
-                if f is not None
-            ],
-        )
-        for r in session.execute(text(query)).all()
-    ]
+    if settings.ppm_engine == "sql":
+        return run_saved_ppm_sql(project_id, [PatternGroup(**ppm)], session)
+    return await run_ppm_flink(project_id, [PatternGroup(**ppm)], session)
 
 
 @router.post("/api/project/{project_id}/ppm/save")
