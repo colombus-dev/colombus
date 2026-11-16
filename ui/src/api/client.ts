@@ -66,6 +66,22 @@ axiosInstance.interceptors.response.use(
 	},
 );
 
+export type Project = { id: string; name: string };
+
+export function getApiErrorMessage(err: any, fallback: string): string {
+	const detail = err?.response?.data?.detail;
+	if (typeof detail === "string") {
+		return detail;
+	}
+	if (Array.isArray(detail) && typeof detail[0]?.msg === "string") {
+		return detail[0].msg;
+	}
+	if (typeof err?.message === "string" && err.message !== "") {
+		return err.message;
+	}
+	return fallback;
+}
+
 export async function createNewProject(name: string) {
 	return await axiosInstance
 		.post<string>("/project", {
@@ -74,10 +90,20 @@ export async function createNewProject(name: string) {
 		.then(({ data }) => data);
 }
 
-export async function getAllProjects() {
+export async function getAllProjects(signal?: AbortSignal) {
 	return await axiosInstance
-		.get<{ id: string; name: string }[]>("/project")
+		.get<Project[]>("/project", { signal })
 		.then(({ data }) => data);
+}
+
+export async function renameProject(projectId: string, name: string) {
+	return await axiosInstance
+		.patch<string>(`/project/${projectId}`, { name })
+		.then(({ data }) => data);
+}
+
+export async function deleteProject(projectId: string) {
+	await axiosInstance.delete(`/project/${projectId}`);
 }
 
 export async function postRetrieveProjectName(projectId: string) {

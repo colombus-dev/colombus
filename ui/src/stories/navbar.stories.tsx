@@ -25,6 +25,7 @@ export const DefaultHome: Story = {
 	args: {
 		isOnProject: false,
 		projectName: undefined,
+		authRequired: true,
 		onLogout: () => console.log("Logout clicked"),
 	},
 };
@@ -33,6 +34,16 @@ export const WithinProject: Story = {
 	args: {
 		isOnProject: true,
 		projectName: "Reusable workspace",
+		authRequired: true,
+		onLogout: () => console.log("Logout clicked"),
+	},
+};
+
+export const LoadingProjectName: Story = {
+	args: {
+		isOnProject: true,
+		projectName: undefined,
+		authRequired: true,
 		onLogout: () => console.log("Logout clicked"),
 	},
 };

@@ -16,6 +16,7 @@ export default function useValidProject() {
 			setProjectValidity("invalid");
 			return;
 		}
+		setProjectName(undefined);
 		postRetrieveProjectName(projectId)
 			.then((name) => {
 				setProjectName(name);
