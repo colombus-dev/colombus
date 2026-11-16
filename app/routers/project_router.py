@@ -1,26 +1,28 @@
 import uuid
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import APIRouter, UploadFile
-from pydantic import BaseModel
+from fastapi import APIRouter, UploadFile, status
+from pydantic import BaseModel, StringConstraints
 from sqlmodel import select
 
 from app.constants import NOTEBOOK_FILE_EXTENSION, notebooks_storage_path
 from app.dependencies import DatabaseSession
 from app.exceptions import ElementNotFoundException
 from app.models.sql_model import Project
+from app.service import project_service
 from app.utils.file_helper import check_files
 
 router = APIRouter()
 
 
-class CreateNewProjectPayload(BaseModel):
-    name: str
+class ProjectNamePayload(BaseModel):
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 
 @router.post("/api/project")
 async def create_new_project(
-    payload: CreateNewProjectPayload,
+    payload: ProjectNamePayload,
     session: DatabaseSession,
 ) -> uuid.UUID:
     new_project = Project(name=payload.name)
@@ -40,6 +42,28 @@ async def post_retrieve_project_details(
     if not res:
         raise ElementNotFoundException("project")
     return res
+
+
+@router.patch("/api/project/{project_id}")
+def rename_project(
+    project_id: uuid.UUID,
+    payload: ProjectNamePayload,
+    session: DatabaseSession,
+) -> str:
+    project = session.get(Project, project_id)
+    if project is None:
+        raise ElementNotFoundException("project")
+    project.name = payload.name
+    session.add(project)
+    session.commit()
+    return project.name
+
+
+@router.delete("/api/project/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_project(project_id: uuid.UUID, session: DatabaseSession) -> None:
+    if project_service.delete_project(session, project_id) == 0:
+        raise ElementNotFoundException("project")
+    session.commit()
 
 
 class PostNotebooksPayload(BaseModel):
