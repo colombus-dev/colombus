@@ -23,7 +23,7 @@ export default function App({ authRequired }: AppProps) {
 					authRequired={authRequired}
 					onLogout={() => setJwtToken(undefined)}
 				/>
-				<main className="flex-1">
+				<main className="flex-1 min-h-0">
 					<Outlet />
 				</main>
 			</div>

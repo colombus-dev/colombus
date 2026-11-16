@@ -5,8 +5,8 @@ import pathlib
 import random
 import uuid
 
-from sqlalchemy import delete, insert
-from sqlmodel import Session, col, select, text
+from sqlalchemy import insert
+from sqlmodel import Session, select, text
 
 from app.models.sql_model import (
     Code,
@@ -16,6 +16,7 @@ from app.models.sql_model import (
     Step,
     engine,
 )
+from app.service.project_service import delete_project_profiles
 from app.utils import encode_profile
 
 PROJECT_NAME = "scale-test"
@@ -39,22 +40,9 @@ def get_or_create_project(session: Session, reset: bool) -> Project:
             raise SystemExit(
                 f"Project '{PROJECT_NAME}' already exists (id={project.id}), pass --reset"
             )
-        profile_ids = session.exec(
-            select(Profile.id).where(Profile.project_id == project.id)
-        ).all()
-        if profile_ids:
-            session.execute(text("SET LOCAL statement_timeout = 0"))
-            session.execute(delete(Code).where(col(Code.profile_id).in_(profile_ids)))
-            session.execute(
-                delete(MetaInstruction).where(
-                    col(MetaInstruction.profile_id).in_(profile_ids)
-                )
-            )
-            session.execute(delete(Step).where(col(Step.profile_id).in_(profile_ids)))
-            session.execute(
-                delete(Profile).where(col(Profile.project_id) == project.id)
-            )
-            session.commit()
+        session.execute(text("SET LOCAL statement_timeout = 0"))
+        delete_project_profiles(session, project.id)
+        session.commit()
         return project
 
     project = Project(name=PROJECT_NAME)

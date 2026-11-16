@@ -91,7 +91,7 @@ export default function ExplorerProjectIdPage() {
 	useEffect(() => {
 		if (projectValidity === "invalid") {
 			toast.error("Project not found.");
-			navigate(PATH.EXPLORER);
+			navigate(PATH.HOME);
 		}
 	}, [projectValidity, navigate]);
 
