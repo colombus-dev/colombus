@@ -1,4 +1,5 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
+import { SectionHeading } from "@/components/section-heading";
 import useScoreDistribution from "@/hooks/useScoreDistribution";
 
 export default function ProfileScoreDistributionChart() {
@@ -6,15 +7,12 @@ export default function ProfileScoreDistributionChart() {
 
 	return (
 		<div className="w-full h-full">
-			<div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] w-full h-full flex flex-col">
-				<div className="mb-6 text-center w-full shrink-0">
-					<h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-1">
-						Notebooks average
-					</h2>
-					<p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
-						Global score distribution
-					</p>
-				</div>
+			<div className="flex h-full w-full flex-col rounded-lg border p-4">
+				<SectionHeading
+					className="mb-4"
+					title="Notebooks average"
+					description="Global score distribution"
+				/>
 
 				<div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-8 w-full">
 					<div className="relative w-64 h-64 flex-shrink-0 flex items-center justify-center">

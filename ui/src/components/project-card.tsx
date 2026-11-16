@@ -1,29 +1,75 @@
-import { ChevronRight, Folder } from "lucide-react";
-import { useNavigate } from "react-router";
+import { Ellipsis, Pencil, Trash2 } from "lucide-react";
+import { Link } from "react-router";
+import type { Project } from "@/api/client";
+import { Button } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PATH } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 interface ProjectCardProps {
-	project: { id: string; name: string; description?: string | null };
+	project: Project;
+	highlighted?: boolean;
+	onRename?: (project: Project) => void;
+	onDelete?: (project: Project) => void;
 }
 
-export const ProjectCard = ({ project }: ProjectCardProps) => {
-	const navigate = useNavigate();
-
+export const ProjectCard = ({
+	project,
+	highlighted = false,
+	onRename,
+	onDelete,
+}: ProjectCardProps) => {
 	return (
-		<button
-			type="button"
-			onClick={() => navigate(`${PATH.EXPLORER}/${project.id}`)}
-			className="w-full text-left bg-white rounded-xl p-4 border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md cursor-pointer transition-all duration-200 flex items-center justify-between"
+		<div
+			className={cn(
+				"group relative flex items-center justify-between gap-2 rounded-xl border bg-card p-4 text-card-foreground shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/25 hover:shadow-md has-[a:focus-visible]:border-foreground/25 has-[a:focus-visible]:ring-3 has-[a:focus-visible]:ring-ring/50",
+				highlighted && "border-primary/40 ring-3 ring-primary/15",
+			)}
 		>
-			<div className="flex items-center gap-3">
-				<div className="p-1.5 bg-slate-100 rounded-lg">
-					<Folder className="w-4 h-4 text-slate-500" />
-				</div>
-				<h3 className="font-semibold text-slate-700 leading-tight text-[15px]">
-					{project.name}
-				</h3>
-			</div>
-			<ChevronRight className="w-4 h-4 text-slate-300" />
-		</button>
+			<Link
+				to={`${PATH.EXPLORER}/${project.id}`}
+				className="min-w-0 truncate font-medium outline-none after:absolute after:inset-0 after:rounded-xl"
+			>
+				{project.name}
+			</Link>
+			{(onRename !== undefined || onDelete !== undefined) && (
+				<DropdownMenu>
+					<DropdownMenuTrigger
+						render={
+							<Button
+								variant="ghost"
+								size="icon-xs"
+								aria-label={`Actions for project ${project.name}`}
+								className="relative z-10 -mr-1 text-muted-foreground"
+							/>
+						}
+					>
+						<Ellipsis />
+					</DropdownMenuTrigger>
+					<DropdownMenuContent>
+						{onRename !== undefined && (
+							<DropdownMenuItem onClick={() => onRename(project)}>
+								<Pencil />
+								Rename
+							</DropdownMenuItem>
+						)}
+						{onDelete !== undefined && (
+							<DropdownMenuItem
+								variant="destructive"
+								onClick={() => onDelete(project)}
+							>
+								<Trash2 />
+								Delete project
+							</DropdownMenuItem>
+						)}
+					</DropdownMenuContent>
+				</DropdownMenu>
+			)}
+		</div>
 	);
 };

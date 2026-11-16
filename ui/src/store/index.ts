@@ -55,6 +55,7 @@ interface ProfilesSlice {
 interface ProjectSlice {
 	projectName?: string;
 	setProjectName: (name?: string) => void;
+	resetProjectState: () => void;
 }
 
 interface ColombusStore
@@ -170,6 +171,21 @@ const createProjectSlice: StateCreator<ColombusStore, [], [], ProjectSlice> = (
 	setProjectName(name) {
 		set((state) => ({ ...state, projectName: name }));
 	},
+	resetProjectState: () =>
+		set((state) => ({
+			...state,
+			projectName: undefined,
+			referenceDiffProfile: undefined,
+			diffResults: [],
+			currentPattern: undefined,
+			allSavedPatterns: [],
+			availableProfilesNames: [],
+			availableProfilesWithPpmData: [],
+			filteredProfilesNames: [],
+			profilesScores: {},
+			selectedProfileNodeId: null,
+			selectedProfileName: null,
+		})),
 });
 
 export const useColombusStore = create<ColombusStore>()(
@@ -185,6 +201,14 @@ export const useColombusStore = create<ColombusStore>()(
 			}),
 			{
 				name: "colombus-storage",
+				partialize: (state) => ({
+					jwtToken: state.jwtToken,
+					jwtExpiry: state.jwtExpiry,
+					displayedLevel: state.displayedLevel,
+					useWeightedNodes: state.useWeightedNodes,
+					patternCapturedNodesDisplayMode:
+						state.patternCapturedNodesDisplayMode,
+				}),
 			},
 		),
 	),

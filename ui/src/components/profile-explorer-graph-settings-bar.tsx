@@ -1,4 +1,5 @@
 import ProjectTaxonomyList from "@/components/project-taxonomy-list";
+import { SectionHeading } from "@/components/section-heading";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -11,7 +12,15 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
+
+const DISPLAYED_LEVEL_ITEMS = [
+	{ value: "1", label: "Workflow" },
+	{ value: "2", label: "Step" },
+	{ value: "3", label: "MetaInstruction" },
+	{ value: "4", label: "Code" },
+];
 
 const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
@@ -20,6 +29,7 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 		(state) => state.referenceDiffProfile,
 	);
 	const currentPattern = useColombusStore((state) => state.currentPattern);
+	const displayedLevel = useColombusStore((state) => state.displayedLevel);
 	const setDisplayedLevel = useColombusStore(
 		(state) => state.setDisplayedLevel,
 	);
@@ -37,41 +47,35 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 	return (
 		<div
 			{...divProps}
-			className={`flex flex-col h-full overflow-hidden space-y-4 ${divProps.className ?? ""}`}
+			className={cn("flex flex-col gap-4 overflow-y-auto", divProps.className)}
 		>
 			<div className="space-y-4">
 				<div className="space-y-2">
-					<p className="font-bold">Displayed levels:</p>
+					<SectionHeading title="Displayed level" />
 					<Select
 						onValueChange={(v) =>
 							setDisplayedLevel(Number.parseInt(v ?? "2", 10))
 						}
-						defaultValue="2"
+						value={String(displayedLevel)}
+						items={DISPLAYED_LEVEL_ITEMS}
 					>
-						<SelectTrigger>
+						<SelectTrigger className="w-full">
 							<SelectValue placeholder="Level to display" />
 						</SelectTrigger>
 						<SelectContent>
 							<SelectGroup>
 								<SelectLabel>Level to display</SelectLabel>
-								<SelectItem key="1" value="1">
-									Workflow
-								</SelectItem>
-								<SelectItem key="2" value="2">
-									Step
-								</SelectItem>
-								<SelectItem key="3" value="3">
-									MetaInstruction
-								</SelectItem>
-								<SelectItem key="4" value="4">
-									Code
-								</SelectItem>
+								{DISPLAYED_LEVEL_ITEMS.map((item) => (
+									<SelectItem key={item.value} value={item.value}>
+										{item.label}
+									</SelectItem>
+								))}
 							</SelectGroup>
 						</SelectContent>
 					</Select>
 				</div>
 				<div className="space-y-2">
-					<p className="font-bold">Customization:</p>
+					<SectionHeading title="Display options" />
 					<div className="flex flex-col space-y-2.5">
 						<div
 							className="flex items-center gap-3"
@@ -109,7 +113,7 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 					</div>
 				</div>
 			</div>
-			<ProjectTaxonomyList className="flex-1 min-h-0 mt-1" />
+			<ProjectTaxonomyList />
 		</div>
 	);
 };

@@ -1,20 +1,24 @@
 import React, { useMemo, useState } from "react";
+import { SectionHeading } from "@/components/section-heading";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn, scoreToBandColor } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 
+interface ProfileExplorerPpmResultsBarProps
+	extends React.HTMLAttributes<HTMLDivElement> {
+	isLoading?: boolean;
+}
+
+const SKELETON_ROWS = ["a", "b", "c", "d", "e", "f", "g", "h"];
+
 const ProfileExplorerPpmResultsBar: React.FunctionComponent<
-	React.HTMLAttributes<HTMLDivElement>
-> = ({ ...divProps }) => {
+	ProfileExplorerPpmResultsBarProps
+> = ({ isLoading = false, className, ...divProps }) => {
 	const [resultSearchFilter, setResultSearchFilter] = useState("");
 	const availableProfilesNames = useColombusStore(
 		(state) => state.availableProfilesNames,
-	);
-	const availableProfilesWithPpmData = useColombusStore(
-		(state) => state.availableProfilesWithPpmData,
 	);
 	const filteredProfilesNames = useColombusStore(
 		(state) => state.filteredProfilesNames,
@@ -26,162 +30,162 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 		(state) => state.selectedProfileName,
 	);
 	const profilesScores = useColombusStore((state) => state.profilesScores);
-	const profiles = useMemo(() => {
-		return availableProfilesNames.map((name) => {
-			const profileData = availableProfilesWithPpmData.find(
-				(profile) => profile.profile_name === name,
-			);
-			const resultCount = profileData?.results.length ?? 0;
-			const score = profilesScores[name];
 
-			return {
-				key: name,
-				name,
-				resultCount,
-				score,
-			};
-		});
-	}, [availableProfilesNames, availableProfilesWithPpmData, profilesScores]);
+	const selectedNames = useMemo(() => {
+		const available = new Set(availableProfilesNames);
+		return new Set(filteredProfilesNames.filter((n) => available.has(n)));
+	}, [availableProfilesNames, filteredProfilesNames]);
 
-	const filteredProfiles = useMemo(() => {
-		return profiles.filter((profile) =>
-			profile.name.toLowerCase().includes(resultSearchFilter.toLowerCase()),
-		);
-	}, [profiles, resultSearchFilter]);
+	const visibleNames = useMemo(() => {
+		const query = resultSearchFilter.trim().toLowerCase();
+		return query === ""
+			? availableProfilesNames
+			: availableProfilesNames.filter((n) => n.toLowerCase().includes(query));
+	}, [availableProfilesNames, resultSearchFilter]);
 
-	const selectedProfiles = useMemo(() => {
-		return filteredProfilesNames.filter((name) =>
-			profiles.some((p) => p.key === name),
-		);
-	}, [filteredProfilesNames, profiles]);
+	const allVisibleSelected =
+		visibleNames.length > 0 && visibleNames.every((n) => selectedNames.has(n));
 
-	const selectedCount = useMemo(() => {
-		return profiles.filter((p) => selectedProfiles.includes(p.key)).length;
-	}, [profiles, selectedProfiles]);
-
-	const allProfilesSelected = useMemo(() => {
-		return (
-			filteredProfiles.length > 0 &&
-			filteredProfiles.every((p) => selectedProfiles.includes(p.key))
-		);
-	}, [filteredProfiles, selectedProfiles]);
-
-	const toggleProfile = (key: string) => {
-		if (selectedProfiles.includes(key)) {
-			setFilteredProfilesNames(selectedProfiles.filter((n) => n !== key));
+	const toggleProfile = (name: string) => {
+		const next = new Set(selectedNames);
+		if (next.has(name)) {
+			next.delete(name);
 		} else {
-			setFilteredProfilesNames([...selectedProfiles, key]);
+			next.add(name);
 		}
+		setFilteredProfilesNames([...next]);
 	};
 
 	const toggleAll = () => {
-		if (allProfilesSelected) {
-			setFilteredProfilesNames([]);
-		} else {
-			setFilteredProfilesNames(filteredProfiles.map((p) => p.key));
+		const next = new Set(selectedNames);
+		for (const name of visibleNames) {
+			if (allVisibleSelected) {
+				next.delete(name);
+			} else {
+				next.add(name);
+			}
 		}
+		setFilteredProfilesNames([...next]);
 	};
 
 	React.useEffect(() => {
-		if (selectedProfileName) {
-			// Small timeout to allow render
-			setTimeout(() => {
-				const element = document.getElementById(
-					`result-item-${selectedProfileName}`,
-				);
-				if (element) {
-					element.scrollIntoView({ behavior: "smooth", block: "nearest" });
-				}
-			}, 50);
+		if (selectedProfileName === null) {
+			return;
 		}
+		const timer = setTimeout(() => {
+			document
+				.getElementById(`result-item-${selectedProfileName}`)
+				?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+		}, 50);
+		return () => clearTimeout(timer);
 	}, [selectedProfileName]);
+
+	const renderList = () => {
+		if (isLoading) {
+			return (
+				<div className="space-y-1.5 px-1">
+					{SKELETON_ROWS.map((key) => (
+						<div key={key} className="h-6 animate-pulse rounded bg-muted" />
+					))}
+				</div>
+			);
+		}
+		if (availableProfilesNames.length === 0) {
+			return (
+				<p className="px-1 py-2 text-xs text-muted-foreground">
+					No profiles yet.
+				</p>
+			);
+		}
+		if (visibleNames.length === 0) {
+			return (
+				<p className="px-1 py-2 text-xs text-muted-foreground">
+					No matching profiles.
+				</p>
+			);
+		}
+		return (
+			<ul className="space-y-0.5">
+				{visibleNames.map((name) => {
+					const score = profilesScores[name];
+					const checkboxId = `result-cb-${name}`;
+					return (
+						<li
+							key={name}
+							id={`result-item-${name}`}
+							className={cn(
+								"flex items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-muted",
+								name === selectedProfileName && "bg-muted",
+							)}
+						>
+							<Checkbox
+								id={checkboxId}
+								checked={selectedNames.has(name)}
+								onCheckedChange={() => toggleProfile(name)}
+							/>
+							<span
+								aria-hidden="true"
+								className="size-2 shrink-0 rounded-full"
+								style={{ backgroundColor: scoreToBandColor(score) }}
+							/>
+							<Label
+								htmlFor={checkboxId}
+								className="min-w-0 flex-1 cursor-pointer truncate text-xs font-normal"
+							>
+								{name}
+							</Label>
+							<span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+								{score !== undefined && score !== null ? score.toFixed(2) : "-"}
+							</span>
+						</li>
+					);
+				})}
+			</ul>
+		);
+	};
 
 	return (
 		<section
 			{...divProps}
 			className={cn(
-				"flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)]",
-				divProps.className,
+				"flex h-full min-h-0 flex-col gap-2 rounded-xl border bg-card p-3",
+				className,
 			)}
 		>
-			<h3 className="mb-2 text-sm font-semibold text-slate-900">
-				Results ({selectedCount}/{profiles.length})
-			</h3>
-
+			<SectionHeading
+				title="Results"
+				actions={
+					!isLoading && (
+						<span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+							{selectedNames.size}/{availableProfilesNames.length}
+						</span>
+					)
+				}
+			/>
 			<Input
-				type="text"
+				type="search"
+				aria-label="Search profiles"
 				placeholder="Search profiles..."
 				value={resultSearchFilter}
 				onChange={(e) => setResultSearchFilter(e.target.value)}
-				className="mb-2"
+				className="h-8"
+				disabled={isLoading}
 			/>
-			{/* biome-ignore lint/a11y/useSemanticElements: cannot use <button> here as Checkbox (Radix UI) renders a <button> internally, nesting buttons is invalid HTML */}
-			<div
-				role="button"
-				tabIndex={0}
-				onClick={toggleAll}
-				onKeyDown={(e) =>
-					e.key === "Enter" || e.key === " " ? toggleAll() : undefined
-				}
-				className="mb-2 mt-1 flex w-full cursor-pointer items-center gap-2 rounded-md border-b border-slate-100 pb-2 text-left"
-			>
+			<div className="flex items-center gap-2 border-b px-1 pb-2">
 				<Checkbox
-					checked={allProfilesSelected}
+					id="result-cb-select-all"
+					checked={allVisibleSelected}
 					onCheckedChange={toggleAll}
-					className="pointer-events-none border-slate-300 data-[state=checked]:bg-slate-900 data-[state=checked]:text-white"
+					disabled={isLoading || visibleNames.length === 0}
 				/>
-				<span className="text-sm font-semibold text-slate-900">Select all</span>
+				<Label
+					htmlFor="result-cb-select-all"
+					className="cursor-pointer text-xs font-medium"
+				>
+					Select all
+				</Label>
 			</div>
-
-			<div className="min-h-0 flex-1 overflow-auto pr-1">
-				{profiles.length === 0 ? (
-					<div className="px-1 py-2 text-xs text-slate-400">
-						No profiles found
-					</div>
-				) : (
-					<ScrollArea className="h-full pr-1">
-						<div className="space-y-1">
-							{filteredProfiles.map((profile, index) => {
-								const isSelected = selectedProfiles.includes(profile.key);
-								const isFocused = profile.name === selectedProfileName;
-
-								return (
-									<div // biome-ignore lint/suspicious/noArrayIndexKey: TODO
-										key={`${profile.key}-${index}`}
-										id={`result-item-${profile.name}`}
-										className={`flex w-full items-center gap-2 rounded-md px-1 py-1 text-left transition-colors hover:bg-slate-50 ${isFocused ? "bg-slate-100 ring-1 ring-slate-300" : ""}`}
-									>
-										<Checkbox
-											id={`cb_${profile.key}-${index}`}
-											checked={isSelected}
-											onCheckedChange={() => toggleProfile(profile.key)}
-											className="border-slate-300 data-[state=checked]:bg-slate-900 data-[state=checked]:text-white"
-										/>
-										<div
-											className="h-3 w-3 shrink-0 rounded-full"
-											style={{
-												backgroundColor: scoreToBandColor(profile.score),
-											}}
-										/>
-										<Label
-											htmlFor={`cb_${profile.key}-${index}`}
-											className="min-w-0 flex-1 truncate text-[11px] font-medium text-slate-700 cursor-pointer"
-										>
-											{profile.name}
-										</Label>
-										<span className="shrink-0 text-[10px] font-bold text-slate-900">
-											{profile.score !== undefined && profile.score !== null
-												? profile.score.toFixed(2)
-												: "-"}
-										</span>
-									</div>
-								);
-							})}
-						</div>
-						<ScrollBar />
-					</ScrollArea>
-				)}
-			</div>
+			<div className="min-h-0 flex-1 overflow-y-auto">{renderList()}</div>
 		</section>
 	);
 };

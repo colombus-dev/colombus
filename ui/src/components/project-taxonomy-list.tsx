@@ -1,31 +1,25 @@
+import { SectionHeading } from "@/components/section-heading";
 import { stepsColorsMapping } from "@/configuration";
-
-interface ProjectTaxonomyListProps
-	extends React.HTMLAttributes<HTMLDivElement> {
-	colorSize?: string;
-}
+import { cn } from "@/lib/utils";
 
 const ProjectTaxonomyList: React.FunctionComponent<
-	ProjectTaxonomyListProps
-> = ({ colorSize = "w-3.5 h-3.5", ...props }) => {
+	React.HTMLAttributes<HTMLDivElement>
+> = ({ className, ...props }) => {
 	return (
-		<div {...props} className={`flex flex-col ${props.className ?? ""}`}>
-			<p className="font-bold">Legend</p>
-			<ul className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-1 list-none pr-1">
-				{Object.entries(stepsColorsMapping).map(([n, c]) => (
+		<div {...props} className={cn("space-y-2", className)}>
+			<SectionHeading title="Legend" />
+			<ul className="flex flex-col space-y-2.5">
+				{Object.entries(stepsColorsMapping).map(([name, color]) => (
 					<li
-						key={`legend_color_${c}`}
-						className="flex items-center gap-2 px-1 py-1 text-xs font-medium text-[#475569] transition-all w-full shrink-0"
+						key={name}
+						className="flex items-center gap-3 text-sm leading-none font-medium"
 					>
-						<div
-							className={`${colorSize} rounded-full shrink-0`}
-							style={{
-								backgroundColor: c,
-							}}
+						<span
+							aria-hidden="true"
+							className="size-4 shrink-0 rounded-full"
+							style={{ backgroundColor: color }}
 						/>
-						<span className="truncate" title={n}>
-							{n}
-						</span>
+						<span className="truncate">{name}</span>
 					</li>
 				))}
 			</ul>

@@ -9,7 +9,7 @@ const meta = {
 	decorators: [
 		(Story) => (
 			<BrowserRouter>
-				<div className="w-[300px] p-4 bg-slate-50 min-h-screen">
+				<div className="w-[300px] p-4">
 					<Story />
 				</div>
 			</BrowserRouter>
@@ -23,5 +23,12 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
 	args: {
 		project: { id: "1", name: "Reusable workspace" },
+	},
+};
+
+export const Highlighted: Story = {
+	args: {
+		project: { id: "2", name: "Freshly created project" },
+		highlighted: true,
 	},
 };
