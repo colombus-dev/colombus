@@ -55,6 +55,8 @@ services:
       retries: 3
       start_period: 20s
     depends_on:
+      vespucci_parser_api:
+        condition: service_started
       colombus_postgresql:
         condition: service_healthy
       flink_gateway:

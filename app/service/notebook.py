@@ -1,4 +1,3 @@
-import logging
 from enum import Enum
 from typing import Any, Generator
 
@@ -72,7 +71,7 @@ async def get_notebooks_information(list_of_notebooks, parser_name):
             c["source"] for c in NotebookCellIterator(file_content.decode("utf8"))
         )
 
-        parser_model = get_parser(parser_name).parse_code(source_code)
+        parser_model = await get_parser(parser_name).parse_code(source_code)
 
         notebook_information = NotebookInformation(
             name=notebook.filename,

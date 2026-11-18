@@ -16,7 +16,7 @@ class DSPipelinesParser(BaseMLParser):
         super().__init__()
         self.__subgraphs: list[ParserSubgraph] = []
 
-    def parse_code(
+    async def parse_code(
         self, python_code: str, parse_subscript: bool = True
     ) -> list[ParserSubgraph]:
         tree = ast.parse(python_code)

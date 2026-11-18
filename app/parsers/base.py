@@ -8,7 +8,7 @@ class BaseMLParser(ABC):
         super().__init__()
 
     @abstractmethod
-    def parse_code(
+    async def parse_code(
         self, python_code: str, parse_subscript: bool = True
     ) -> list[ParserSubgraph]:
         """Parse a given python code to extract the instructions to classify.

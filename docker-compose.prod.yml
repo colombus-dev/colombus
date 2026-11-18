@@ -27,6 +27,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
       ML_PROFILER_API_URL_PREFIX: ${ML_PROFILER_API_URL_PREFIX}
+      VESPUCCI_PARSER_API_URL_PREFIX: http://vespucci_parser_api:1701
       PPM_ENGINE: ${PPM_ENGINE:-flink}
       FLINK_GATEWAY_API_URL_PREFIX: ${FLINK_GATEWAY_API_URL_PREFIX:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
@@ -43,6 +44,8 @@ services:
     networks:
       - colombus-net
     depends_on:
+      vespucci_parser_api:
+        condition: service_started
       colombus_postgresql:
         condition: service_healthy
 
@@ -67,6 +70,15 @@ services:
       timeout: 5s
       retries: 10
       start_period: 15s
+
+  vespucci_parser_api:
+    image: ghcr.io/mlprofile/fast-parsing-service:v0.1.1
+    working_dir: /opt/pharo
+    command: [ "--headless", "Pharo.image", "eval", "--no-quit", "Server start" ]
+    ports:
+      - "1701:1701"
+    networks:
+      - colombus-dev_network
 
 networks:
   colombus-net:

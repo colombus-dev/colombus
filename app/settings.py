@@ -33,6 +33,7 @@ class Settings(BaseSettings):
 
     ppm_engine: Literal["flink", "sql"] = "flink"
     flink_gateway_api_url_prefix: str | None = None
+    vespucci_parser_api_url_prefix: str = Field()
     ml_profiler_api_url_prefix: str = Field()
     google_client_id: str = Field()
 
