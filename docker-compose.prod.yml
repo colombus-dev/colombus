@@ -78,7 +78,7 @@ services:
     ports:
       - "1701:1701"
     networks:
-      - colombus-dev_network
+      - colombus-net
 
 networks:
   colombus-net:
