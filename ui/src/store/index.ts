@@ -188,6 +188,26 @@ const createProjectSlice: StateCreator<ColombusStore, [], [], ProjectSlice> = (
 		})),
 });
 
+const PERSISTED_KEYS = [
+	"jwtToken",
+	"jwtExpiry",
+	"displayedLevel",
+	"useWeightedNodes",
+	"patternCapturedNodesDisplayMode",
+] as const;
+
+type PersistedState = Partial<
+	Pick<ColombusStore, (typeof PERSISTED_KEYS)[number]>
+>;
+
+const persistedState = (state: PersistedState): PersistedState =>
+	Object.fromEntries(
+		PERSISTED_KEYS.filter((key) => state[key] !== undefined).map((key) => [
+			key,
+			state[key],
+		]),
+	);
+
 export const useColombusStore = create<ColombusStore>()(
 	devtools(
 		persist(
@@ -201,14 +221,9 @@ export const useColombusStore = create<ColombusStore>()(
 			}),
 			{
 				name: "colombus-storage",
-				partialize: (state) => ({
-					jwtToken: state.jwtToken,
-					jwtExpiry: state.jwtExpiry,
-					displayedLevel: state.displayedLevel,
-					useWeightedNodes: state.useWeightedNodes,
-					patternCapturedNodesDisplayMode:
-						state.patternCapturedNodesDisplayMode,
-				}),
+				version: 1,
+				partialize: (state) => persistedState(state),
+				migrate: (stored) => persistedState(stored as PersistedState),
 			},
 		),
 	),

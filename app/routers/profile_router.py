@@ -5,10 +5,10 @@ import re
 import tempfile
 import uuid
 from pathlib import Path
-from typing import Any, Sequence
 
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
+from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
 from app.constants import NOTEBOOK_FILE_EXTENSION, PROFILE_FILE_EXTENSION
@@ -38,31 +38,7 @@ from app.service.kaggle_service import (
 )
 
 
-@router.get("/api/project/{project_id}/profile/getAll")
-def get_all_profile(
-    project_id: uuid.UUID,
-    session: DatabaseSession,
-) -> Sequence[str]:
-    return session.exec(
-        select(Profile.name).where(Profile.project_id == project_id)
-    ).all()
-
-
-@router.get("/api/project/{project_id}/profile/scores")
-def get_profiles_scores(
-    project_id: uuid.UUID,
-    session: DatabaseSession,
-) -> dict[str, float | None]:
-    results = session.exec(
-        select(Profile.name, Profile.json_profile).where(
-            Profile.project_id == project_id
-        )
-    ).all()
-    # TODO : We delete profiles with the same name
-    return {name: json_profile.get("score") for name, json_profile in results}
-
-
-@router.get("/api/project/{project_id}/profile/getJson")
+@router.get("/api/projects/{project_id}/profiles/json")
 async def get_json_profile(
     project_id: uuid.UUID, profile_name: str, session: DatabaseSession
 ):
@@ -73,18 +49,26 @@ async def get_json_profile(
     ).all()
 
 
-@router.get(
-    "/api/project/{project_id}/profile/nodes",
+class ProfileNodesPayload(BaseModel):
+    names: list[str]
+
+
+@router.post(
+    "/api/projects/{project_id}/profiles/nodes",
     response_model=list[ProfileNodes],
 )
-def get_all_nodes(
+def get_profiles_nodes(
     project_id: uuid.UUID,
+    payload: ProfileNodesPayload,
     session: DatabaseSession,
-    names: list[str] = Query(None),
 ) -> list[ProfileNodes]:
     results = session.exec(
-        select(Profile).where(
-            Profile.project_id == project_id, col(Profile.name).in_(names)
+        select(Profile)
+        .where(Profile.project_id == project_id, col(Profile.name).in_(payload.names))
+        .options(
+            selectinload(Profile.steps),  # pyright: ignore[reportArgumentType]
+            selectinload(Profile.meta_instructions),  # pyright: ignore[reportArgumentType]
+            selectinload(Profile.codes),  # pyright: ignore[reportArgumentType]
         )
     ).all()
     return [
@@ -99,7 +83,7 @@ def get_all_nodes(
     ]
 
 
-@router.get("/api/project/{project_id}/profile/get/{profile_id}")
+@router.get("/api/projects/{project_id}/profiles/{profile_id}")
 async def get_profile(
     project_id: uuid.UUID,
     profile_id: uuid.UUID,
@@ -120,7 +104,7 @@ async def get_profile(
     )
 
 
-@router.post("/api/project/{project_id}/profile/import")
+@router.post("/api/projects/{project_id}/profiles")
 async def import_multiple_profile(
     project_id: uuid.UUID,
     session: DatabaseSession,
@@ -146,7 +130,7 @@ async def import_multiple_profile(
     return [profile.name for profile in all_profiles_to_import]
 
 
-@router.delete("/api/project/{project_id}/profile/delete/{profile_id}")
+@router.delete("/api/projects/{project_id}/profiles/{profile_id}")
 async def delete_profile(
     project_id: uuid.UUID,
     profile_id: uuid.UUID,
@@ -168,7 +152,7 @@ def get_kaggle_status():
     return {"available": is_kaggle_available()}
 
 
-@router.get("/api/project/{project_id}/profile/kaggle/competitions")
+@router.get("/api/projects/{project_id}/kaggle/competitions")
 async def search_kaggle_competitions(
     project_id: uuid.UUID,
     search: str,
@@ -215,7 +199,7 @@ async def search_kaggle_competitions(
     return results
 
 
-@router.get("/api/project/{project_id}/profile/kaggle/list")
+@router.get("/api/projects/{project_id}/kaggle/notebooks")
 async def list_kaggle_competition(
     project_id: uuid.UUID,
     competition: str,
@@ -226,7 +210,7 @@ async def list_kaggle_competition(
     return await list_kaggle_competition_notebooks(competition, page_token)
 
 
-@router.post("/api/project/{project_id}/profile/import/kaggle")
+@router.post("/api/projects/{project_id}/profiles/kaggle")
 async def import_kaggle_competition(
     project_id: uuid.UUID,
     payload: ImportKagglePayload,

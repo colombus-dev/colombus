@@ -20,7 +20,7 @@ from app.utils.convert_ppm_to_regex import convert_pattern_to_regex
 router = APIRouter()
 
 
-@router.get("/api/project/{project_id}/profile/step/{step_id}/output")
+@router.get("/api/projects/{project_id}/steps/{step_id}/outputs")
 async def get_step_output(
     project_id: uuid.UUID,
     step_id: uuid.UUID,
@@ -32,12 +32,12 @@ async def get_step_output(
     ).all()
 
 
-@router.post("/api/utils/generate/regex/pattern")
+@router.post("/api/utils/regex/pattern")
 async def generate_pattern_regex(pattern: list[PatternGroup]) -> str:
     return convert_pattern_to_regex(pattern)
 
 
-@router.post("/api/utils/generate/regex/profile")
+@router.post("/api/utils/regex/profile")
 async def generate_profile_regex(
     profile: JsonProfile,
 ) -> list[RegexCompatibleProfileElement]:

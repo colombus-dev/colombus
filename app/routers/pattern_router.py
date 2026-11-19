@@ -21,9 +21,9 @@ router = APIRouter()
 # TODO: support multiple (sub)-patterns
 
 
-@router.get("/api/project/{project_id}/ppm/getAll")
+@router.get("/api/projects/{project_id}/patterns")
 async def get_all_ppm(
-    project_id: str,
+    project_id: uuid.UUID,
     session: DatabaseSession,
 ) -> list[PatternWithDSLApi]:
     retrieved_patterns = session.exec(
@@ -45,7 +45,7 @@ class ExecutePpmResponse(BaseModel):
     results: list[PpmResult]
 
 
-@router.post("/api/project/{project_id}/ppm/parse")
+@router.post("/api/projects/{project_id}/patterns/parse")
 async def parse_ppm(
     project_id: uuid.UUID,
     params: ParsePpmParams,
@@ -74,18 +74,24 @@ async def parse_ppm(
     )
 
 
-@router.post("/api/project/{project_id}/ppm/execute")
+def _sort_by_profile_name(results: list[PpmResult]) -> list[PpmResult]:
+    return sorted(results, key=lambda result: result.profile_name)
+
+
+@router.post("/api/projects/{project_id}/patterns/execute")
 async def execute_ppm(
     project_id: uuid.UUID,
     pattern: list[PatternGroup],
     session: DatabaseSession,
 ) -> list[PpmResult]:
     if settings.ppm_engine == "sql":
-        return run_ppm_sql(project_id, pattern, session)
-    return await run_ppm_flink(project_id, pattern, session)
+        results = run_ppm_sql(project_id, pattern, session)
+    else:
+        results = await run_ppm_flink(project_id, pattern, session)
+    return _sort_by_profile_name(results)
 
 
-@router.post("/api/project/{project_id}/ppm/execute/{name}")
+@router.post("/api/projects/{project_id}/patterns/{name}/execute")
 async def execute_ppm_with_name(
     project_id: uuid.UUID, name: str, session: DatabaseSession
 ) -> list[PpmResult]:
@@ -95,11 +101,13 @@ async def execute_ppm_with_name(
         )
     ).one()
     if settings.ppm_engine == "sql":
-        return run_saved_ppm_sql(project_id, [PatternGroup(**ppm)], session)
-    return await run_ppm_flink(project_id, [PatternGroup(**ppm)], session)
+        results = run_saved_ppm_sql(project_id, [PatternGroup(**ppm)], session)
+    else:
+        results = await run_ppm_flink(project_id, [PatternGroup(**ppm)], session)
+    return _sort_by_profile_name(results)
 
 
-@router.post("/api/project/{project_id}/ppm/save")
+@router.post("/api/projects/{project_id}/patterns")
 async def save_ppm(
     project_id: uuid.UUID,
     pattern: PatternWithDSLApi,
@@ -121,7 +129,7 @@ async def save_ppm(
 
 
 # TODO: change name to pattern_id in delete operation
-@router.delete("/api/project/{project_id}/ppm/delete/{name}")
+@router.delete("/api/projects/{project_id}/patterns/{name}")
 async def delete_ppm(project_id: uuid.UUID, name: str, session: DatabaseSession):
     pattern = session.exec(
         select(Pattern).where(Pattern.project_id == project_id, Pattern.name == name)

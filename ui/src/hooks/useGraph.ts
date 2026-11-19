@@ -3,6 +3,7 @@ import Graph from "graphology";
 import { useEffect, useRef } from "react";
 import Sigma from "sigma";
 import type { GraphDefinition } from "@/api/client";
+import type { PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
 import useGraphUtils from "./useGraphUtils";
 
@@ -76,19 +77,28 @@ export default function useGraph(
 		}
 		let addedX = 0;
 		let addedY = 0;
-		const sortedGraphDefinition = graphDefinitions.toSorted((a, b) =>
-			availableProfilesNames.indexOf(a.name) >
-			availableProfilesNames.indexOf(b.name)
-				? 1
-				: -1,
+		const positions = new Map(
+			availableProfilesNames.map((name, index) => [name, index]),
 		);
-		for (const profile of sortedGraphDefinition) {
-			if (!filteredProfilesNames.includes(profile.name)) {
-				continue;
+		const selected = new Set(filteredProfilesNames);
+		const ppmByProfile = new Map<string, PpmResult[]>();
+		for (const pr of availableProfilesWithPpmData) {
+			const group = ppmByProfile.get(pr.profile_name);
+			if (group === undefined) {
+				ppmByProfile.set(pr.profile_name, [pr]);
+			} else {
+				group.push(pr);
 			}
-			const ppmResData = availableProfilesWithPpmData.filter(
-				(pr) => pr.profile_name === profile.name,
+		}
+		const sortedGraphDefinition = graphDefinitions
+			.filter((profile) => selected.has(profile.name))
+			.toSorted(
+				(a, b) =>
+					(positions.get(a.name) ?? Number.MAX_SAFE_INTEGER) -
+					(positions.get(b.name) ?? Number.MAX_SAFE_INTEGER),
 			);
+		for (const profile of sortedGraphDefinition) {
+			const ppmResData = ppmByProfile.get(profile.name) ?? [];
 			addNewProfile(profile, ppmResData, currentPattern, addedX, addedY);
 			addedY -= 50 * (displayedLevel + 2);
 			addedX = 1;

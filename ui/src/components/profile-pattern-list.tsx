@@ -1,8 +1,8 @@
 import Editor, { useMonaco } from "@monaco-editor/react";
 import { Trash } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { getAllPatterns } from "@/api/client";
+import { getAllPatterns, getApiErrorMessage } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import {
 	Tooltip,
@@ -28,6 +28,7 @@ const ProfilePatternList: React.FunctionComponent<
 	);
 	const { projectId } = useParams<{ projectId: string }>();
 
+	const [loadError, setLoadError] = useState<string | null>(null);
 	const monaco = useMonaco();
 	const { themeName } = useCanopusTheme(monaco);
 	useCanopusGrammar(monaco);
@@ -36,8 +37,24 @@ const ProfilePatternList: React.FunctionComponent<
 		if (!projectId) {
 			return;
 		}
-		getAllPatterns(projectId).then(setAvailablePatterns);
+		setLoadError(null);
+		getAllPatterns(projectId)
+			.then(setAvailablePatterns)
+			.catch((error) => {
+				console.error("Failed to load saved patterns", error);
+				setLoadError(
+					getApiErrorMessage(error, "Failed to load saved patterns."),
+				);
+			});
 	}, [setAvailablePatterns, projectId]);
+
+	if (loadError !== null) {
+		return (
+			<p role="alert" className="text-xs text-destructive">
+				{loadError}
+			</p>
+		);
+	}
 
 	return (
 		<div {...divProps} className={cn(divProps.className)}>

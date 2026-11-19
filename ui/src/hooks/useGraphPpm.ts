@@ -46,7 +46,7 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 	const [hoveredNeighbors, setHoveredNeighbors] = useState<
 		Set<string> | undefined
 	>();
-	// TODO: should we useParams or useValidProject ?
+	// TODO: should we useParams or useProject ?
 	const { projectId } = useParams<{ projectId: string }>();
 
 	const getHoveredTopTree = useCallback(

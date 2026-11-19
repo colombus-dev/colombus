@@ -19,7 +19,7 @@ from app.utils.diff_stats_exploration import get_frequent_patterns_matrix
 router = APIRouter()
 
 
-@router.get("/api/project/{project_id}/stats")
+@router.get("/api/projects/{project_id}/stats")
 async def get_project_stats(project_id: str, session: DatabaseSession):
     # TODO: seems duplicated with get_frequent_patterns_matrix
 
@@ -75,7 +75,7 @@ class PostStatsProfilesFilterPayload(BaseModel):
     profiles_names: list[str] | None = None
 
 
-@router.post("/api/project/{project_id}/stats/patterns")
+@router.post("/api/projects/{project_id}/stats/patterns")
 async def post_project_stats_patterns(
     project_id: str,
     payload: PostStatsProfilesFilterPayload,
@@ -138,7 +138,7 @@ async def post_project_stats_patterns(
     return Response(content=fig.to_json(), media_type="application/json")
 
 
-@router.post("/api/project/{project_id}/stats/steps/frequency")
+@router.post("/api/projects/{project_id}/stats/steps/frequency")
 async def post_steps_frequency(
     project_id: str,
     payload: PostStatsProfilesFilterPayload,

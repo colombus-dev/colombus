@@ -18,15 +18,15 @@ export interface ChartDataEntry {
 
 export default function useScoreDistribution() {
 	const profilesScores = useColombusStore((state) => state.profilesScores);
-	const filteredProfilesNames = useColombusStore(
-		(state) => state.filteredProfilesNames,
+	const availableProfilesNames = useColombusStore(
+		(state) => state.availableProfilesNames,
 	);
 
 	const { average, bands, hasData, chartData } = useMemo(() => {
 		const scores: number[] = [];
 		let noScoreCount = 0;
 
-		for (const name of filteredProfilesNames) {
+		for (const name of availableProfilesNames) {
 			const score = profilesScores[name];
 			if (typeof score === "number" && score !== null && !Number.isNaN(score)) {
 				scores.push(score);
@@ -115,7 +115,7 @@ export default function useScoreDistribution() {
 			hasData: hasActiveData,
 			chartData: donutData,
 		};
-	}, [filteredProfilesNames, profilesScores]);
+	}, [availableProfilesNames, profilesScores]);
 
 	return { average, bands, hasData, chartData };
 }

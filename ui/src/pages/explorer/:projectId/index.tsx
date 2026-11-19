@@ -1,12 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import type { GraphDefinition } from "@/api/client";
 import {
-	getAllProfiles,
+	getApiErrorMessage,
 	getGraphNodes,
 	getKaggleStatus,
-	getProfilesScores,
 	postApplyPpmFilter,
 	postApplyPpmFilterByName,
 	postNotebookOrProfiles,
@@ -17,31 +16,32 @@ import ProfileCodeViewer from "@/components/profile-code-viewer";
 import ProfileExplorerPpmResultsBar from "@/components/profile-explorer-ppm-results-bar";
 import PatternDslEditor from "@/components/profile-pattern-dsl-editor";
 import ProfilePatternList from "@/components/profile-pattern-list";
-import ProfilePatternStatsFreqMatrix from "@/components/profile-pattern-stats-freq-matrix";
-import ProfileScoreDistributionChart from "@/components/profile-score-distribution-chart";
-import ProfileStepsFrequencyChart from "@/components/profile-steps-frequency-chart";
 import { SectionHeading } from "@/components/section-heading";
 import { Button } from "@/components/ui/button";
 import usePatternActions from "@/hooks/explorer/usePatternActions";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
-import useValidProject from "@/hooks/useValidProject";
-import { PATH } from "@/lib/constants";
+import useProject from "@/hooks/useProject";
+import { MAX_SELECTED_PROFILES, PATH } from "@/lib/constants";
 import type { PpmResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 
 const GRAPH_CONTAINER_ID = "graph-container";
 
-type ExplorerTab = "code" | "explorer" | "statistics";
+type ExplorerTab = "code" | "explorer";
 
 const EXPLORER_TABS: { id: ExplorerTab; label: string }[] = [
 	{ id: "code", label: "Code" },
 	{ id: "explorer", label: "Explorer" },
-	{ id: "statistics", label: "Statistics" },
 ];
 
-export default function ExplorerProjectIdPage() {
+export default function ExplorerProjectIdRoute() {
+	const { projectId } = useParams<{ projectId: string }>();
+	return <ExplorerProjectIdPage key={projectId} />;
+}
+
+function ExplorerProjectIdPage() {
 	const [activeTab, setActiveTab] = useState<ExplorerTab>("explorer");
 	const [graphContainerId, setGraphContainerId] = useState<
 		string | undefined
@@ -54,6 +54,9 @@ export default function ExplorerProjectIdPage() {
 		boolean | undefined
 	>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [isNodesLoading, setIsNodesLoading] = useState<boolean>(false);
+	const [nodesError, setNodesError] = useState<string | null>(null);
+	const nodesCache = useRef(new Map<string, GraphDefinition>());
 	const [backendError, setBackendError] = useState<string | null>(null);
 	const [isImporting, setIsImporting] = useState<boolean>(false);
 
@@ -64,14 +67,22 @@ export default function ExplorerProjectIdPage() {
 	const setAvailableProfilesNames = useColombusStore(
 		(state) => state.setAvailableProfilesNames,
 	);
+	const availableProfilesNames = useColombusStore(
+		(state) => state.availableProfilesNames,
+	);
+	const filteredProfilesNames = useColombusStore(
+		(state) => state.filteredProfilesNames,
+	);
 	const setFilteredProfilesNames = useColombusStore(
 		(state) => state.setFilteredProfilesNames,
 	);
-	const setProfilesScores = useColombusStore(
-		(state) => state.setProfilesScores,
-	);
 
-	const { validity: projectValidity, projectId } = useValidProject();
+	const {
+		validity: projectValidity,
+		projectId,
+		profiles: profileSummaries,
+		error: summaryError,
+	} = useProject(postedProfiles);
 
 	const { renderer } = useGraph(graphContainerId, filteredWorkflowsNodes);
 
@@ -98,49 +109,43 @@ export default function ExplorerProjectIdPage() {
 		}
 	}, [projectValidity, navigate]);
 
-	// TODO
-	// biome-ignore lint/correctness/useExhaustiveDependencies: we should refactor this file
+	// biome-ignore lint/correctness/useExhaustiveDependencies: imported notebooks may replace cached details
 	useEffect(() => {
-		if (!projectId || projectValidity !== "valid") {
+		nodesCache.current.clear();
+	}, [postedProfiles]);
+
+	useEffect(() => {
+		if (
+			projectId === undefined ||
+			projectValidity !== "valid" ||
+			profileSummaries === null
+		) {
 			return;
 		}
-		const updateAndMergeWithPosted = async (
-			rawWorkflowsNames: string[],
-			workflowsPpmData?: PpmResult[],
-		) => {
-			const workflowsNames = [...new Set(rawWorkflowsNames)];
-			setAvailableProfilesNames(workflowsNames);
-			const reducedWorkflows = new Set([
-				...workflowsNames.filter((w) => postedProfiles?.includes(w)),
-				...workflowsNames,
-			]);
-			setFilteredProfilesNames([...reducedWorkflows]);
-			setAvailableProfilesWithPpmData(workflowsPpmData ?? []);
-
-			const countInWorkflows = (name: string) =>
-				workflowsNames.filter((n) => n === name).length;
-			const countInNodes = (name: string) =>
-				filteredWorkflowsNodes?.filter((n) => n.name === name).length ?? 0;
-
-			const namesToFetch = [...new Set(workflowsNames)].filter(
-				(name) => countInWorkflows(name) > countInNodes(name),
+		let cancelled = false;
+		const applyResults = (names: string[], ppmData: PpmResult[]) => {
+			if (cancelled) {
+				return;
+			}
+			const available = new Set(names);
+			setAvailableProfilesNames(names);
+			setAvailableProfilesWithPpmData(ppmData);
+			setFilteredProfilesNames(
+				useColombusStore
+					.getState()
+					.filteredProfilesNames.filter((name) => available.has(name)),
 			);
-
-			const graphNodesToKeep =
-				filteredWorkflowsNodes?.filter(
-					({ name }) =>
-						workflowsNames.includes(name) && !namesToFetch.includes(name),
-				) ?? [];
-
-			await getGraphNodes(projectId, namesToFetch).then((r) => {
-				setFilteredWorkflowsNodes([...graphNodesToKeep, ...r]);
-				setIsLoading(false);
-			});
+			setIsLoading(false);
 		};
-		setIsLoading(true);
-		setBackendError(null);
-
+		const applyPpmResults = (results: PpmResult[]) =>
+			applyResults(
+				[...new Set(results.map(({ profile_name }) => profile_name))],
+				results,
+			);
 		const handleError = (error: any) => {
+			if (cancelled) {
+				return;
+			}
 			console.error("Pattern execution error:", error);
 			setIsLoading(false);
 			let detail = error?.response?.data?.detail;
@@ -149,61 +154,89 @@ export default function ExplorerProjectIdPage() {
 			} else if (typeof detail === "object" && detail !== null) {
 				detail = JSON.stringify(detail);
 			}
-			setBackendError(
-				detail
+			const message =
+				typeof detail === "string" && detail !== ""
 					? `Execution failed: ${detail}`
-					: "Execution error: Please check the pattern syntax",
-			);
+					: "Execution failed. Please check the pattern syntax.";
+			setBackendError(message);
+			toast.error(message);
 		};
 
+		setBackendError(null);
 		if (currentPattern?.groups?.length) {
+			setIsLoading(true);
 			postApplyPpmFilter(projectId, currentPattern.groups)
-				.then((workflowsWithData) =>
-					updateAndMergeWithPosted(
-						[
-							...new Set(
-								workflowsWithData.map(({ profile_name }) => profile_name),
-							),
-						],
-						workflowsWithData,
-					),
-				)
+				.then(applyPpmResults)
 				.catch(handleError);
 		} else if (currentPattern?.name) {
+			setIsLoading(true);
 			postApplyPpmFilterByName(projectId, currentPattern.name)
-				.then((workflowsWithData) =>
-					updateAndMergeWithPosted(
-						[
-							...new Set(
-								workflowsWithData.map(({ profile_name }) => profile_name),
-							),
-						],
-						workflowsWithData,
-					),
-				)
+				.then(applyPpmResults)
 				.catch(handleError);
 		} else {
-			getAllProfiles(projectId)
-				.then((wfs) => updateAndMergeWithPosted(wfs, undefined))
-				.catch(handleError);
+			applyResults(
+				profileSummaries.map(({ name }) => name),
+				[],
+			);
 		}
+		return () => {
+			cancelled = true;
+		};
 	}, [
 		projectId,
 		projectValidity,
 		currentPattern,
-		postedProfiles,
+		profileSummaries,
 		setFilteredProfilesNames,
 		setAvailableProfilesNames,
 		setAvailableProfilesWithPpmData,
 	]);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: refetch scores after an import
 	useEffect(() => {
-		if (!projectId || projectValidity !== "valid") {
+		if (projectId === undefined) {
 			return;
 		}
-		getProfilesScores(projectId).then(setProfilesScores);
-	}, [projectId, projectValidity, postedProfiles, setProfilesScores]);
+		const cache = nodesCache.current;
+		const selectedNodes = () =>
+			filteredProfilesNames.flatMap((name) => {
+				const nodes = cache.get(name);
+				return nodes === undefined ? [] : [nodes];
+			});
+		const missing = filteredProfilesNames.filter((name) => !cache.has(name));
+		setNodesError(null);
+		if (missing.length === 0) {
+			setIsNodesLoading(false);
+			setFilteredWorkflowsNodes(selectedNodes());
+			return;
+		}
+		let cancelled = false;
+		setIsNodesLoading(true);
+		getGraphNodes(projectId, missing)
+			.then((nodes) => {
+				for (const node of nodes) {
+					cache.set(node.name, node);
+				}
+				if (!cancelled) {
+					setFilteredWorkflowsNodes(selectedNodes());
+				}
+			})
+			.catch((error) => {
+				console.error("Failed to load notebook details", error);
+				if (!cancelled) {
+					setNodesError(
+						getApiErrorMessage(error, "Failed to load notebook details."),
+					);
+				}
+			})
+			.finally(() => {
+				if (!cancelled) {
+					setIsNodesLoading(false);
+				}
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [projectId, filteredProfilesNames]);
 
 	useEffect(() => {
 		if (isLoading) {
@@ -367,6 +400,24 @@ export default function ExplorerProjectIdPage() {
 		[projectId],
 	);
 
+	const hasPattern =
+		(currentPattern?.groups?.length ?? 0) > 0 ||
+		(currentPattern?.name ?? "") !== "";
+	const graphEmptyMessage = (() => {
+		if (summaryError !== null || profileSummaries === null) {
+			return null;
+		}
+		if (availableProfilesNames.length === 0) {
+			return hasPattern
+				? "No notebook matches this pattern."
+				: "No notebooks yet. Import profiles to get started.";
+		}
+		if (filteredProfilesNames.length === 0) {
+			return `Select up to ${MAX_SELECTED_PROFILES} notebooks in Results to display them.`;
+		}
+		return null;
+	})();
+
 	if (projectValidity === "pending") {
 		return <section className="grid grid-cols-7 space-x-2 h-full" />;
 	}
@@ -398,7 +449,11 @@ export default function ExplorerProjectIdPage() {
 			</div>
 			<ProfileExplorerPpmResultsBar
 				className="col-span-1"
-				isLoading={isLoading}
+				isLoading={
+					isLoading || (profileSummaries === null && summaryError === null)
+				}
+				error={summaryError}
+				hasPattern={hasPattern}
 			/>
 			<div className="col-span-5 flex min-h-0 flex-col gap-3">
 				{projectId && (
@@ -444,20 +499,12 @@ export default function ExplorerProjectIdPage() {
 						<GraphContainer
 							className="group relative h-full w-full overflow-hidden"
 							containerId={GRAPH_CONTAINER_ID}
-							isLoading={isLoading}
+							isLoading={isLoading || isNodesLoading}
+							errorMessage={nodesError}
+							emptyMessage={graphEmptyMessage}
 							graphRenderer={renderer.current}
 						/>
 					</div>
-
-					{activeTab === "statistics" && (
-						<div className="h-full overflow-y-auto rounded-xl border bg-card p-4">
-							<div className="grid grid-cols-2 gap-4">
-								<ProfileScoreDistributionChart />
-								<ProfileStepsFrequencyChart />
-								<ProfilePatternStatsFreqMatrix className="col-span-2" />
-							</div>
-						</div>
-					)}
 
 					{activeTab === "code" && (
 						<div className="h-full">

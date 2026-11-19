@@ -2,6 +2,7 @@ import App from "@/App.tsx";
 import { getAuthConfig } from "@/api/client";
 import Home from "@/components/home.tsx";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "@/index.css";
 import { GoogleOAuthProvider } from "@react-oauth/google";
@@ -41,6 +42,7 @@ async function bootstrap() {
 							</Routes>
 						</BrowserRouter>
 					</GoogleOAuthProvider>
+					<Toaster />
 				</TooltipProvider>
 			</ThemeProvider>
 		</StrictMode>,

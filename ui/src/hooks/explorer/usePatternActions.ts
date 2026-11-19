@@ -54,9 +54,10 @@ export default function usePatternActions({
 					if (typeof detail === "object" && detail !== null) {
 						detail = JSON.stringify(detail);
 					}
-					setBackendError(
-						detail || "Failed to execute pattern. Please check the logic.",
-					);
+					const message =
+						detail || "Failed to execute pattern. Please check the logic.";
+					setBackendError(message);
+					toast.error(message);
 				})
 				.finally(() => {
 					setIsLoading(false);
@@ -95,7 +96,7 @@ export default function usePatternActions({
 					await postSavePpm(projectId, newPattern);
 					const all = await getAllPatterns(projectId);
 					setAllSavedPatterns(all);
-					toast.success("Pattern saved successfully!");
+					toast.success("Pattern saved.");
 				})
 				.catch((error: any) => {
 					console.error("Parse pattern error:", error);
@@ -107,9 +108,11 @@ export default function usePatternActions({
 					} else if (typeof detail === "object" && detail !== null) {
 						detail = JSON.stringify(detail);
 					}
-					setBackendError(
-						detail || "Execution error: Please check the pattern semantics.",
-					);
+					const message =
+						detail ||
+						"Failed to save pattern. Please check the pattern semantics.";
+					setBackendError(message);
+					toast.error(message);
 				})
 				.finally(() => {
 					setIsLoading(false);

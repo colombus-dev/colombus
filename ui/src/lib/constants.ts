@@ -6,3 +6,5 @@ export const PATH = {
 	HOME: "/home",
 	EXPLORER: "/explorer",
 } as const;
+
+export const MAX_SELECTED_PROFILES = 20;

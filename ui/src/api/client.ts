@@ -84,7 +84,7 @@ export function getApiErrorMessage(err: any, fallback: string): string {
 
 export async function createNewProject(name: string) {
 	return await axiosInstance
-		.post<string>("/project", {
+		.post<string>("/projects", {
 			name,
 		})
 		.then(({ data }) => data);
@@ -92,56 +92,42 @@ export async function createNewProject(name: string) {
 
 export async function getAllProjects(signal?: AbortSignal) {
 	return await axiosInstance
-		.get<Project[]>("/project", { signal })
+		.get<Project[]>("/projects", { signal })
 		.then(({ data }) => data);
 }
 
 export async function renameProject(projectId: string, name: string) {
 	return await axiosInstance
-		.patch<string>(`/project/${projectId}`, { name })
+		.patch<string>(`/projects/${projectId}`, { name })
 		.then(({ data }) => data);
 }
 
 export async function deleteProject(projectId: string) {
-	await axiosInstance.delete(`/project/${projectId}`);
-}
-
-export async function postRetrieveProjectName(projectId: string) {
-	return await axiosInstance
-		.post<string>(`/project/${projectId}/details`)
-		.then(({ data }) => data);
+	await axiosInstance.delete(`/projects/${projectId}`);
 }
 
 export async function getGraphNodes(
 	projectId: string,
-	profilesNames?: string[],
+	profilesNames: string[],
 ) {
-	if (profilesNames?.length === 0) {
+	if (profilesNames.length === 0) {
 		return Promise.resolve<GraphDefinition[]>([]);
 	}
 	return await axiosInstance
-		.get<GraphDefinition[]>(`/project/${projectId}/profile/nodes`, {
-			params: {
-				names: profilesNames,
-			},
-			paramsSerializer: {
-				indexes: null,
-			},
+		.post<GraphDefinition[]>(`/projects/${projectId}/profiles/nodes`, {
+			names: profilesNames,
 		})
 		.then(({ data }) => data);
 }
 
-export async function getAllProfiles(projectId: string) {
-	return await axiosInstance
-		.get<string[]>(`/project/${projectId}/profile/getAll`)
-		.then(({ data }) => data);
-}
+export type ProfileSummary = { name: string; score: number | null };
 
-export async function getProfilesScores(projectId: string) {
-	const response = await axiosInstance.get<Record<string, number | null>>(
-		`/project/${projectId}/profile/scores`,
-	);
-	return response.data;
+export type ProjectDetails = Project & { profiles: ProfileSummary[] };
+
+export async function getProject(projectId: string) {
+	return await axiosInstance
+		.get<ProjectDetails>(`/projects/${projectId}`)
+		.then(({ data }) => data);
 }
 
 export async function postNotebookOrProfiles(projectId: string, files: File[]) {
@@ -153,7 +139,7 @@ export async function postNotebookOrProfiles(projectId: string, files: File[]) {
 				? formData.append("notebook_files", file)
 				: console.assert("Failed to upload unknown file type {file.name}");
 	return await axiosInstance
-		.post<string[]>(`/project/${projectId}/profile/import`, formData, {
+		.post<string[]>(`/projects/${projectId}/profiles`, formData, {
 			headers: {
 				accept: "application/json",
 				"Content-Type": "multipart/form-data",
@@ -164,13 +150,13 @@ export async function postNotebookOrProfiles(projectId: string, files: File[]) {
 
 export async function getAllPatterns(projectId: string) {
 	return await axiosInstance
-		.get<Pattern[]>(`/project/${projectId}/ppm/getAll`)
+		.get<Pattern[]>(`/projects/${projectId}/patterns`)
 		.then(({ data }) => Pattern.array().parse(data));
 }
 
 export async function parsePpm(projectId: string, content: string) {
 	return await axiosInstance
-		.post<Pattern>(`/project/${projectId}/ppm/parse`, {
+		.post<Pattern>(`/projects/${projectId}/patterns/parse`, {
 			pattern_dsl: content,
 		})
 		.then(({ data }) => data);
@@ -181,7 +167,7 @@ export async function postApplyPpmFilter(
 	pattern: PatternGroup[],
 ) {
 	return await axiosInstance
-		.post<PpmResult[]>(`/project/${projectId}/ppm/execute`, pattern)
+		.post<PpmResult[]>(`/projects/${projectId}/patterns/execute`, pattern)
 		.then(({ data }) => data);
 }
 
@@ -190,7 +176,7 @@ export async function postApplyPpmFilterByName(
 	name: string,
 ) {
 	return await axiosInstance
-		.post<PpmResult[]>(`/project/${projectId}/ppm/execute/${name}`)
+		.post<PpmResult[]>(`/projects/${projectId}/patterns/${name}/execute`)
 		.then(({ data }) => data);
 }
 
@@ -200,7 +186,7 @@ export async function searchKaggleCompetitions(
 ) {
 	return await axiosInstance
 		.get<{ ref: string; title: string; description: string }[]>(
-			`/project/${projectId}/profile/kaggle/competitions`,
+			`/projects/${projectId}/kaggle/competitions`,
 			{ params: { search } },
 		)
 		.then(({ data }) => data);
@@ -218,7 +204,7 @@ export async function getKaggleCompetitionNotebooks(
 	pageToken?: string,
 ) {
 	return await axiosInstance
-		.get<KaggleNotebookList>(`/project/${projectId}/profile/kaggle/list`, {
+		.get<KaggleNotebookList>(`/projects/${projectId}/kaggle/notebooks`, {
 			params: { competition, page_token: pageToken },
 		})
 		.then(({ data }) => data);
@@ -233,18 +219,18 @@ export async function postImportKaggle(
 	},
 ) {
 	return await axiosInstance
-		.post<string[]>(`/project/${projectId}/profile/import/kaggle`, payload)
+		.post<string[]>(`/projects/${projectId}/profiles/kaggle`, payload)
 		.then(({ data }) => data);
 }
 
 export async function postSavePpm(projectId: string, pattern: Pattern) {
 	return await axiosInstance
-		.post<string>(`/project/${projectId}/ppm/save`, pattern)
+		.post<string>(`/projects/${projectId}/patterns`, pattern)
 		.then(({ data }) => data);
 }
 
 export async function deletePpm(projectId: string, name: string) {
-	return await axiosInstance.delete(`/project/${projectId}/ppm/delete/${name}`);
+	return await axiosInstance.delete(`/projects/${projectId}/patterns/${name}`);
 }
 
 export async function getOutputImagesForStep(
@@ -252,7 +238,7 @@ export async function getOutputImagesForStep(
 	stepId: string,
 ) {
 	return await axiosInstance
-		.get<string[]>(`/project/${projectId}/profile/step/${stepId}/output`)
+		.get<string[]>(`/projects/${projectId}/steps/${stepId}/outputs`)
 		.then(({ data }) => data);
 }
 
@@ -269,7 +255,7 @@ export async function postFrequentPatternsMatrixPlotly(
 	profilesNames?: string[],
 ) {
 	return await axiosInstance
-		.post<any>(`/project/${projectId}/stats/patterns`, {
+		.post<any>(`/projects/${projectId}/stats/patterns`, {
 			profiles_names: profilesNames,
 		})
 		.then(({ data }) => data);
@@ -280,7 +266,7 @@ export async function postFrequentStepsData(
 	profilesNames?: string[],
 ) {
 	return await axiosInstance
-		.post<[string, number][]>(`/project/${projectId}/stats/steps/frequency`, {
+		.post<[string, number][]>(`/projects/${projectId}/stats/steps/frequency`, {
 			profiles_names: profilesNames,
 		})
 		.then(({ data }) => data.map((d) => ({ step: d[0], frequency: d[1] })));

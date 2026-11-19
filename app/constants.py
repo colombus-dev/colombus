@@ -5,7 +5,7 @@ notebooks_storage_path = Path("./data/notebooks")
 PROFILE_FILE_EXTENSION = ".json"
 NOTEBOOK_FILE_EXTENSION = ".ipynb"
 
-REQUEST_TIMEOUT_SECONDS = 60
+REQUEST_TIMEOUT_SECONDS = 180
 QUERY_TIMEOUT_SECONDS = 30
 
 
