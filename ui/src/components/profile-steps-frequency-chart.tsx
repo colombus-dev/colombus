@@ -25,21 +25,21 @@ const ProfileStepsFrequencyChart: React.FunctionComponent<
 	const [frequentStepsData, setFrequentStepsData] =
 		useState<{ step: string; frequency: number }[]>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const availableProfilesNames = useColombusStore(
-		(state) => state.availableProfilesNames,
+	const availableProfileIds = useColombusStore(
+		(state) => state.availableProfileIds,
 	);
 
 	useEffect(() => {
-		if (projectId && availableProfilesNames.length > 0) {
+		if (projectId && availableProfileIds.length > 0) {
 			setIsLoading(true);
-			postFrequentStepsData(projectId, availableProfilesNames).then((res) => {
+			postFrequentStepsData(projectId, availableProfileIds).then((res) => {
 				setFrequentStepsData(res);
 				setIsLoading(false);
 			});
 		}
-	}, [projectId, availableProfilesNames]);
+	}, [projectId, availableProfileIds]);
 
-	if (!projectId || availableProfilesNames.length === 0 || !frequentStepsData) {
+	if (!projectId || availableProfileIds.length === 0 || !frequentStepsData) {
 		return null;
 	}
 

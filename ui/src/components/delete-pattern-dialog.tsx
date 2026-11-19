@@ -14,11 +14,13 @@ import {
 import { useColombusStore } from "@/store";
 
 interface DeletePatternDialogProps {
+	patternId?: string;
 	patternName?: string;
 	render: React.ReactElement;
 }
 
 export default function DeletePatternDialog({
+	patternId,
 	patternName,
 	render,
 }: DeletePatternDialogProps) {
@@ -41,8 +43,8 @@ export default function DeletePatternDialog({
 					<AlertDialogCancel>Cancel</AlertDialogCancel>
 					<AlertDialogAction
 						onClick={() => {
-							if (projectId && patternName) {
-								deletePpm(projectId, patternName).then(resetCurrentPattern);
+							if (projectId !== undefined && patternId !== undefined) {
+								deletePpm(projectId, patternId).then(resetCurrentPattern);
 							}
 						}}
 					>

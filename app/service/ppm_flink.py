@@ -66,6 +66,10 @@ async def run_ppm_flink(
             if group_results is None:
                 continue
             results.append(
-                PpmResult(profile_name=match["profile_name"], results=group_results)
+                PpmResult(
+                    profile_id=match["profile_id"],
+                    profile_name=match["profile_name"],
+                    results=group_results,
+                )
             )
     return results

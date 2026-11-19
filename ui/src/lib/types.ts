@@ -49,6 +49,7 @@ const basePatternGroup = z.object({
 });
 
 const basePattern = z.object({
+	id: z.string().optional(),
 	name: z.string().optional(),
 	dsl_content: z.string().optional(),
 });
@@ -67,6 +68,7 @@ export type PatternGroup = {
 };
 
 export type Pattern = {
+	id?: string;
 	name?: string;
 	groups?: PatternGroup[];
 	dsl_content?: string;
@@ -89,6 +91,7 @@ export const PatternGroup: z.ZodType<PatternGroup> = basePatternGroup
 	.strict();
 
 export const PpmResult = z.object({
+	profile_id: z.string(),
 	profile_name: z.string(),
 	results: z.string().array().array(),
 });

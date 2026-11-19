@@ -62,6 +62,7 @@ class Profile(ProfileBase):
 
 
 class PpmResult(BaseModel):
+    profile_id: uuid.UUID
     profile_name: str
     results: list[list[uuid.UUID]]
 
@@ -73,6 +74,10 @@ class Pattern(BaseModel):
 
 class PatternWithDSLApi(Pattern):
     dsl_content: str
+
+
+class SavedPattern(PatternWithDSLApi):
+    id: uuid.UUID
 
 
 class PatternMetaCharacters(BaseModel):

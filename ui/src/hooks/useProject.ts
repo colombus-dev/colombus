@@ -16,6 +16,7 @@ export default function useProject(refreshKey: unknown) {
 	const setProfilesScores = useColombusStore(
 		(state) => state.setProfilesScores,
 	);
+	const setProfilesNames = useColombusStore((state) => state.setProfilesNames);
 	const resetProjectState = useColombusStore(
 		(state) => state.resetProjectState,
 	);
@@ -41,7 +42,12 @@ export default function useProject(refreshKey: unknown) {
 				setProfiles(project.profiles);
 				setProfilesScores(
 					Object.fromEntries(
-						project.profiles.map(({ name, score }) => [name, score]),
+						project.profiles.map(({ id, score }) => [id, score]),
+					),
+				);
+				setProfilesNames(
+					Object.fromEntries(
+						project.profiles.map(({ id, name }) => [id, name]),
 					),
 				);
 				setValidity("valid");
@@ -61,7 +67,13 @@ export default function useProject(refreshKey: unknown) {
 		return () => {
 			cancelled = true;
 		};
-	}, [projectId, refreshKey, setProjectName, setProfilesScores]);
+	}, [
+		projectId,
+		refreshKey,
+		setProjectName,
+		setProfilesScores,
+		setProfilesNames,
+	]);
 
 	return useMemo(
 		() => ({ validity, projectId, profiles, error }),

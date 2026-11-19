@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import type { GraphDefinition } from "@/api/client";
@@ -8,7 +8,7 @@ import {
 	getKaggleCompetitionNotebooks,
 	getKaggleStatus,
 	postApplyPpmFilter,
-	postApplyPpmFilterByName,
+	postApplySavedPpmFilter,
 	postImportKaggle,
 	postNotebookOrProfiles,
 	searchKaggleCompetitions,
@@ -67,17 +67,17 @@ function ExplorerProjectIdPage() {
 	const setAvailableProfilesWithPpmData = useColombusStore(
 		(state) => state.setAvailableProfilesWithPpmData,
 	);
-	const setAvailableProfilesNames = useColombusStore(
-		(state) => state.setAvailableProfilesNames,
+	const setAvailableProfileIds = useColombusStore(
+		(state) => state.setAvailableProfileIds,
 	);
-	const availableProfilesNames = useColombusStore(
-		(state) => state.availableProfilesNames,
+	const availableProfileIds = useColombusStore(
+		(state) => state.availableProfileIds,
 	);
-	const filteredProfilesNames = useColombusStore(
-		(state) => state.filteredProfilesNames,
+	const filteredProfileIds = useColombusStore(
+		(state) => state.filteredProfileIds,
 	);
-	const setFilteredProfilesNames = useColombusStore(
-		(state) => state.setFilteredProfilesNames,
+	const setFilteredProfileIds = useColombusStore(
+		(state) => state.setFilteredProfileIds,
 	);
 
 	const {
@@ -126,23 +126,23 @@ function ExplorerProjectIdPage() {
 			return;
 		}
 		let cancelled = false;
-		const applyResults = (names: string[], ppmData: PpmResult[]) => {
+		const applyResults = (ids: string[], ppmData: PpmResult[]) => {
 			if (cancelled) {
 				return;
 			}
-			const available = new Set(names);
-			setAvailableProfilesNames(names);
+			const available = new Set(ids);
+			setAvailableProfileIds(ids);
 			setAvailableProfilesWithPpmData(ppmData);
-			setFilteredProfilesNames(
+			setFilteredProfileIds(
 				useColombusStore
 					.getState()
-					.filteredProfilesNames.filter((name) => available.has(name)),
+					.filteredProfileIds.filter((id) => available.has(id)),
 			);
 			setIsLoading(false);
 		};
 		const applyPpmResults = (results: PpmResult[]) =>
 			applyResults(
-				[...new Set(results.map(({ profile_name }) => profile_name))],
+				[...new Set(results.map(({ profile_id }) => profile_id))],
 				results,
 			);
 		const handleError = (error: unknown) => {
@@ -165,14 +165,14 @@ function ExplorerProjectIdPage() {
 			postApplyPpmFilter(projectId, currentPattern.groups)
 				.then(applyPpmResults)
 				.catch(handleError);
-		} else if (currentPattern?.name) {
+		} else if (currentPattern?.id !== undefined) {
 			setIsLoading(true);
-			postApplyPpmFilterByName(projectId, currentPattern.name)
+			postApplySavedPpmFilter(projectId, currentPattern.id)
 				.then(applyPpmResults)
 				.catch(handleError);
 		} else {
 			applyResults(
-				profileSummaries.map(({ name }) => name),
+				profileSummaries.map(({ id }) => id),
 				[],
 			);
 		}
@@ -184,15 +184,10 @@ function ExplorerProjectIdPage() {
 		projectValidity,
 		currentPattern,
 		profileSummaries,
-		setFilteredProfilesNames,
-		setAvailableProfilesNames,
+		setFilteredProfileIds,
+		setAvailableProfileIds,
 		setAvailableProfilesWithPpmData,
 	]);
-
-	const profileIdsByName = useMemo(
-		() => new Map((profileSummaries ?? []).map(({ id, name }) => [name, id])),
-		[profileSummaries],
-	);
 
 	useEffect(() => {
 		if (projectId === undefined) {
@@ -200,11 +195,11 @@ function ExplorerProjectIdPage() {
 		}
 		const cache = nodesCache.current;
 		const selectedNodes = () =>
-			filteredProfilesNames.flatMap((name) => {
-				const nodes = cache.get(name);
+			filteredProfileIds.flatMap((id) => {
+				const nodes = cache.get(id);
 				return nodes === undefined ? [] : [nodes];
 			});
-		const missing = filteredProfilesNames.filter((name) => !cache.has(name));
+		const missing = filteredProfileIds.filter((id) => !cache.has(id));
 		setNodesError(null);
 		if (missing.length === 0) {
 			setIsNodesLoading(false);
@@ -213,14 +208,10 @@ function ExplorerProjectIdPage() {
 		}
 		let cancelled = false;
 		setIsNodesLoading(true);
-		const missingIds = missing.flatMap((name) => {
-			const id = profileIdsByName.get(name);
-			return id === undefined ? [] : [id];
-		});
-		getGraphNodes(projectId, missingIds)
+		getGraphNodes(projectId, missing)
 			.then((nodes) => {
 				for (const node of nodes) {
-					cache.set(node.name, node);
+					cache.set(node.id, node);
 				}
 				if (!cancelled) {
 					setFilteredWorkflowsNodes(selectedNodes());
@@ -242,7 +233,7 @@ function ExplorerProjectIdPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [projectId, filteredProfilesNames, profileIdsByName]);
+	}, [projectId, filteredProfileIds]);
 
 	useEffect(() => {
 		if (isLoading) {
@@ -402,17 +393,17 @@ function ExplorerProjectIdPage() {
 
 	const hasPattern =
 		(currentPattern?.groups?.length ?? 0) > 0 ||
-		(currentPattern?.name ?? "") !== "";
+		currentPattern?.id !== undefined;
 	const graphEmptyMessage = (() => {
 		if (summaryError !== null || profileSummaries === null) {
 			return null;
 		}
-		if (availableProfilesNames.length === 0) {
+		if (availableProfileIds.length === 0) {
 			return hasPattern
 				? "No notebook matches this pattern."
 				: "No notebooks yet. Import profiles to get started.";
 		}
-		if (filteredProfilesNames.length === 0) {
+		if (filteredProfileIds.length === 0) {
 			return "Select notebooks to display them.";
 		}
 		return null;

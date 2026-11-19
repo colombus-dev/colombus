@@ -12,15 +12,15 @@ export default function useGraph(
 	graphDefinitions: GraphDefinition[] | undefined,
 ) {
 	const displayedLevel = useColombusStore((state) => state.displayedLevel);
-	const filteredProfilesNames = useColombusStore(
-		(state) => state.filteredProfilesNames,
+	const filteredProfileIds = useColombusStore(
+		(state) => state.filteredProfileIds,
 	);
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const availableProfilesWithPpmData = useColombusStore(
 		(state) => state.availableProfilesWithPpmData,
 	);
-	const availableProfilesNames = useColombusStore(
-		(state) => state.availableProfilesNames,
+	const availableProfileIds = useColombusStore(
+		(state) => state.availableProfileIds,
 	);
 
 	const graph = useRef<Graph>(new Graph());
@@ -78,27 +78,27 @@ export default function useGraph(
 		let addedX = 0;
 		let addedY = 0;
 		const positions = new Map(
-			availableProfilesNames.map((name, index) => [name, index]),
+			availableProfileIds.map((id, index) => [id, index]),
 		);
-		const selected = new Set(filteredProfilesNames);
+		const selected = new Set(filteredProfileIds);
 		const ppmByProfile = new Map<string, PpmResult[]>();
 		for (const pr of availableProfilesWithPpmData) {
-			const group = ppmByProfile.get(pr.profile_name);
+			const group = ppmByProfile.get(pr.profile_id);
 			if (group === undefined) {
-				ppmByProfile.set(pr.profile_name, [pr]);
+				ppmByProfile.set(pr.profile_id, [pr]);
 			} else {
 				group.push(pr);
 			}
 		}
 		const sortedGraphDefinition = graphDefinitions
-			.filter((profile) => selected.has(profile.name))
+			.filter((profile) => selected.has(profile.id))
 			.toSorted(
 				(a, b) =>
-					(positions.get(a.name) ?? Number.MAX_SAFE_INTEGER) -
-					(positions.get(b.name) ?? Number.MAX_SAFE_INTEGER),
+					(positions.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
+					(positions.get(b.id) ?? Number.MAX_SAFE_INTEGER),
 			);
 		for (const profile of sortedGraphDefinition) {
-			const ppmResData = ppmByProfile.get(profile.name) ?? [];
+			const ppmResData = ppmByProfile.get(profile.id) ?? [];
 			addNewProfile(profile, ppmResData, currentPattern, addedX, addedY);
 			addedY -= 50 * (displayedLevel + 2);
 			addedX = 1;
@@ -106,9 +106,9 @@ export default function useGraph(
 	}, [
 		graphDefinitions,
 		availableProfilesWithPpmData,
-		availableProfilesNames,
+		availableProfileIds,
 		currentPattern,
-		filteredProfilesNames,
+		filteredProfileIds,
 		displayedLevel,
 		addNewProfile,
 	]);

@@ -36,8 +36,8 @@ export default function ProfileCodeViewer({
 	const setSelectedProfileNodeId = useColombusStore(
 		(state) => state.setSelectedProfileNodeId,
 	);
-	const setSelectedProfileName = useColombusStore(
-		(state) => state.setSelectedProfileName,
+	const setSelectedProfileId = useColombusStore(
+		(state) => state.setSelectedProfileId,
 	);
 
 	const selectedNodeId =
@@ -50,12 +50,12 @@ export default function ProfileCodeViewer({
 			setSelectedProfileNodeId(id);
 			if (id && nodes) {
 				const node = nodes.find((n) => n.id === id);
-				setSelectedProfileName(node ? node.name : null);
+				setSelectedProfileId(node ? node.id : null);
 			} else {
-				setSelectedProfileName(null);
+				setSelectedProfileId(null);
 			}
 		},
-		[nodes, setSelectedProfileNodeId, setSelectedProfileName],
+		[nodes, setSelectedProfileNodeId, setSelectedProfileId],
 	);
 
 	const [selectedStepIds, setSelectedStepIds] = useState<Set<string>>(
@@ -95,7 +95,7 @@ export default function ProfileCodeViewer({
 	const matchedStepIds = useMemo(() => {
 		if (!activeNode || !currentPattern) return new Set<string>();
 		const profileMatches = availableProfilesWithPpmData.filter(
-			(p) => p.profile_name === activeNode.name,
+			(p) => p.profile_id === activeNode.id,
 		);
 		return new Set(profileMatches.flatMap((p) => p.results.flat()));
 	}, [activeNode, currentPattern, availableProfilesWithPpmData]);

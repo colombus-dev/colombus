@@ -171,12 +171,12 @@ export async function postApplyPpmFilter(
 		.then(({ data }) => data);
 }
 
-export async function postApplyPpmFilterByName(
+export async function postApplySavedPpmFilter(
 	projectId: string,
-	name: string,
+	patternId: string,
 ) {
 	return await axiosInstance
-		.post<PpmResult[]>(`/projects/${projectId}/patterns/${name}/execute`)
+		.post<PpmResult[]>(`/projects/${projectId}/patterns/${patternId}/execute`)
 		.then(({ data }) => data);
 }
 
@@ -229,8 +229,10 @@ export async function postSavePpm(projectId: string, pattern: Pattern) {
 		.then(({ data }) => data);
 }
 
-export async function deletePpm(projectId: string, name: string) {
-	return await axiosInstance.delete(`/projects/${projectId}/patterns/${name}`);
+export async function deletePpm(projectId: string, patternId: string) {
+	return await axiosInstance.delete(
+		`/projects/${projectId}/patterns/${patternId}`,
+	);
 }
 
 export async function getOutputImagesForStep(
@@ -244,22 +246,22 @@ export async function getOutputImagesForStep(
 
 export async function postFrequentPatternsMatrixPlotly(
 	projectId: string,
-	profilesNames?: string[],
+	profileIds?: string[],
 ) {
 	return await axiosInstance
 		.post<any>(`/projects/${projectId}/stats/patterns`, {
-			profiles_names: profilesNames,
+			profile_ids: profileIds,
 		})
 		.then(({ data }) => data);
 }
 
 export async function postFrequentStepsData(
 	projectId: string,
-	profilesNames?: string[],
+	profileIds?: string[],
 ) {
 	return await axiosInstance
 		.post<[string, number][]>(`/projects/${projectId}/stats/steps/frequency`, {
-			profiles_names: profilesNames,
+			profile_ids: profileIds,
 		})
 		.then(({ data }) => data.map((d) => ({ step: d[0], frequency: d[1] })));
 }

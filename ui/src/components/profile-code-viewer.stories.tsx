@@ -91,6 +91,7 @@ const mockNodes: GraphDefinition[] = [
 
 const mockPpmData: PpmResult[] = [
 	{
+		profile_id: "notebook_1",
 		profile_name: "notebook_1.ipynb",
 		results: [["step_0"], ["step_2"]],
 	},
