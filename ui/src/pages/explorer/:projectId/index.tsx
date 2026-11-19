@@ -25,7 +25,7 @@ import usePatternActions from "@/hooks/explorer/usePatternActions";
 import useGraph from "@/hooks/useGraph";
 import useGraphPpm from "@/hooks/useGraphPpm";
 import useProject from "@/hooks/useProject";
-import { MAX_SELECTED_PROFILES, PATH } from "@/lib/constants";
+import { PATH } from "@/lib/constants";
 import type { PpmResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
@@ -404,7 +404,7 @@ function ExplorerProjectIdPage() {
 				: "No notebooks yet. Import profiles to get started.";
 		}
 		if (filteredProfilesNames.length === 0) {
-			return `Select up to ${MAX_SELECTED_PROFILES} notebooks in Results to display them.`;
+			return "Select notebooks to display them.";
 		}
 		return null;
 	})();

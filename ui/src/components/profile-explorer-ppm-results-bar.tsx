@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MAX_SELECTED_PROFILES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useColombusStore } from "@/store";
 
@@ -81,13 +80,11 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 		}
 	};
 
-	const isSelectionFull = selectedNames.size >= MAX_SELECTED_PROFILES;
-
 	const toggleProfile = (name: string) => {
 		const next = new Set(selectedNames);
 		if (next.has(name)) {
 			next.delete(name);
-		} else if (!isSelectionFull) {
+		} else {
 			next.add(name);
 		}
 		setFilteredProfilesNames([...next]);
@@ -144,7 +141,6 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 			<ul className="space-y-0.5">
 				{visibleNames.slice(0, renderCount).map((name) => {
 					const isSelected = selectedNames.has(name);
-					const isDisabled = !isSelected && isSelectionFull;
 					const checkboxId = `result-cb-${name}`;
 					const matchCount = matchCounts.get(name);
 					return (
@@ -159,17 +155,11 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 							<Checkbox
 								id={checkboxId}
 								checked={isSelected}
-								disabled={isDisabled}
 								onCheckedChange={() => toggleProfile(name)}
 							/>
 							<Label
 								htmlFor={checkboxId}
-								className={cn(
-									"min-w-0 flex-1 truncate text-xs font-normal",
-									isDisabled
-										? "cursor-not-allowed text-muted-foreground"
-										: "cursor-pointer",
-								)}
+								className="min-w-0 flex-1 cursor-pointer truncate text-xs font-normal"
 							>
 								{name}
 							</Label>
@@ -216,13 +206,8 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 				disabled={!isReady || availableProfilesNames.length === 0}
 			/>
 			<div className="flex items-center justify-between gap-2 border-b px-1 pb-2">
-				<span
-					className={cn(
-						"text-xs tabular-nums",
-						isSelectionFull ? "text-foreground" : "text-muted-foreground",
-					)}
-				>
-					{selectedNames.size}/{MAX_SELECTED_PROFILES} selected
+				<span className="text-xs tabular-nums text-muted-foreground">
+					{selectedNames.size} selected
 				</span>
 				<Button
 					variant="ghost"
