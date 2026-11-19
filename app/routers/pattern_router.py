@@ -13,6 +13,7 @@ from app.models.sql_model import Pattern
 from app.service.ppm_flink import run_ppm_flink
 from app.service.ppm_sql import run_ppm_sql, run_saved_ppm_sql
 from app.settings import get_settings
+from app.utils import natural_key
 from app.utils.convert_canopus_to_legacy import convert_pattern_to_legacy
 
 settings = get_settings()
@@ -75,7 +76,7 @@ async def parse_ppm(
 
 
 def _sort_by_profile_name(results: list[PpmResult]) -> list[PpmResult]:
-    return sorted(results, key=lambda result: result.profile_name)
+    return sorted(results, key=lambda result: natural_key(result.profile_name))
 
 
 @router.post("/api/projects/{project_id}/patterns/execute")

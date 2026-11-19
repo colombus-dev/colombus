@@ -1,4 +1,8 @@
+import re
+
 from app.constants import __TMP_ENCODING_MAPPING
+
+_DIGITS = re.compile(r"(\d+)")
 
 
 def format_template(
@@ -27,3 +31,10 @@ def encode_step_name(step_name: str) -> str:
 
 def encode_profile(all_steps_names: list[str]) -> str:
     return "".join(__TMP_ENCODING_MAPPING[step_name] for step_name in all_steps_names)
+
+
+def natural_key(value: str) -> list[int | str]:
+    return [
+        int(part) if part.isdigit() else part.casefold()
+        for part in _DIGITS.split(value)
+    ]

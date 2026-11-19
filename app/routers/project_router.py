@@ -11,6 +11,7 @@ from app.dependencies import DatabaseSession
 from app.exceptions import ElementNotFoundException
 from app.models.sql_model import Profile, Project
 from app.service import project_service
+from app.utils import natural_key
 from app.utils.file_helper import check_files
 
 router = APIRouter()
@@ -48,11 +49,12 @@ def get_project(project_id: uuid.UUID, session: DatabaseSession) -> ProjectDetai
     if project is None:
         raise ElementNotFoundException("project")
     score = col(Profile.json_profile)["score"].as_float()
-    rows = session.exec(
-        select(Profile.name, score)
-        .where(Profile.project_id == project_id)
-        .order_by(col(Profile.name))
-    ).all()
+    rows = sorted(
+        session.exec(
+            select(Profile.name, score).where(col(Profile.project_id) == project_id)
+        ).all(),
+        key=lambda row: natural_key(row[0]),
+    )
     return ProjectDetails(
         id=project.id,
         name=project.name,
