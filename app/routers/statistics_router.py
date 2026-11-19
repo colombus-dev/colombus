@@ -9,7 +9,6 @@ from fastapi import APIRouter
 from fastapi.responses import Response, StreamingResponse
 from plotly import express as px
 from pydantic import BaseModel
-from seaborn import color_palette
 from sqlmodel import col, func, select
 
 from app.constants import __TMP_ENCODING_MAPPING
@@ -18,6 +17,20 @@ from app.models.sql_model import Profile, Step
 from app.utils.diff_stats_exploration import get_frequent_patterns_matrix
 
 router = APIRouter()
+
+ROCKET_COLOR_SCALE = [
+    "#03051a",
+    "#271534",
+    "#4c1d4b",
+    "#751f58",
+    "#a11a5b",
+    "#cb1b4f",
+    "#e83f3f",
+    "#f26f4c",
+    "#f69c73",
+    "#f7c6a6",
+    "#faebdd",
+]
 
 
 @router.get("/api/projects/{project_id}/stats")
@@ -107,13 +120,11 @@ async def post_project_stats_patterns(
 
     hover_labels = ["<br>".join(wrap(label, width=50)) for label in full_labels]
 
-    rocket_colors = color_palette("rocket", as_cmap=False, n_colors=256).as_hex()
-
     fig = px.imshow(
         matrix_top,
         aspect="auto",
         labels=dict(x="Position in the profile (in %)", y="Pattern", color="Frequency"),
-        color_continuous_scale=rocket_colors,
+        color_continuous_scale=ROCKET_COLOR_SCALE,
     )
     fig.update_traces(
         customdata=[[label] * len(matrix_top.columns) for label in hover_labels],
