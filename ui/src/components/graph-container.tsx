@@ -1,5 +1,5 @@
-import { Loader2 } from "lucide-react";
 import type { Sigma } from "sigma";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import GraphControls from "./graph-controls";
 import ProfileExplorerGraphSettingsBar from "./profile-explorer-graph-settings-bar";
@@ -30,10 +30,7 @@ export default function GraphContainer({
 			/>
 			{isLoading && (
 				<div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-					<Loader2
-						aria-label="Loading"
-						className="size-6 animate-spin text-muted-foreground"
-					/>
+					<Spinner />
 				</div>
 			)}
 			{!isLoading && message !== null && (

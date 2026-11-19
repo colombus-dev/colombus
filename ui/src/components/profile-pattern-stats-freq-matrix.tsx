@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import Plot from "react-plotly.js";
 import { useParams } from "react-router";
-import { BounceLoader } from "react-spinners";
 import { postFrequentPatternsMatrixPlotly } from "@/api/client";
 import { SectionHeading } from "@/components/section-heading";
+import { Spinner } from "@/components/ui/spinner";
 import { useColombusStore } from "@/store";
 
 const ProfilePatternStatsFreqMatrix: React.FunctionComponent<
@@ -84,7 +84,7 @@ const ProfilePatternStatsFreqMatrix: React.FunctionComponent<
 			/>
 			<div className="flex-1 w-full h-full min-h-100 relative">
 				{isLoading ? (
-					<BounceLoader color="green" loading={isLoading} />
+					<Spinner />
 				) : plotData ? (
 					<Plot
 						data={plotData.data}

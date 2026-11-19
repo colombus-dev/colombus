@@ -3,8 +3,8 @@ import Editor, { useMonaco } from "@monaco-editor/react";
 import _ from "lodash";
 import type * as monaco_editor from "monaco-editor";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BounceLoader } from "react-spinners";
 import ProfilePatternActions from "@/components/profile-pattern-actions";
+import { Spinner } from "@/components/ui/spinner";
 import useCanopusCompletion from "@/hooks/editor/useCanopusCompletion";
 import useCanopusGrammar from "@/hooks/editor/useCanopusGrammar";
 import useCanopusTheme from "@/hooks/editor/useCanopusTheme";
@@ -96,7 +96,16 @@ export default function PatternDslEditor({
 	);
 
 	if (!themeName) {
-		return <BounceLoader color="green" loading={true} />;
+		return (
+			<div
+				className={cn(
+					"flex min-h-0 items-center justify-center",
+					props.className,
+				)}
+			>
+				<Spinner />
+			</div>
+		);
 	}
 
 	return (
