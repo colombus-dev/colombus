@@ -105,21 +105,22 @@ export async function deleteProject(projectId: string) {
 	await axiosInstance.delete(`/projects/${projectId}`);
 }
 
-export async function getGraphNodes(
-	projectId: string,
-	profilesNames: string[],
-) {
-	if (profilesNames.length === 0) {
+export async function getGraphNodes(projectId: string, profileIds: string[]) {
+	if (profileIds.length === 0) {
 		return Promise.resolve<GraphDefinition[]>([]);
 	}
 	return await axiosInstance
 		.post<GraphDefinition[]>(`/projects/${projectId}/profiles/nodes`, {
-			names: profilesNames,
+			ids: profileIds,
 		})
 		.then(({ data }) => data);
 }
 
-export type ProfileSummary = { name: string; score: number | null };
+export type ProfileSummary = {
+	id: string;
+	name: string;
+	score: number | null;
+};
 
 export type ProjectDetails = Project & { profiles: ProfileSummary[] };
 

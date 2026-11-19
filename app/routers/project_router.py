@@ -30,6 +30,7 @@ async def create_new_project(
 
 
 class ProfileSummary(BaseModel):
+    id: uuid.UUID
     name: str
     score: float | None
 
@@ -48,14 +49,19 @@ def get_project(project_id: uuid.UUID, session: DatabaseSession) -> ProjectDetai
     score = col(Profile.json_profile)["score"].as_float()
     rows = sorted(
         session.exec(
-            select(Profile.name, score).where(col(Profile.project_id) == project_id)
+            select(Profile.id, Profile.name, score).where(
+                col(Profile.project_id) == project_id
+            )
         ).all(),
-        key=lambda row: natural_key(row[0]),
+        key=lambda row: natural_key(row[1]),
     )
     return ProjectDetails(
         id=project.id,
         name=project.name,
-        profiles=[ProfileSummary(name=name, score=value) for name, value in rows],
+        profiles=[
+            ProfileSummary(id=profile_id, name=name, score=value)
+            for profile_id, name, value in rows
+        ],
     )
 
 

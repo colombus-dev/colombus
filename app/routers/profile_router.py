@@ -34,7 +34,7 @@ from app.service.kaggle_service import (
 
 
 class ProfileNodesPayload(BaseModel):
-    names: list[str]
+    ids: list[uuid.UUID]
 
 
 @router.post(
@@ -48,7 +48,7 @@ def get_profiles_nodes(
 ) -> list[ProfileNodes]:
     results = session.exec(
         select(Profile)
-        .where(Profile.project_id == project_id, col(Profile.name).in_(payload.names))
+        .where(Profile.project_id == project_id, col(Profile.id).in_(payload.ids))
         .options(
             selectinload(Profile.steps),  # pyright: ignore[reportArgumentType]
             selectinload(Profile.meta_instructions),  # pyright: ignore[reportArgumentType]

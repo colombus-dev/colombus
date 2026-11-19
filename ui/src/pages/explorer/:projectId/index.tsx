@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import type { GraphDefinition } from "@/api/client";
@@ -189,6 +189,11 @@ function ExplorerProjectIdPage() {
 		setAvailableProfilesWithPpmData,
 	]);
 
+	const profileIdsByName = useMemo(
+		() => new Map((profileSummaries ?? []).map(({ id, name }) => [name, id])),
+		[profileSummaries],
+	);
+
 	useEffect(() => {
 		if (projectId === undefined) {
 			return;
@@ -208,7 +213,11 @@ function ExplorerProjectIdPage() {
 		}
 		let cancelled = false;
 		setIsNodesLoading(true);
-		getGraphNodes(projectId, missing)
+		const missingIds = missing.flatMap((name) => {
+			const id = profileIdsByName.get(name);
+			return id === undefined ? [] : [id];
+		});
+		getGraphNodes(projectId, missingIds)
 			.then((nodes) => {
 				for (const node of nodes) {
 					cache.set(node.name, node);
@@ -233,7 +242,7 @@ function ExplorerProjectIdPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [projectId, filteredProfilesNames]);
+	}, [projectId, filteredProfilesNames, profileIdsByName]);
 
 	useEffect(() => {
 		if (isLoading) {
