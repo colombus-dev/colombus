@@ -21,13 +21,6 @@ export const supportedSteps = [
 	"Save Results",
 ];
 
-export const metacharacterSTARTS = "^";
-export const metacharacterENDS = "$";
-export const metacharacterOR = "|";
-export const metacharacterNOT = "!";
-export const metacharacterSTAR = "*";
-export const metacharacterPLUS = "+";
-
 // graph styling configuration
 
 export const colors = [

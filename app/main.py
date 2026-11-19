@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.constants import REQUEST_TIMEOUT_SECONDS, notebooks_storage_path
+from app.constants import REQUEST_TIMEOUT_SECONDS
 from app.dependencies import APIKeyDeps
 from app.models.sql_model import initialize
 from app.routers import (
@@ -26,7 +26,6 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    notebooks_storage_path.mkdir(parents=True, exist_ok=True)
     initialize()
     yield
     # TODO: close database session?

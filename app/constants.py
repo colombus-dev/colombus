@@ -1,7 +1,3 @@
-from pathlib import Path
-
-notebooks_storage_path = Path("./data/notebooks")
-
 PROFILE_FILE_EXTENSION = ".json"
 NOTEBOOK_FILE_EXTENSION = ".ipynb"
 

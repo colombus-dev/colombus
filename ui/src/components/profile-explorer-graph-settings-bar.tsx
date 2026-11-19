@@ -25,9 +25,6 @@ const DISPLAYED_LEVEL_ITEMS = [
 const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 	React.HTMLAttributes<HTMLDivElement>
 > = ({ ...divProps }) => {
-	const referenceDiffProfile = useColombusStore(
-		(state) => state.referenceDiffProfile,
-	);
 	const currentPattern = useColombusStore((state) => state.currentPattern);
 	const displayedLevel = useColombusStore((state) => state.displayedLevel);
 	const setDisplayedLevel = useColombusStore(
@@ -94,7 +91,7 @@ const ProfileExplorerGraphSettingsBar: React.FunctionComponent<
 							onValueChange={(value) =>
 								setPatternCapturedNodesDisplayMode(value)
 							}
-							disabled={!referenceDiffProfile && !currentPattern}
+							disabled={currentPattern === undefined}
 							className="w-fit"
 						>
 							<div className="flex items-center gap-3">

@@ -1,10 +1,5 @@
-import asyncio
-import json
 import logging
-import re
-import tempfile
 import uuid
-from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
@@ -13,7 +8,7 @@ from sqlmodel import col, select
 
 from app.constants import NOTEBOOK_FILE_EXTENSION, PROFILE_FILE_EXTENSION
 from app.dependencies import DatabaseSession
-from app.exceptions import ElementNotFoundException, UnsupportedTaxonomyException
+from app.exceptions import UnsupportedTaxonomyException
 from app.models.api_model import Profile as JsonProfile
 from app.models.api_model import ProfileNodes
 from app.models.sql_model import Profile
@@ -36,17 +31,6 @@ from app.service.kaggle_service import (
     list_kaggle_competition_notebooks,
     pull_kaggle_notebooks,
 )
-
-
-@router.get("/api/projects/{project_id}/profiles/json")
-async def get_json_profile(
-    project_id: uuid.UUID, profile_name: str, session: DatabaseSession
-):
-    return session.exec(
-        select(Profile.json_profile).where(
-            Profile.project_id == project_id, Profile.name == profile_name
-        )
-    ).all()
 
 
 class ProfileNodesPayload(BaseModel):
@@ -83,27 +67,6 @@ def get_profiles_nodes(
     ]
 
 
-@router.get("/api/projects/{project_id}/profiles/{profile_id}")
-async def get_profile(
-    project_id: uuid.UUID,
-    profile_id: uuid.UUID,
-    session: DatabaseSession,
-) -> JsonProfile:
-    profile = session.exec(
-        select(Profile).where(
-            Profile.project_id == project_id, Profile.id == profile_id
-        )
-    ).one_or_none()
-    if not profile:
-        raise ElementNotFoundException("profile")
-    return JsonProfile(  # pyright: ignore[reportCallIssue]
-        name=profile.name,
-        steps=[  # pyright: ignore[reportCallIssue]
-            s for s in sorted(profile.steps, key=lambda step: step.position)
-        ],
-    )
-
-
 @router.post("/api/projects/{project_id}/profiles")
 async def import_multiple_profile(
     project_id: uuid.UUID,
@@ -128,23 +91,6 @@ async def import_multiple_profile(
         save_notebook_as_sql(project_id, profile, session)
     session.commit()
     return [profile.name for profile in all_profiles_to_import]
-
-
-@router.delete("/api/projects/{project_id}/profiles/{profile_id}")
-async def delete_profile(
-    project_id: uuid.UUID,
-    profile_id: uuid.UUID,
-    session: DatabaseSession,
-):
-    profile = session.exec(
-        select(Profile).where(
-            Profile.project_id == project_id, Profile.id == profile_id
-        )
-    ).one_or_none()
-    if not profile:
-        raise ElementNotFoundException("profile")
-    session.delete(profile)
-    session.commit()
 
 
 @router.get("/api/kaggle/status")

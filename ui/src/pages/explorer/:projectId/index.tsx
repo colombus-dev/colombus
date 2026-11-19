@@ -5,10 +5,13 @@ import type { GraphDefinition } from "@/api/client";
 import {
 	getApiErrorMessage,
 	getGraphNodes,
+	getKaggleCompetitionNotebooks,
 	getKaggleStatus,
 	postApplyPpmFilter,
 	postApplyPpmFilterByName,
+	postImportKaggle,
 	postNotebookOrProfiles,
+	searchKaggleCompetitions,
 } from "@/api/client";
 import GraphContainer from "@/components/graph-container";
 import ImportModal from "@/components/import-modal";
@@ -302,19 +305,19 @@ function ExplorerProjectIdPage() {
 			if (!projectId) {
 				return Promise.resolve({ notebooks: [], next_page_token: null });
 			}
-			return import("@/api/client")
-				.then(({ getKaggleCompetitionNotebooks }) =>
-					getKaggleCompetitionNotebooks(projectId, competition, pageToken),
-				)
-				.catch((error: any) => {
-					console.error("Failed to search Kaggle competition", error);
-					const detail = error?.response?.data?.detail;
-					throw new Error(
-						typeof detail === "string"
-							? detail
-							: "Failed to search Kaggle competition. Please check the inputs.",
-					);
-				});
+			return getKaggleCompetitionNotebooks(
+				projectId,
+				competition,
+				pageToken,
+			).catch((error: any) => {
+				console.error("Failed to search Kaggle competition", error);
+				const detail = error?.response?.data?.detail;
+				throw new Error(
+					typeof detail === "string"
+						? detail
+						: "Failed to search Kaggle competition. Please check the inputs.",
+				);
+			});
 		},
 		[projectId],
 	);
@@ -346,20 +349,18 @@ function ExplorerProjectIdPage() {
 					let allPosted: string[] = [];
 					let promiseChain = Promise.resolve();
 
-					return import("@/api/client").then(({ postImportKaggle }) => {
-						for (let i = 0; i < slugsToImport.length; i++) {
-							promiseChain = promiseChain.then(() =>
-								postImportKaggle(projectId, {
-									slugs: [slugsToImport[i]],
-									scores: payload.scores,
-								}).then((r) => {
-									allPosted = [...allPosted, ...r];
-								}),
-							);
-						}
-						return promiseChain.then(() => {
-							setPostedProfiles(allPosted);
-						});
+					for (const slug of slugsToImport) {
+						promiseChain = promiseChain.then(() =>
+							postImportKaggle(projectId, {
+								slugs: [slug],
+								scores: payload.scores,
+							}).then((r) => {
+								allPosted = [...allPosted, ...r];
+							}),
+						);
+					}
+					return promiseChain.then(() => {
+						setPostedProfiles(allPosted);
 					});
 				})
 				.catch((error: any) => {
@@ -383,19 +384,15 @@ function ExplorerProjectIdPage() {
 			if (!projectId) {
 				return Promise.resolve([]);
 			}
-			return import("@/api/client")
-				.then(({ searchKaggleCompetitions }) =>
-					searchKaggleCompetitions(projectId, search),
-				)
-				.catch((error: any) => {
-					console.error("Failed to search Kaggle competitions", error);
-					const detail = error?.response?.data?.detail;
-					throw new Error(
-						typeof detail === "string"
-							? detail
-							: "Failed to search Kaggle competitions. Please check the inputs.",
-					);
-				});
+			return searchKaggleCompetitions(projectId, search).catch((error: any) => {
+				console.error("Failed to search Kaggle competitions", error);
+				const detail = error?.response?.data?.detail;
+				throw new Error(
+					typeof detail === "string"
+						? detail
+						: "Failed to search Kaggle competitions. Please check the inputs.",
+				);
+			});
 		},
 		[projectId],
 	);

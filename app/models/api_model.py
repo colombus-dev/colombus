@@ -103,10 +103,3 @@ class RegexCompatibleProfileElement(BaseModel):
     algoName: str
     library: str
     function: str
-
-
-# Diff
-
-
-class DiffResult(PpmResult):
-    ratio: float

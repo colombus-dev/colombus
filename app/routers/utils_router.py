@@ -1,20 +1,13 @@
 import uuid
-from difflib import SequenceMatcher
 from typing import Sequence
 
 from fastapi import APIRouter
-from pydantic import BaseModel
 from sqlmodel import select
 
-from app.constants import __TMP_ENCODING_MAPPING
 from app.dependencies import DatabaseSession
-from app.models.api_model import (
-    DiffResult,
-    PatternGroup,
-    RegexCompatibleProfileElement,
-)
+from app.models.api_model import PatternGroup, RegexCompatibleProfileElement
 from app.models.api_model import Profile as JsonProfile
-from app.models.sql_model import CellOutput, Profile, Step
+from app.models.sql_model import CellOutput
 from app.utils.convert_ppm_to_regex import convert_pattern_to_regex
 
 router = APIRouter()
@@ -52,48 +45,3 @@ async def generate_profile_regex(
         for se in profile.source
         for mi in se["tasks"]
     ]
-
-
-class PostDiffSortPayload(BaseModel):
-    profiles_to_diff: list[str]
-
-
-@router.post("/api/utils/diff/sort")
-async def post_diff_sort(
-    payload: PostDiffSortPayload, session: DatabaseSession
-) -> list[DiffResult]:
-    if len(payload.profiles_to_diff) == 1:
-        return []
-
-    profiles_ids: list[uuid.UUID] = []
-    for ptd in payload.profiles_to_diff:
-        profile_id = session.exec(select(Profile.id).where(Profile.name == ptd)).first()
-        if profile_id:
-            profiles_ids.append(profile_id)
-
-    profiles_content: list[Sequence[tuple[uuid.UUID, str]]] = []
-    for pid in profiles_ids:
-        profiles_content.append(
-            session.exec(select(Step.id, Step.name).where(Step.profile_id == pid)).all()
-        )
-
-    results: list[DiffResult] = []
-    ref_element = "-".join(
-        [__TMP_ENCODING_MAPPING[pe[1]] for pe in profiles_content[0]]
-    )
-    seq_match = SequenceMatcher(isjunk=None, a=ref_element)
-
-    for i, (ptd, pc) in enumerate(zip(payload.profiles_to_diff, profiles_content)):
-        seq_match.set_seq2("-".join([__TMP_ENCODING_MAPPING[pe[1]] for pe in pc]))
-        results.append(
-            DiffResult(
-                profile_name=ptd,
-                results=[
-                    [e[0] for e in profiles_content[i][b[1] : b[1] + b[2]]]
-                    for b in seq_match.get_matching_blocks()[:-1]
-                ],
-                ratio=seq_match.ratio(),
-            )
-        )
-
-    return sorted(results, key=lambda r: r.ratio, reverse=True)

@@ -1,10 +1,5 @@
 import axios from "axios";
-import type {
-	DiffResult,
-	KaggleNotebookList,
-	PatternGroup,
-	PpmResult,
-} from "@/lib/types";
+import type { KaggleNotebookList, PatternGroup, PpmResult } from "@/lib/types";
 import { Pattern } from "@/lib/types";
 import { useColombusStore } from "@/store";
 
@@ -239,14 +234,6 @@ export async function getOutputImagesForStep(
 ) {
 	return await axiosInstance
 		.get<string[]>(`/projects/${projectId}/steps/${stepId}/outputs`)
-		.then(({ data }) => data);
-}
-
-export async function postDiffSort(profiles: string[]) {
-	return await axiosInstance
-		.post<DiffResult[]>("/utils/diff/sort", {
-			profiles_to_diff: profiles,
-		})
 		.then(({ data }) => data);
 }
 

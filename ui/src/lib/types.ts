@@ -95,10 +95,6 @@ export const PpmResult = z.object({
 
 export type PpmResult = z.infer<typeof PpmResult>;
 
-export const DiffResult = PpmResult.extend({ ratio: z.number() });
-
-export type DiffResult = z.infer<typeof DiffResult>;
-
 // Monaco editor (for DSL)
 export type MonacoEditor = typeof monaco_editor;
 

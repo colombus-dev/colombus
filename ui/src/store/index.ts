@@ -1,21 +1,13 @@
 import type { StateCreator } from "zustand";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import { postDiffSort } from "@/api/client";
 import type { PpmNodesDisplayMode } from "@/configuration";
-import type { DiffResult, Pattern, PpmResult } from "@/lib/types";
+import type { Pattern, PpmResult } from "@/lib/types";
 
 interface AuthSlice {
 	jwtToken?: string;
 	jwtExpiry?: number;
 	setJwtToken: (token: string | undefined, expiry?: number) => void;
-}
-
-interface DiffSlice {
-	referenceDiffProfile?: string;
-	diffResults: DiffResult[];
-	setReferenceDiffProfile: (r: string) => void;
-	resetReferenceDiffProfile: () => void;
 }
 
 interface PatternSlice {
@@ -60,44 +52,10 @@ interface ProjectSlice {
 
 interface ColombusStore
 	extends AuthSlice,
-		DiffSlice,
 		PatternSlice,
 		GraphCustomizationSlice,
 		ProfilesSlice,
 		ProjectSlice {}
-
-const createDiffSlice: StateCreator<ColombusStore, [], [], DiffSlice> = (
-	set,
-	get,
-) => ({
-	referenceDiffProfile: undefined,
-	diffResults: [],
-	setReferenceDiffProfile: async (p) => {
-		/**
-		 * Set the reference diff profile and query/update the results.
-		 */
-		const availableProfilesNames = get().availableProfilesNames;
-		const diffResults = await postDiffSort([
-			p,
-			...availableProfilesNames.filter((n) => n !== p),
-		]);
-		set((state) => ({
-			...state,
-			referenceDiffProfile: p,
-			diffResults,
-			availableProfilesNames: diffResults.map((r) => r.profile_name),
-			availableProfilesWithPpmData: diffResults.map(
-				({ profile_name, results }) => ({ profile_name, results }),
-			),
-		}));
-	},
-	resetReferenceDiffProfile: () =>
-		set((state) => ({
-			...state,
-			referenceDiffProfile: undefined,
-			diffResults: [],
-		})),
-});
 
 const createPatternSlice: StateCreator<ColombusStore, [], [], PatternSlice> = (
 	set,
@@ -175,8 +133,6 @@ const createProjectSlice: StateCreator<ColombusStore, [], [], ProjectSlice> = (
 		set((state) => ({
 			...state,
 			projectName: undefined,
-			referenceDiffProfile: undefined,
-			diffResults: [],
 			currentPattern: undefined,
 			allSavedPatterns: [],
 			availableProfilesNames: [],
@@ -213,7 +169,6 @@ export const useColombusStore = create<ColombusStore>()(
 		persist(
 			(...a) => ({
 				...createAuthSlice(...a),
-				...createDiffSlice(...a),
 				...createPatternSlice(...a),
 				...createGraphCustomizationSlice(...a),
 				...createProfilesSlice(...a),

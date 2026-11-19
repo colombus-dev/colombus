@@ -1,18 +1,15 @@
 import uuid
-from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, UploadFile, status
+from fastapi import APIRouter, status
 from pydantic import BaseModel, StringConstraints
 from sqlmodel import col, select
 
-from app.constants import NOTEBOOK_FILE_EXTENSION, notebooks_storage_path
 from app.dependencies import DatabaseSession
 from app.exceptions import ElementNotFoundException
 from app.models.sql_model import Profile, Project
 from app.service import project_service
 from app.utils import natural_key
-from app.utils.file_helper import check_files
 
 router = APIRouter()
 
@@ -82,25 +79,6 @@ def delete_project(project_id: uuid.UUID, session: DatabaseSession) -> None:
     if project_service.delete_project(session, project_id) == 0:
         raise ElementNotFoundException("project")
     session.commit()
-
-
-class PostNotebooksPayload(BaseModel):
-    notebook_files: list[UploadFile]
-
-
-@router.post("/api/projects/{project_id}/notebooks")
-async def post_notebooks(
-    project_id: uuid.UUID,
-    payload: PostNotebooksPayload,
-) -> str:
-    notebook_files = check_files(payload.notebook_files, NOTEBOOK_FILE_EXTENSION)
-    for file in notebook_files:
-        path_file = Path(file)
-        with open(notebooks_storage_path / path_file.name, "w") as f:
-            file_content = await file.read()
-            f.write(file_content)
-
-    return "ok"
 
 
 class ProjectResponse(BaseModel):

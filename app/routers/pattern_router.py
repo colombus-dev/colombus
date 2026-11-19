@@ -41,11 +41,6 @@ class ParsePpmParams(BaseModel):
     pattern_dsl: str
 
 
-class ExecutePpmResponse(BaseModel):
-    pattern: PatternApi
-    results: list[PpmResult]
-
-
 @router.post("/api/projects/{project_id}/patterns/parse")
 async def parse_ppm(
     project_id: uuid.UUID,
