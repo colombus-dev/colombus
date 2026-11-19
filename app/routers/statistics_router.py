@@ -1,3 +1,4 @@
+import uuid
 from difflib import SequenceMatcher
 from io import BytesIO
 from itertools import groupby
@@ -20,7 +21,7 @@ router = APIRouter()
 
 
 @router.get("/api/projects/{project_id}/stats")
-async def get_project_stats(project_id: str, session: DatabaseSession):
+async def get_project_stats(project_id: uuid.UUID, session: DatabaseSession):
     # TODO: seems duplicated with get_frequent_patterns_matrix
 
     profiles_content = session.exec(
@@ -77,7 +78,7 @@ class PostStatsProfilesFilterPayload(BaseModel):
 
 @router.post("/api/projects/{project_id}/stats/patterns")
 async def post_project_stats_patterns(
-    project_id: str,
+    project_id: uuid.UUID,
     payload: PostStatsProfilesFilterPayload,
     session: DatabaseSession,
 ):
@@ -140,7 +141,7 @@ async def post_project_stats_patterns(
 
 @router.post("/api/projects/{project_id}/stats/steps/frequency")
 async def post_steps_frequency(
-    project_id: str,
+    project_id: uuid.UUID,
     payload: PostStatsProfilesFilterPayload,
     session: DatabaseSession,
 ) -> Sequence[tuple[str, int]]:
