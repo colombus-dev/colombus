@@ -65,13 +65,17 @@ export type Project = { id: string; name: string };
 
 export function getApiErrorMessage(err: any, fallback: string): string {
 	const detail = err?.response?.data?.detail;
-	if (typeof detail === "string") {
+	if (typeof detail === "string" && detail !== "") {
 		return detail;
 	}
 	if (Array.isArray(detail) && typeof detail[0]?.msg === "string") {
 		return detail[0].msg;
 	}
-	if (typeof err?.message === "string" && err.message !== "") {
+	if (
+		err?.response === undefined &&
+		typeof err?.message === "string" &&
+		err.message !== ""
+	) {
 		return err.message;
 	}
 	return fallback;

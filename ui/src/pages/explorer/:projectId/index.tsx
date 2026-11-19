@@ -145,22 +145,16 @@ function ExplorerProjectIdPage() {
 				[...new Set(results.map(({ profile_name }) => profile_name))],
 				results,
 			);
-		const handleError = (error: any) => {
+		const handleError = (error: unknown) => {
 			if (cancelled) {
 				return;
 			}
-			console.error("Pattern execution error:", error);
+			console.error("Failed to execute pattern", error);
 			setIsLoading(false);
-			let detail = error?.response?.data?.detail;
-			if (Array.isArray(detail)) {
-				detail = detail.map((d: any) => d.msg || JSON.stringify(d)).join(", ");
-			} else if (typeof detail === "object" && detail !== null) {
-				detail = JSON.stringify(detail);
-			}
-			const message =
-				typeof detail === "string" && detail !== ""
-					? `Execution failed: ${detail}`
-					: "Execution failed. Please check the pattern syntax.";
+			const message = getApiErrorMessage(
+				error,
+				"Execution failed. Please check the pattern syntax.",
+			);
 			setBackendError(message);
 			toast.error(message);
 		};
@@ -269,13 +263,13 @@ function ExplorerProjectIdPage() {
 				.then(() => {
 					setPostedProfiles(allPosted);
 				})
-				.catch((error: any) => {
+				.catch((error) => {
 					console.error("Failed to import profile(s)", error);
-					const detail = error?.response?.data?.detail;
 					throw new Error(
-						typeof detail === "string"
-							? detail
-							: "Failed to import file(s). Please check the file format.",
+						getApiErrorMessage(
+							error,
+							"Failed to import file(s). Please check the file format.",
+						),
 					);
 				})
 				.finally(() => {
@@ -309,13 +303,13 @@ function ExplorerProjectIdPage() {
 				projectId,
 				competition,
 				pageToken,
-			).catch((error: any) => {
+			).catch((error) => {
 				console.error("Failed to search Kaggle competition", error);
-				const detail = error?.response?.data?.detail;
 				throw new Error(
-					typeof detail === "string"
-						? detail
-						: "Failed to search Kaggle competition. Please check the inputs.",
+					getApiErrorMessage(
+						error,
+						"Failed to search Kaggle competition. Please check the inputs.",
+					),
 				);
 			});
 		},
@@ -363,13 +357,13 @@ function ExplorerProjectIdPage() {
 						setPostedProfiles(allPosted);
 					});
 				})
-				.catch((error: any) => {
+				.catch((error) => {
 					console.error("Failed to import Kaggle competition", error);
-					const detail = error?.response?.data?.detail;
 					throw new Error(
-						typeof detail === "string"
-							? detail
-							: "Failed to import Kaggle competition. Please check the inputs and ensure your backend has Kaggle credentials.",
+						getApiErrorMessage(
+							error,
+							"Failed to import Kaggle competition. Please check the inputs and ensure your backend has Kaggle credentials.",
+						),
 					);
 				})
 				.finally(() => {
@@ -384,13 +378,13 @@ function ExplorerProjectIdPage() {
 			if (!projectId) {
 				return Promise.resolve([]);
 			}
-			return searchKaggleCompetitions(projectId, search).catch((error: any) => {
+			return searchKaggleCompetitions(projectId, search).catch((error) => {
 				console.error("Failed to search Kaggle competitions", error);
-				const detail = error?.response?.data?.detail;
 				throw new Error(
-					typeof detail === "string"
-						? detail
-						: "Failed to search Kaggle competitions. Please check the inputs.",
+					getApiErrorMessage(
+						error,
+						"Failed to search Kaggle competitions. Please check the inputs.",
+					),
 				);
 			});
 		},

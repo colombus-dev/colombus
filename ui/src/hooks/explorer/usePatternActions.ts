@@ -1,12 +1,24 @@
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { getAllPatterns, parsePpm, postSavePpm } from "@/api/client";
+import {
+	getAllPatterns,
+	getApiErrorMessage,
+	parsePpm,
+	postSavePpm,
+} from "@/api/client";
 import { useColombusStore } from "@/store";
 
 interface UsePatternActionsProps {
 	projectId?: string;
 	setIsLoading: (isLoading: boolean) => void;
 	setBackendError: (error: string | null) => void;
+}
+
+function hasExecutableCode(content: string) {
+	return content.split("\n").some((line) => {
+		const trimmed = line.trim();
+		return trimmed.length > 0 && !trimmed.startsWith("#");
+	});
 }
 
 export default function usePatternActions({
@@ -23,16 +35,7 @@ export default function usePatternActions({
 
 	const handleExecuteCodeSubmit = useCallback(
 		(content: string) => {
-			if (!projectId) {
-				return;
-			}
-
-			const hasExecutableCode = content.split("\n").some((line) => {
-				const trimmed = line.trim();
-				return trimmed.length > 0 && !trimmed.startsWith("#");
-			});
-
-			if (!hasExecutableCode) {
+			if (projectId === undefined || !hasExecutableCode(content)) {
 				return;
 			}
 
@@ -42,14 +45,12 @@ export default function usePatternActions({
 				.then((p) => {
 					setCurrentPattern({ ...p, dsl_content: content });
 				})
-				.catch((error: any) => {
-					console.error("Parse pattern error:", error);
-					let detail = error?.response?.data?.detail;
-					if (typeof detail === "object" && detail !== null) {
-						detail = JSON.stringify(detail);
-					}
-					const message =
-						detail || "Failed to execute pattern. Please check the logic.";
+				.catch((error) => {
+					console.error("Failed to parse pattern", error);
+					const message = getApiErrorMessage(
+						error,
+						"Failed to execute pattern. Please check the pattern syntax.",
+					);
 					setBackendError(message);
 					toast.error(message);
 				})
@@ -62,16 +63,7 @@ export default function usePatternActions({
 
 	const handleSaveCodeSubmit = useCallback(
 		(content: string) => {
-			if (!projectId) {
-				return;
-			}
-
-			const hasExecutableCode = content.split("\n").some((line) => {
-				const trimmed = line.trim();
-				return trimmed.length > 0 && !trimmed.startsWith("#");
-			});
-
-			if (!hasExecutableCode) {
+			if (projectId === undefined || !hasExecutableCode(content)) {
 				return;
 			}
 
@@ -85,19 +77,12 @@ export default function usePatternActions({
 					setCurrentPattern(newPattern);
 					toast.success("Pattern saved.");
 				})
-				.catch((error: any) => {
-					console.error("Parse pattern error:", error);
-					let detail = error?.response?.data?.detail;
-					if (Array.isArray(detail)) {
-						detail = detail
-							.map((d: any) => d.msg || JSON.stringify(d))
-							.join(", ");
-					} else if (typeof detail === "object" && detail !== null) {
-						detail = JSON.stringify(detail);
-					}
-					const message =
-						detail ||
-						"Failed to save pattern. Please check the pattern syntax.";
+				.catch((error) => {
+					console.error("Failed to save pattern", error);
+					const message = getApiErrorMessage(
+						error,
+						"Failed to save pattern. Please check the pattern syntax.",
+					);
 					setBackendError(message);
 					toast.error(message);
 				})
