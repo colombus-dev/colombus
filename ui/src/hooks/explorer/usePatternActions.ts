@@ -1,12 +1,6 @@
 import { useCallback } from "react";
 import { toast } from "sonner";
-import {
-	getAllPatterns,
-	parsePpm,
-	postApplyPpmFilter,
-	postApplyPpmFilterByName,
-	postSavePpm,
-} from "@/api/client";
+import { getAllPatterns, parsePpm, postSavePpm } from "@/api/client";
 import { useColombusStore } from "@/store";
 
 interface UsePatternActionsProps {
@@ -85,17 +79,10 @@ export default function usePatternActions({
 			setBackendError(null);
 			parsePpm(projectId, content)
 				.then(async (p) => {
-					// Execute to validate semantics before saving
-					if (p.groups?.length) {
-						await postApplyPpmFilter(projectId, p.groups);
-					} else if (p.name) {
-						await postApplyPpmFilterByName(projectId, p.name);
-					}
 					const newPattern = { ...p, dsl_content: content };
-					setCurrentPattern(newPattern);
 					await postSavePpm(projectId, newPattern);
-					const all = await getAllPatterns(projectId);
-					setAllSavedPatterns(all);
+					setAllSavedPatterns(await getAllPatterns(projectId));
+					setCurrentPattern(newPattern);
 					toast.success("Pattern saved.");
 				})
 				.catch((error: any) => {
@@ -110,7 +97,7 @@ export default function usePatternActions({
 					}
 					const message =
 						detail ||
-						"Failed to save pattern. Please check the pattern semantics.";
+						"Failed to save pattern. Please check the pattern syntax.";
 					setBackendError(message);
 					toast.error(message);
 				})
