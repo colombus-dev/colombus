@@ -6462,16 +6462,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-spinners@npm:^0.17.1":
-  version: 0.17.1
-  resolution: "react-spinners@npm:0.17.1"
-  peerDependencies:
-    react: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-    react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10c0/1cd6ef33b0842d24725957ed3222c46337d6ac5aee1e09b9abe486033c84c258a3f08eef7b3adc84b840db05db33cc9d931301d725a52347450b2d50d110cc2e
-  languageName: node
-  linkType: hard
-
 "react-syntax-highlighter@npm:^16.1.2":
   version: 16.1.2
   resolution: "react-syntax-highlighter@npm:16.1.2"
@@ -7517,7 +7507,6 @@ __metadata:
     react-is: "npm:^19.3.1"
     react-plotly.js: "npm:^4.1.0"
     react-router: "npm:^8.5.1"
-    react-spinners: "npm:^0.17.1"
     react-syntax-highlighter: "npm:^16.1.2"
     recharts: "npm:3.10.1"
     shadcn: "npm:^4.23.0"

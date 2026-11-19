@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { BounceLoader } from "react-spinners";
 import { Legend, PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
 import { postFrequentStepsData } from "@/api/client";
 import { SectionHeading } from "@/components/section-heading";
@@ -10,6 +9,7 @@ import {
 	ChartTooltip,
 	ChartTooltipContent,
 } from "@/components/ui/chart";
+import { Spinner } from "@/components/ui/spinner";
 import { useColombusStore } from "@/store";
 
 const chartConfig = {
@@ -52,7 +52,7 @@ const ProfileStepsFrequencyChart: React.FunctionComponent<
 			/>
 			<div className="flex-1 flex items-center justify-center w-full">
 				{isLoading ? (
-					<BounceLoader color="green" loading={isLoading} />
+					<Spinner />
 				) : (
 					<ChartContainer config={chartConfig} className="w-full max-h-125">
 						<RadarChart data={frequentStepsData}>
