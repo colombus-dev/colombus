@@ -59,7 +59,7 @@ const ProfilePatternList: React.FunctionComponent<
 	return (
 		<div {...divProps} className={cn(divProps.className)}>
 			<ul className="list-none space-y-1">
-				{availablePatterns.map(({ name, groups, dsl_content }) => {
+				{availablePatterns.map(({ id, name, groups, dsl_content }) => {
 					const lineCount = (dsl_content || "").split("\n").length;
 					const editorHeight = Math.min(
 						Math.max(lineCount * 19 + 20, 100),
@@ -67,7 +67,7 @@ const ProfilePatternList: React.FunctionComponent<
 					);
 
 					return (
-						<li key={name} className="flex items-center gap-1">
+						<li key={id} className="flex items-center gap-1">
 							<Tooltip>
 								<TooltipTrigger
 									render={
@@ -78,6 +78,7 @@ const ProfilePatternList: React.FunctionComponent<
 											key={name}
 											onClick={() => {
 												setCurrentPattern({
+													id,
 													name,
 													groups,
 													dsl_content,
@@ -124,6 +125,7 @@ const ProfilePatternList: React.FunctionComponent<
 								</TooltipContent>
 							</Tooltip>
 							<DeletePatternDialog
+								patternId={id}
 								patternName={name}
 								render={
 									<Button

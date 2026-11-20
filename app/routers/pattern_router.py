@@ -8,7 +8,12 @@ from sqlmodel import col, select
 from app.dependencies import DatabaseSession
 from app.exceptions import ElementNotFoundException, InvalidPatternDefinitionException
 from app.models.api_model import Pattern as PatternApi
-from app.models.api_model import PatternGroup, PatternWithDSLApi, PpmResult
+from app.models.api_model import (
+    PatternGroup,
+    PatternWithDSLApi,
+    PpmResult,
+    SavedPattern,
+)
 from app.models.sql_model import Pattern
 from app.service.ppm_flink import run_ppm_flink
 from app.service.ppm_sql import run_ppm_sql, run_saved_ppm_sql
@@ -26,14 +31,15 @@ router = APIRouter()
 async def get_all_ppm(
     project_id: uuid.UUID,
     session: DatabaseSession,
-) -> list[PatternWithDSLApi]:
+) -> list[SavedPattern]:
     retrieved_patterns = session.exec(
-        select(Pattern.json_pattern, Pattern.dsl_content)
+        select(Pattern.id, Pattern.json_pattern, Pattern.dsl_content)
         .where(Pattern.project_id == project_id)
         .order_by(Pattern.name)
     ).all()
     return [
-        PatternWithDSLApi(dsl_content=p[1] or "", **p[0]) for p in retrieved_patterns
+        SavedPattern(id=p[0], dsl_content=p[2] or "", **p[1])
+        for p in retrieved_patterns
     ]
 
 
@@ -87,19 +93,20 @@ async def execute_ppm(
     return _sort_by_profile_name(results)
 
 
-@router.post("/api/projects/{project_id}/patterns/{name}/execute")
-async def execute_ppm_with_name(
-    project_id: uuid.UUID, name: str, session: DatabaseSession
+@router.post("/api/projects/{project_id}/patterns/{pattern_id}/execute")
+async def execute_saved_ppm(
+    project_id: uuid.UUID, pattern_id: uuid.UUID, session: DatabaseSession
 ) -> list[PpmResult]:
     ppm = session.exec(
         select(Pattern.json_pattern).where(
-            (Pattern.project_id == project_id) & (Pattern.name == name)
+            (Pattern.project_id == project_id) & (Pattern.id == pattern_id)
         )
     ).one()
+    groups = PatternApi(**ppm).groups or []
     if settings.ppm_engine == "sql":
-        results = run_saved_ppm_sql(project_id, [PatternGroup(**ppm)], session)
+        results = run_saved_ppm_sql(project_id, groups, session)
     else:
-        results = await run_ppm_flink(project_id, [PatternGroup(**ppm)], session)
+        results = await run_ppm_flink(project_id, groups, session)
     return _sort_by_profile_name(results)
 
 
@@ -108,7 +115,7 @@ async def save_ppm(
     project_id: uuid.UUID,
     pattern: PatternWithDSLApi,
     session: DatabaseSession,
-) -> str:
+) -> uuid.UUID:
     retrieved_session_pattern = session.exec(
         select(Pattern).where(
             Pattern.project_id == project_id, Pattern.name == pattern.name
@@ -121,14 +128,17 @@ async def save_ppm(
     session_pattern.dsl_content = pattern.dsl_content
     session.add(session_pattern)
     session.commit()
-    return session_pattern.name
+    return session_pattern.id
 
 
-# TODO: change name to pattern_id in delete operation
-@router.delete("/api/projects/{project_id}/patterns/{name}")
-async def delete_ppm(project_id: uuid.UUID, name: str, session: DatabaseSession):
+@router.delete("/api/projects/{project_id}/patterns/{pattern_id}")
+async def delete_ppm(
+    project_id: uuid.UUID, pattern_id: uuid.UUID, session: DatabaseSession
+):
     pattern = session.exec(
-        select(Pattern).where(Pattern.project_id == project_id, Pattern.name == name)
+        select(Pattern).where(
+            Pattern.project_id == project_id, Pattern.id == pattern_id
+        )
     ).one_or_none()
     if not pattern:
         raise ElementNotFoundException("pattern")

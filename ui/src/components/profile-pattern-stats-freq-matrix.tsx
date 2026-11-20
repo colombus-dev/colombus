@@ -12,14 +12,14 @@ const ProfilePatternStatsFreqMatrix: React.FunctionComponent<
 	const { projectId } = useParams<{ projectId: string }>();
 	const [plotData, setPlotData] = useState<any>(null);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const availableProfilesNames = useColombusStore(
-		(state) => state.availableProfilesNames,
+	const availableProfileIds = useColombusStore(
+		(state) => state.availableProfileIds,
 	);
 
 	useEffect(() => {
-		if (projectId && availableProfilesNames.length >= 2) {
+		if (projectId && availableProfileIds.length >= 2) {
 			setIsLoading(true);
-			postFrequentPatternsMatrixPlotly(projectId, availableProfilesNames)
+			postFrequentPatternsMatrixPlotly(projectId, availableProfileIds)
 				.then((res: any) => {
 					setPlotData(res);
 					setIsLoading(false);
@@ -31,7 +31,7 @@ const ProfilePatternStatsFreqMatrix: React.FunctionComponent<
 		} else {
 			setPlotData(null);
 		}
-	}, [projectId, availableProfilesNames]);
+	}, [projectId, availableProfileIds]);
 
 	const injectTooltips = () => {
 		if (!plotData) return;

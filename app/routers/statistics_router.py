@@ -86,7 +86,7 @@ async def get_project_stats(project_id: uuid.UUID, session: DatabaseSession):
 
 
 class PostStatsProfilesFilterPayload(BaseModel):
-    profiles_names: list[str] | None = None
+    profile_ids: list[uuid.UUID] | None = None
 
 
 @router.post("/api/projects/{project_id}/stats/patterns")
@@ -95,8 +95,8 @@ async def post_project_stats_patterns(
     payload: PostStatsProfilesFilterPayload,
     session: DatabaseSession,
 ):
-    if payload.profiles_names:
-        nb_profiles = len(payload.profiles_names)
+    if payload.profile_ids:
+        nb_profiles = len(payload.profile_ids)
     else:
         nb_profiles = session.exec(select(func.count(col(Profile.id)))).one()
 
@@ -105,8 +105,8 @@ async def post_project_stats_patterns(
         .join(Step)
         .where(Profile.project_id == project_id)
     )
-    if payload.profiles_names:
-        query = query.where(col(Profile.name).in_(payload.profiles_names))
+    if payload.profile_ids:
+        query = query.where(col(Profile.id).in_(payload.profile_ids))
     query = query.order_by(Profile.name, col(Step.position))
     profiles_content = session.exec(query).all()
 
@@ -161,7 +161,7 @@ async def post_steps_frequency(
         .join(Profile)
         .where(Profile.project_id == project_id)
     )
-    if payload.profiles_names:
-        query = query.where(col(Profile.name).in_(payload.profiles_names))
+    if payload.profile_ids:
+        query = query.where(col(Profile.id).in_(payload.profile_ids))
     query = query.group_by(Step.name)
     return session.exec(query).all()

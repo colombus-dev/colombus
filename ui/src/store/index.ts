@@ -28,20 +28,22 @@ interface GraphCustomizationSlice {
 }
 
 interface ProfilesSlice {
-	availableProfilesNames: string[];
-	setAvailableProfilesNames: (profiles: string[]) => void;
+	availableProfileIds: string[];
+	setAvailableProfileIds: (profiles: string[]) => void;
 	availableProfilesWithPpmData: PpmResult[];
 	setAvailableProfilesWithPpmData: (data: PpmResult[]) => void;
-	filteredProfilesNames: string[];
-	setFilteredProfilesNames: (profiles: string[]) => void;
+	filteredProfileIds: string[];
+	setFilteredProfileIds: (profiles: string[]) => void;
 	profilesScores: Record<string, number | null | undefined>;
 	setProfilesScores: (
 		scores: Record<string, number | null | undefined>,
 	) => void;
 	selectedProfileNodeId: string | null;
 	setSelectedProfileNodeId: (id: string | null) => void;
-	selectedProfileName: string | null;
-	setSelectedProfileName: (name: string | null) => void;
+	selectedProfileId: string | null;
+	setSelectedProfileId: (id: string | null) => void;
+	profilesNames: Record<string, string>;
+	setProfilesNames: (names: Record<string, string>) => void;
 }
 
 interface ProjectSlice {
@@ -102,24 +104,27 @@ const createProfilesSlice: StateCreator<
 	[],
 	ProfilesSlice
 > = (set) => ({
-	availableProfilesNames: [],
-	setAvailableProfilesNames: (profiles) =>
-		set((state) => ({ ...state, availableProfilesNames: profiles })),
+	availableProfileIds: [],
+	setAvailableProfileIds: (profiles) =>
+		set((state) => ({ ...state, availableProfileIds: profiles })),
 	availableProfilesWithPpmData: [],
 	setAvailableProfilesWithPpmData: (data) =>
 		set((state) => ({ ...state, availableProfilesWithPpmData: data })),
-	filteredProfilesNames: [],
-	setFilteredProfilesNames: (profiles) =>
-		set((state) => ({ ...state, filteredProfilesNames: profiles })),
+	filteredProfileIds: [],
+	setFilteredProfileIds: (profiles) =>
+		set((state) => ({ ...state, filteredProfileIds: profiles })),
 	profilesScores: {},
 	setProfilesScores: (scores) =>
 		set((state) => ({ ...state, profilesScores: scores })),
 	selectedProfileNodeId: null,
 	setSelectedProfileNodeId: (id) =>
 		set((state) => ({ ...state, selectedProfileNodeId: id })),
-	selectedProfileName: null,
-	setSelectedProfileName: (name) =>
-		set((state) => ({ ...state, selectedProfileName: name })),
+	selectedProfileId: null,
+	setSelectedProfileId: (id) =>
+		set((state) => ({ ...state, selectedProfileId: id })),
+	profilesNames: {},
+	setProfilesNames: (names) =>
+		set((state) => ({ ...state, profilesNames: names })),
 });
 
 const createProjectSlice: StateCreator<ColombusStore, [], [], ProjectSlice> = (
@@ -135,12 +140,13 @@ const createProjectSlice: StateCreator<ColombusStore, [], [], ProjectSlice> = (
 			projectName: undefined,
 			currentPattern: undefined,
 			allSavedPatterns: [],
-			availableProfilesNames: [],
+			availableProfileIds: [],
 			availableProfilesWithPpmData: [],
-			filteredProfilesNames: [],
+			filteredProfileIds: [],
 			profilesScores: {},
 			selectedProfileNodeId: null,
-			selectedProfileName: null,
+			selectedProfileId: null,
+			profilesNames: {},
 		})),
 });
 

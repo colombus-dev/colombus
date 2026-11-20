@@ -29,82 +29,85 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 }) => {
 	const [resultSearchFilter, setResultSearchFilter] = useState("");
 	const [renderCount, setRenderCount] = useState(RENDER_CHUNK_SIZE);
-	const availableProfilesNames = useColombusStore(
-		(state) => state.availableProfilesNames,
+	const availableProfileIds = useColombusStore(
+		(state) => state.availableProfileIds,
 	);
 	const availableProfilesWithPpmData = useColombusStore(
 		(state) => state.availableProfilesWithPpmData,
 	);
-	const filteredProfilesNames = useColombusStore(
-		(state) => state.filteredProfilesNames,
+	const filteredProfileIds = useColombusStore(
+		(state) => state.filteredProfileIds,
 	);
-	const setFilteredProfilesNames = useColombusStore(
-		(state) => state.setFilteredProfilesNames,
+	const setFilteredProfileIds = useColombusStore(
+		(state) => state.setFilteredProfileIds,
 	);
-	const selectedProfileName = useColombusStore(
-		(state) => state.selectedProfileName,
+	const selectedProfileId = useColombusStore(
+		(state) => state.selectedProfileId,
 	);
+	const profilesNames = useColombusStore((state) => state.profilesNames);
 
-	const selectedNames = useMemo(() => {
-		const available = new Set(availableProfilesNames);
-		return new Set(filteredProfilesNames.filter((n) => available.has(n)));
-	}, [availableProfilesNames, filteredProfilesNames]);
+	const selectedIds = useMemo(() => {
+		const available = new Set(availableProfileIds);
+		return new Set(filteredProfileIds.filter((id) => available.has(id)));
+	}, [availableProfileIds, filteredProfileIds]);
 
 	const matchCounts = useMemo(() => {
 		const counts = new Map<string, number>();
-		for (const { profile_name } of availableProfilesWithPpmData) {
-			counts.set(profile_name, (counts.get(profile_name) ?? 0) + 1);
+		for (const { profile_id } of availableProfilesWithPpmData) {
+			counts.set(profile_id, (counts.get(profile_id) ?? 0) + 1);
 		}
 		return counts;
 	}, [availableProfilesWithPpmData]);
 
-	const visibleNames = useMemo(() => {
+	const visibleIds = useMemo(() => {
 		const query = resultSearchFilter.trim().toLowerCase();
 		return query === ""
-			? availableProfilesNames
-			: availableProfilesNames.filter((n) => n.toLowerCase().includes(query));
-	}, [availableProfilesNames, resultSearchFilter]);
+			? availableProfileIds
+			: availableProfileIds.filter((id) =>
+					(profilesNames[id] ?? "").toLowerCase().includes(query),
+				);
+	}, [availableProfileIds, profilesNames, resultSearchFilter]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: reset the rendered chunk when the list changes
 	React.useEffect(() => {
 		setRenderCount(RENDER_CHUNK_SIZE);
-	}, [visibleNames]);
+	}, [visibleIds]);
 
 	const handleListScroll = (event: React.UIEvent<HTMLDivElement>) => {
 		const { scrollTop, clientHeight, scrollHeight } = event.currentTarget;
 		if (
-			renderCount < visibleNames.length &&
+			renderCount < visibleIds.length &&
 			scrollTop + clientHeight >= scrollHeight - LOAD_MORE_THRESHOLD_PX
 		) {
 			setRenderCount((count) => count + RENDER_CHUNK_SIZE);
 		}
 	};
 
-	const toggleProfile = (name: string) => {
-		const next = new Set(selectedNames);
-		if (next.has(name)) {
-			next.delete(name);
+	const toggleProfile = (id: string) => {
+		const next = new Set(selectedIds);
+		if (next.has(id)) {
+			next.delete(id);
 		} else {
-			next.add(name);
+			next.add(id);
 		}
-		setFilteredProfilesNames([...next]);
+		setFilteredProfileIds([...next]);
 	};
 
 	React.useEffect(() => {
-		if (selectedProfileName === null) {
+		if (selectedProfileId === null) {
 			return;
 		}
-		const index = visibleNames.indexOf(selectedProfileName);
+		const index = visibleIds.indexOf(selectedProfileId);
 		if (index >= renderCount) {
 			setRenderCount(index + 1);
 		}
 		const timer = setTimeout(() => {
 			document
-				.getElementById(`result-item-${selectedProfileName}`)
+				.getElementById(`result-item-${selectedProfileId}`)
 				?.scrollIntoView({ behavior: "smooth", block: "nearest" });
 		}, 50);
 		return () => clearTimeout(timer);
-	}, [selectedProfileName, visibleNames, renderCount]);
+	}, [selectedProfileId, visibleIds, renderCount]);
 
 	const renderMessage = (message: string) => (
 		<p className="px-1 py-2 text-xs text-muted-foreground">{message}</p>
@@ -127,41 +130,41 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 				</p>
 			);
 		}
-		if (availableProfilesNames.length === 0) {
+		if (availableProfileIds.length === 0) {
 			return renderMessage(
 				hasPattern
 					? "No notebook matches this pattern."
 					: "No notebooks yet. Import profiles to get started.",
 			);
 		}
-		if (visibleNames.length === 0) {
+		if (visibleIds.length === 0) {
 			return renderMessage("No notebook matches your search.");
 		}
 		return (
 			<ul className="space-y-0.5">
-				{visibleNames.slice(0, renderCount).map((name) => {
-					const isSelected = selectedNames.has(name);
-					const checkboxId = `result-cb-${name}`;
-					const matchCount = matchCounts.get(name);
+				{visibleIds.slice(0, renderCount).map((id) => {
+					const isSelected = selectedIds.has(id);
+					const checkboxId = `result-cb-${id}`;
+					const matchCount = matchCounts.get(id);
 					return (
 						<li
-							key={name}
-							id={`result-item-${name}`}
+							key={id}
+							id={`result-item-${id}`}
 							className={cn(
 								"flex items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-muted",
-								name === selectedProfileName && "bg-muted",
+								id === selectedProfileId && "bg-muted",
 							)}
 						>
 							<Checkbox
 								id={checkboxId}
 								checked={isSelected}
-								onCheckedChange={() => toggleProfile(name)}
+								onCheckedChange={() => toggleProfile(id)}
 							/>
 							<Label
 								htmlFor={checkboxId}
 								className="min-w-0 flex-1 cursor-pointer truncate text-xs font-normal"
 							>
-								{name}
+								{profilesNames[id] ?? id}
 							</Label>
 							{matchCount !== undefined && (
 								<span
@@ -191,8 +194,8 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 			<SectionHeading
 				title="Results"
 				description={
-					isReady && availableProfilesNames.length > 0
-						? `${availableProfilesNames.length} ${hasPattern ? "matching notebooks" : "notebooks"}`
+					isReady && availableProfileIds.length > 0
+						? `${availableProfileIds.length} ${hasPattern ? "matching notebooks" : "notebooks"}`
 						: undefined
 				}
 			/>
@@ -203,17 +206,17 @@ const ProfileExplorerPpmResultsBar: React.FunctionComponent<
 				value={resultSearchFilter}
 				onChange={(e) => setResultSearchFilter(e.target.value)}
 				className="h-8"
-				disabled={!isReady || availableProfilesNames.length === 0}
+				disabled={!isReady || availableProfileIds.length === 0}
 			/>
 			<div className="flex items-center justify-between gap-2 border-b px-1 pb-2">
 				<span className="text-xs tabular-nums text-muted-foreground">
-					{selectedNames.size} selected
+					{selectedIds.size} selected
 				</span>
 				<Button
 					variant="ghost"
 					size="xs"
-					disabled={selectedNames.size === 0}
-					onClick={() => setFilteredProfilesNames([])}
+					disabled={selectedIds.size === 0}
+					onClick={() => setFilteredProfileIds([])}
 				>
 					Deselect all
 				</Button>
