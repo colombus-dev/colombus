@@ -3,7 +3,7 @@ import httpx
 from app.models.api_model import PatternGroup
 from app.settings import get_settings
 
-FLINK_GATEWAY_TIMEOUT = 60
+FLINK_GATEWAY_TIMEOUT = 60 * 2
 settings = get_settings()
 
 
