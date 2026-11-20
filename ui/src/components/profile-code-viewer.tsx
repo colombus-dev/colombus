@@ -85,6 +85,11 @@ export default function ProfileCodeViewer({
 		}
 	}, [nodes, selectedNodeId, handleNodeSelect]);
 
+	const nodeItems = useMemo(
+		() => (nodes ?? []).map((node) => ({ value: node.id, label: node.name })),
+		[nodes],
+	);
+
 	const activeNode = useMemo(() => {
 		if (!nodes || !selectedNodeId) return null;
 		return nodes.find((n) => n.id === selectedNodeId) || null;
@@ -198,6 +203,7 @@ export default function ProfileCodeViewer({
 			<div className="w-72 bg-slate-50/50 border-r border-slate-200 flex flex-col z-10 shrink-0 min-h-0">
 				<div className="p-4 border-b border-slate-200">
 					<Select
+						items={nodeItems}
 						value={selectedNodeId || undefined}
 						onValueChange={handleNodeSelect}
 					>
