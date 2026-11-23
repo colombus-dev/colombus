@@ -183,7 +183,14 @@ FLINK_STEP_WITH_PROJECT_VIEW = "flink_step_with_project"
 
 # Attribute keys exposed as array columns by the flink step view.
 # Bridge for the current flink table definition, to remove once flink reads attributes directly.
-FLINK_VIEW_ATTRIBUTE_KEYS = ("algoFamily", "algoName", "library", "function")
+FLINK_VIEW_ATTRIBUTE_KEYS = (
+    "algoFamily",
+    "algoName",
+    "library",
+    "function",
+    "action",
+    "metrics",
+)
 
 
 def flink_view_sql() -> str:

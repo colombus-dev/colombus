@@ -9,6 +9,8 @@ export const PATTERN_META_INSTRUCTION_KEYS = [
 	"algoName",
 	"library",
 	"function",
+	"action",
+	"metrics",
 ];
 export const PATTERN_KEYS = ["step", ...PATTERN_META_INSTRUCTION_KEYS];
 
