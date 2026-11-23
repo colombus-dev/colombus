@@ -35,13 +35,14 @@ async def generate_profile_regex(
     profile: JsonProfile,
 ) -> list[RegexCompatibleProfileElement]:
     return [
-        RegexCompatibleProfileElement(
-            step=se["name"],
-            algoFamily=mi["algoFamily"],
-            algoName=mi["algoName"],
-            library=mi["library"],
-            function=mi["function"],
-        )
+        {
+            "step": se["name"],
+            **{
+                key: ", ".join(value) if isinstance(value, list) else value
+                for key, value in sorted(mi.items())
+                if isinstance(value, (str, list))
+            },
+        }
         for se in profile.source
         for mi in se["tasks"]
     ]

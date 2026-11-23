@@ -30,6 +30,17 @@ ALGO_FAMILIES = ["preprocessing", "classification", "regression", "clustering"]
 ALGO_NAMES = ["StandardScaler", "RandomForest", "LogisticRegression", "KMeans"]
 LIBRARIES = ["pandas", "numpy", "sklearn", "matplotlib", "seaborn"]
 FUNCTIONS = ["read_csv", "dropna", "fillna", "groupby", "fit", "predict", "plot"]
+ACTIONS = [
+    "imputation",
+    "data_loading",
+    "row_filtering",
+    "column_removal",
+    "model_training",
+    "prediction",
+]
+METRICS = ["accuracy", "f1_score", "rmse", "r2", "precision", "recall"]
+MAX_ACTIONS_PER_META_INSTRUCTION = 2
+MAX_METRICS_PER_META_INSTRUCTION = 2
 MAX_META_INSTRUCTIONS_PER_STEP = 3
 
 
@@ -103,10 +114,20 @@ def build_rows(
                 meta_instruction_rows.append(
                     {
                         "id": mi_id,
-                        "algoFamily": random.choice(ALGO_FAMILIES),
-                        "algoName": random.choice(ALGO_NAMES),
-                        "library": library,
-                        "function": function,
+                        "attributes": {
+                            "algoFamily": random.choice(ALGO_FAMILIES),
+                            "algoName": random.choice(ALGO_NAMES),
+                            "library": library,
+                            "function": function,
+                            "action": random.sample(
+                                ACTIONS,
+                                random.randint(0, MAX_ACTIONS_PER_META_INSTRUCTION),
+                            ),
+                            "metrics": random.sample(
+                                METRICS,
+                                random.randint(0, MAX_METRICS_PER_META_INSTRUCTION),
+                            ),
+                        },
                         "position": mi_position,
                         "number_children": 1,
                         "profile_id": profile_id,

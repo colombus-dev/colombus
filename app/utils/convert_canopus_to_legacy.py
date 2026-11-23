@@ -5,7 +5,6 @@ from app.models.api_model import (
     Pattern,
     PatternGroup,
     PatternMetaCharacters,
-    PatternMetaInstruction,
 )
 
 
@@ -91,12 +90,11 @@ def convert_pattern_to_legacy(
                     steps=steps,
                     multiplicity=group.multiplicity if isinstance(group, Expr) else "1",
                     metaInstructions=[
-                        PatternMetaInstruction(
-                            algoFamily=conditions_dict.get("algoFamily"),
-                            algoName=conditions_dict.get("algoName"),
-                            library=conditions_dict.get("library"),
-                            function=conditions_dict.get("function"),
-                        )
+                        {
+                            key: value
+                            for key, value in conditions_dict.items()
+                            if key != "step"
+                        }
                     ],  # TODO
                     metaCharacters=PatternMetaCharacters(
                         startsWith=strict_start and i == 1,

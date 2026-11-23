@@ -1,37 +1,20 @@
 import type * as monaco_editor from "monaco-editor";
 import { z } from "zod";
 
-export const PatternGroupMetaInstruction = z.object({
-	algoFamily: z
+export const PatternGroupMetaInstruction = z.record(
+	z.string(),
+	z
 		.string()
 		.nullable()
-		.transform((x) => x ?? undefined)
-		.optional(),
-	algoName: z
-		.string()
-		.nullable()
-		.transform((x) => x ?? undefined)
-		.optional(),
-	library: z
-		.string()
-		.nullable()
-		.transform((x) => x ?? undefined)
-		.optional(),
-	function: z
-		.string()
-		.nullable()
-		.transform((x) => x ?? undefined)
-		.optional(),
-});
+		.transform((x) => x ?? undefined),
+);
 
 // we need to explicitly define the type (instead of zod.infer) because of
 // nullable which is causing type errors in PatternGroup
-export type PatternGroupMetaInstruction = {
-	algoFamily?: string | null;
-	algoName?: string | null;
-	library?: string | null;
-	function?: string | null;
-};
+export type PatternGroupMetaInstruction = Record<
+	string,
+	string | null | undefined
+>;
 
 const basePatternGroup = z.object({
 	name: z.string(),

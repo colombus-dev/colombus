@@ -86,11 +86,7 @@ class PatternMetaCharacters(BaseModel):
     negate: bool
 
 
-class PatternMetaInstruction(BaseModel):
-    algoFamily: Optional[str] = Field(default=None)
-    algoName: Optional[str] = Field(default=None)
-    library: Optional[str] = Field(default=None)
-    function: Optional[str] = Field(default=None)
+PatternMetaInstruction = dict[str, Optional[str]]
 
 
 class PatternGroup(BaseModel):
@@ -102,9 +98,4 @@ class PatternGroup(BaseModel):
     subpattern: Optional["Pattern"] = Field(default=None)
 
 
-class RegexCompatibleProfileElement(BaseModel):
-    step: str
-    algoFamily: str
-    algoName: str
-    library: str
-    function: str
+RegexCompatibleProfileElement = dict[str, str]

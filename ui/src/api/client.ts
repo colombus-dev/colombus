@@ -12,10 +12,7 @@ export type StepNode = {
 export type MetaInstructionNode = {
 	id: string;
 	step_id: string;
-	algoFamily: string;
-	algoName: string;
-	library: string;
-	function: string;
+	attributes: Record<string, unknown>;
 	position: number;
 	number_children: number;
 };
