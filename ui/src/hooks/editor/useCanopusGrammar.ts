@@ -7,7 +7,7 @@ import { supportedSteps } from "@/configuration";
 import CanopusDSLLexer from "@/hooks/editor/CanopusDSLLexer.js";
 // @ts-expect-error: Canopus typing issue
 import CanopusDSLParser from "@/hooks/editor/CanopusDSLParser.js";
-import { EDITOR_LANGUAGE_ID } from "@/lib/constants";
+import { EDITOR_LANGUAGE_ID, PATTERN_KEYS } from "@/lib/constants";
 import type { MonacoEditor } from "@/lib/types";
 
 const canopusGrammarLanguage: monaco_editor.languages.IMonarchLanguage = {
@@ -108,6 +108,25 @@ export default function useCanopusGrammar(monaco: MonacoEditor | null) {
 			lines.forEach((line, i) => {
 				// Skip comments
 				if (line.trim().startsWith("#")) return;
+
+				const keyRegex = /(?<=[[,]\s*)([A-Za-z_]\w*)(?=\s*!?=)/g;
+				const lineWithoutStrings = line.replace(/"[^"]*"/g, (quoted) =>
+					" ".repeat(quoted.length),
+				);
+				let keyMatch = keyRegex.exec(lineWithoutStrings);
+				while (keyMatch !== null) {
+					if (!PATTERN_KEYS.includes(keyMatch[1])) {
+						markers.push({
+							severity: MarkerSeverity.Error,
+							message: `Unsupported key "${keyMatch[1]}", expected one of: ${PATTERN_KEYS.join(", ")}`,
+							startLineNumber: i + 1,
+							startColumn: keyMatch.index + 1,
+							endLineNumber: i + 1,
+							endColumn: keyMatch.index + 1 + keyMatch[1].length,
+						});
+					}
+					keyMatch = keyRegex.exec(lineWithoutStrings);
+				}
 
 				const regex = /step\s*=\s*"([^"]+)"/g;
 				let match = regex.exec(line);

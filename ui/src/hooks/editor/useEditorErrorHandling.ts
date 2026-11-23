@@ -8,6 +8,20 @@ interface UseEditorErrorHandlingProps {
 	backendError?: string | null;
 }
 
+type MarkerNavigationController = monaco_editor.editor.IEditorContribution & {
+	close: (focusEditor?: boolean) => void;
+};
+
+export function closeMarkerWidget(
+	editor: monaco_editor.editor.IStandaloneCodeEditor | null | undefined,
+) {
+	editor
+		?.getContribution<MarkerNavigationController>(
+			"editor.contrib.markerController",
+		)
+		?.close(false);
+}
+
 export default function useEditorErrorHandling({
 	monaco,
 	editorRef,
@@ -42,6 +56,7 @@ export default function useEditorErrorHandling({
 			const model = editorRef.current.getModel();
 			if (model) {
 				monaco.editor.setModelMarkers(model, "backend", []);
+				closeMarkerWidget(editorRef.current);
 			}
 		}
 	}, [backendError, monaco, editorRef]);
@@ -61,6 +76,7 @@ export default function useEditorErrorHandling({
 					);
 					return false;
 				}
+				closeMarkerWidget(editorRef.current);
 			}
 		}
 		return true;

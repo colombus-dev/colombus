@@ -1,7 +1,7 @@
 import type * as monaco_editor from "monaco-editor";
 import { useEffect } from "react";
 import { supportedSteps } from "@/configuration";
-import { EDITOR_LANGUAGE_ID } from "@/lib/constants";
+import { EDITOR_LANGUAGE_ID, PATTERN_KEYS } from "@/lib/constants";
 import type { MonacoEditor } from "@/lib/types";
 import { useColombusStore } from "@/store";
 
@@ -154,18 +154,15 @@ export default function useCanopusCompletion(monaco: MonacoEditor | null) {
 						endColumn: position.column,
 					};
 
-					const suggestions: monaco_editor.languages.CompletionItem[] = [
-						"step",
-						"algoName",
-						"algoFamily",
-					].map((key) => ({
-						label: key,
-						kind: monaco.languages.CompletionItemKind.Property,
-						insertText: key,
-						detail: "Available key",
-						documentation: `Insert the key "${key}"`,
-						range,
-					}));
+					const suggestions: monaco_editor.languages.CompletionItem[] =
+						PATTERN_KEYS.map((key) => ({
+							label: key,
+							kind: monaco.languages.CompletionItemKind.Property,
+							insertText: key,
+							detail: "Available key",
+							documentation: `Insert the key "${key}"`,
+							range,
+						}));
 
 					return { suggestions };
 				},
