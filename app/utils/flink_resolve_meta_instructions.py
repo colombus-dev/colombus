@@ -4,27 +4,15 @@ from sqlalchemy import bindparam
 from sqlmodel import Session, text
 
 from app.models.api_model import PatternMetaInstruction
-
-_FIELDS = ("algoFamily", "algoName", "library", "function")
-
-
-def dedupe_meta_instructions(
-    meta_instructions: list[PatternMetaInstruction],
-) -> list[PatternMetaInstruction]:
-    deduped: dict[str, PatternMetaInstruction] = {}
-    for mi in meta_instructions:
-        fields = {field: getattr(mi, field) for field in _FIELDS}
-        if any(fields.values()):
-            deduped[str(fields)] = mi
-    return list(deduped.values())
+from app.utils.meta_instruction import dedupe_meta_instructions
 
 
 def _build_resolution_query(
     meta_instructions: list[PatternMetaInstruction],
-) -> tuple[str, dict[str, str]]:
+) -> tuple[str, dict[str, str | None]]:
     select_cols = ["s.id::text AS step_id"]
     joins = []
-    params: dict[str, str] = {}
+    params: dict[str, str | None] = {}
     prev_alias = None
 
     for i, mi in enumerate(meta_instructions):
@@ -37,13 +25,15 @@ def _build_resolution_query(
             f"{mi_alias}.step_id = s.id",
             f"{mi_alias}.profile_id = s.profile_id",
         ]
-        for field in _FIELDS:
-            value = getattr(mi, field)
-            if value is None:
-                continue
-            param_name = f"{mi_alias}_{field}"
-            conditions.append(f'{mi_alias}."{field}" = :{param_name}')
-            params[param_name] = value
+        for j, (key, value) in enumerate(mi.items()):
+            key_param = f"{mi_alias}_{j}_key"
+            value_param = f"{mi_alias}_{j}_value"
+            conditions.append(
+                f"{mi_alias}.attributes -> CAST(:{key_param} AS text) "
+                f"@> to_jsonb(CAST(:{value_param} AS text))"
+            )
+            params[key_param] = key
+            params[value_param] = value
         if prev_alias is not None:
             conditions.append(f"{mi_alias}.position > {prev_alias}.position")
 

@@ -134,7 +134,11 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 				res.forceLabel = false;
 			}
 			res.forceLabel = nodeId === hoveredNode;
-			res.label = nodeId === hoveredNode ? res.fullLabel : "";
+			// nodes with details show them in the hover box instead of a label
+			res.label =
+				nodeId === hoveredNode && res.details === undefined
+					? res.fullLabel
+					: "";
 			return res;
 		});
 		graphRenderer?.refresh({

@@ -2,6 +2,7 @@ import { createNodeImageProgram } from "@sigma/node-image";
 import Graph from "graphology";
 import { useEffect, useRef } from "react";
 import Sigma from "sigma";
+import { drawDiscNodeHover } from "sigma/rendering";
 import type { GraphDefinition } from "@/api/client";
 import type { PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
@@ -40,6 +41,51 @@ export default function useGraph(
 						}),
 					},
 					autoRescale: false,
+					defaultDrawNodeHover(context, data, settings) {
+						const details = (data as { details?: string }).details;
+						if (details === undefined) {
+							drawDiscNodeHover(context, data, settings);
+							return;
+						}
+						const size = settings.labelSize;
+						const lineHeight = size + 4;
+						const padding = 4;
+						const lines = details.split("\n");
+
+						context.font = `${settings.labelWeight} ${size}px ${settings.labelFont}`;
+						const width =
+							Math.max(
+								...lines.map((line) => context.measureText(line).width),
+							) +
+							padding * 2;
+						const height = lines.length * lineHeight + padding * 2;
+
+						context.fillStyle = "#FFF";
+						context.shadowOffsetX = 0;
+						context.shadowOffsetY = 0;
+						context.shadowBlur = 8;
+						context.shadowColor = "#000";
+						context.beginPath();
+						context.arc(data.x, data.y, data.size + 2, 0, Math.PI * 2);
+						context.closePath();
+						context.fill();
+						context.fillRect(
+							data.x + data.size,
+							data.y - height / 2,
+							width,
+							height,
+						);
+						context.shadowBlur = 0;
+
+						context.fillStyle = "#000";
+						lines.forEach((line, i) => {
+							context.fillText(
+								line,
+								data.x + data.size + padding,
+								data.y - height / 2 + padding + size + i * lineHeight - 2,
+							);
+						});
+					},
 					defaultDrawNodeLabel(context, data, settings) {
 						if (!data.label) return;
 

@@ -9,7 +9,9 @@ import useCanopusCompletion from "@/hooks/editor/useCanopusCompletion";
 import useCanopusGrammar from "@/hooks/editor/useCanopusGrammar";
 import useCanopusTheme from "@/hooks/editor/useCanopusTheme";
 import useCompletionActions from "@/hooks/editor/useCompletionActions";
-import useEditorErrorHandling from "@/hooks/editor/useEditorErrorHandling";
+import useEditorErrorHandling, {
+	closeMarkerWidget,
+} from "@/hooks/editor/useEditorErrorHandling";
 import { DEFAULT_DSL_CODE, EDITOR_LANGUAGE_ID } from "@/lib/constants";
 import type { MonacoEditor } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -68,12 +70,11 @@ export default function PatternDslEditor({
 			const model = editorRef.current?.getModel();
 			if (model && newContent !== undefined) {
 				validateGrammarModel(model);
-				if (backendError) {
-					monaco?.editor.setModelMarkers(model, "backend", []);
-				}
+				monaco?.editor.setModelMarkers(model, "backend", []);
+				closeMarkerWidget(editorRef.current);
 			}
 		},
-		[validateGrammarModel, backendError, monaco, currentPatternContent],
+		[validateGrammarModel, monaco, currentPatternContent],
 	);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: validateGrammarModel is used inside _.debounce, which biome cannot statically analyse

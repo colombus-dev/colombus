@@ -52,10 +52,8 @@ export default function usePatternActions({
 						"Failed to execute pattern. Please check the pattern syntax.",
 					);
 					setBackendError(message);
-					toast.error(message);
-				})
-				.finally(() => {
 					setIsLoading(false);
+					toast.error(message);
 				});
 		},
 		[projectId, setCurrentPattern, setIsLoading, setBackendError],
@@ -84,10 +82,8 @@ export default function usePatternActions({
 						"Failed to save pattern. Please check the pattern syntax.",
 					);
 					setBackendError(message);
-					toast.error(message);
-				})
-				.finally(() => {
 					setIsLoading(false);
+					toast.error(message);
 				});
 		},
 		[

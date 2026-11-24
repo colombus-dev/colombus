@@ -1,20 +1,12 @@
-from app.models.api_model import PatternGroup, PatternMetaInstruction
+from app.models.api_model import PatternGroup
 from app.utils import format_template
 from app.utils.flatten_pattern import flatten_pattern
+from app.utils.meta_instruction import dedupe_meta_instructions
 
 
 def convert_pattern_to_regex(pattern: list[PatternGroup]) -> str:
     flat_pattern = flatten_pattern(pattern)
     converted_regex = r""
-
-    def __reduce_meta_instructions(_mi_list: list[PatternMetaInstruction]):
-        return list(
-            {
-                f"{mi.algoFamily}_{mi.algoName}_{mi.library}_{mi.function}": mi
-                for mi in _mi_list
-                if mi.algoFamily or mi.algoName or mi.library or mi.function
-            }.values()
-        )
 
     value_placeholder = r'[^"]*'
 
@@ -31,41 +23,22 @@ def convert_pattern_to_regex(pattern: list[PatternGroup]) -> str:
                 ...
 
             # TODO: currently only supporting one metainstruction per group
-            current_metainstruction = (
-                __reduce_meta_instructions(group.metaInstructions)[0]
-                if group.metaInstructions
-                and __reduce_meta_instructions(group.metaInstructions)
-                and (
-                    group.metaInstructions[0].algoFamily
-                    or group.metaInstructions[0].algoName
-                    or group.metaInstructions[0].library
-                    or group.metaInstructions[0].function
-                )
-                else None
+            reduced_meta_instructions = dedupe_meta_instructions(
+                group.metaInstructions or []
+            )
+            current_attributes = (
+                {
+                    key: value if value != "" else value_placeholder
+                    for key, value in reduced_meta_instructions[0].items()
+                    if value is not None
+                }
+                if len(reduced_meta_instructions) > 0
+                else {}
             )
 
             converted_regex += format_template(
                 step_name="|".join(step_name for step_name in group.steps),
-                algo_family=(
-                    current_metainstruction.algoFamily
-                    if current_metainstruction and current_metainstruction.algoFamily
-                    else value_placeholder
-                ),
-                algo_name=(
-                    current_metainstruction.algoName
-                    if current_metainstruction and current_metainstruction.algoName
-                    else value_placeholder
-                ),
-                library=(
-                    current_metainstruction.library
-                    if current_metainstruction and current_metainstruction.library
-                    else value_placeholder
-                ),
-                function=(
-                    current_metainstruction.function
-                    if current_metainstruction and current_metainstruction.function
-                    else value_placeholder
-                ),
+                attributes=current_attributes,
             )
             if group.multiplicity and group.multiplicity != "1":
                 # TODO: currently not supporting multiplicity

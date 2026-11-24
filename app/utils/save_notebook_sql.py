@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -16,6 +17,15 @@ from app.utils import encode_profile
 
 def is_steps_taxonomy_supported(json_profile: JsonProfile):
     return all(step["name"] in __TMP_ENCODING_MAPPING for step in json_profile.source)
+
+
+STRUCTURAL_KEYS = ("id", "name", "tasks", "metadata")
+
+
+def instruction_attributes(mi: dict[str, Any]) -> dict[str, Any]:
+    if "attributes" in mi:
+        return mi["attributes"]
+    return {k: v for k, v in mi.items() if k not in STRUCTURAL_KEYS}
 
 
 def save_notebook_as_sql(
@@ -37,20 +47,9 @@ def save_notebook_as_sql(
             for c in mi["tasks"]:
                 all_codes.append(Code(content=c["name"], position=total_c_i))
                 total_c_i += 1
-            if isinstance(mi["algoFamily"], list):
-                mi["algoFamily"] = ", ".join(mi["algoFamily"])
-            if isinstance(mi["algoName"], list):
-                mi["algoName"] = ", ".join(mi["algoName"])
-            if isinstance(mi["library"], list):
-                mi["library"] = ", ".join(mi["library"])
-            if isinstance(mi["function"], list):
-                mi["function"] = ", ".join(mi["function"])
             all_metainstructions.append(
                 MetaInstruction(
-                    algoFamily=mi["algoFamily"],
-                    algoName=mi["algoName"],
-                    library=mi["library"],
-                    function=mi["function"],
+                    attributes=instruction_attributes(mi),
                     position=total_mi_i,
                     codes=all_codes,
                     number_children=len(mi["tasks"]),

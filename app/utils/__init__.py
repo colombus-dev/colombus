@@ -1,26 +1,21 @@
 import re
+from typing import Mapping
 
 from app.constants import __TMP_ENCODING_MAPPING
 
 _DIGITS = re.compile(r"(\d+)")
 
 
-def format_template(
-    step_name: str,
-    algo_family: str,
-    algo_name: str,
-    library: str,
-    function: str,
-) -> str:
+def format_template(step_name: str, attributes: Mapping[str, str]) -> str:
+    other_attributes = r'(?:,\s*"[^"]*":\s*"[^"]*")*?'
     return (
         r"\{\s*"
-        + r'"step":\s*"{step_name}",\s*"algoFamily":\s*"{algo_family}",\s*"algoName":\s*"{algo_name}",\s*"library":\s*"{library}",\s*"function":\s*"{function}"'.format(
-            step_name=step_name,
-            algo_family=algo_family,
-            algo_name=algo_name,
-            library=library,
-            function=function,
+        + r'"step":\s*"{step_name}"'.format(step_name=step_name)
+        + "".join(
+            other_attributes + r',\s*"{key}":\s*"{value}"'.format(key=key, value=value)
+            for key, value in sorted(attributes.items())
         )
+        + r'(?:,\s*"[^"]*":\s*"[^"]*")*'
         + r"\s*\}"
     )
 

@@ -7,8 +7,39 @@ import {
 	libraryFunctionNodeSuffix,
 	stepsColorsMapping,
 } from "@/configuration";
+import {
+	ALGO_NODE_ATTRIBUTE_KEYS,
+	LIBRARY_NODE_ATTRIBUTE_KEYS,
+} from "@/lib/constants";
 import type { Pattern, PpmResult } from "@/lib/types";
 import { useColombusStore } from "@/store";
+
+function attributesLabel(
+	attributes: Record<string, unknown>,
+	keys: string[],
+): string {
+	return keys
+		.map((key) => {
+			const value = attributes[key];
+			if (value === null || value === undefined) return "";
+			return Array.isArray(value) ? value.join(", ") : String(value);
+		})
+		.join(" | ");
+}
+
+function attributesDetails(attributes: Record<string, unknown>): string {
+	return Object.entries(attributes)
+		.map(([key, value]) => {
+			if (value === null || value === undefined || value === "") {
+				return `${key}: -`;
+			}
+			if (Array.isArray(value) && value.every((v) => typeof v === "string")) {
+				return `${key}: ${value.join(", ") || "-"}`;
+			}
+			return `${key}: ${typeof value === "object" ? JSON.stringify(value) : String(value)}`;
+		})
+		.join("\n");
+}
 
 function pairwise<T>(arr: T[], func: (e1: T, e2: T, i: number) => void) {
 	for (let i = 0; i < arr.length - 1; i++) {
@@ -65,6 +96,7 @@ export default function useGraphUtils(graph: Graph) {
 			size: number,
 			x: number,
 			y: number,
+			details?: string,
 		) => {
 			graph.addNode(id, {
 				label,
@@ -78,6 +110,7 @@ export default function useGraphUtils(graph: Graph) {
 				layerLevel,
 				forceLabel: layerLevel === 0, // always displaying workflow node name
 				fullLabel: label,
+				details,
 				shortLabel: label
 					.split(" ")
 					.map(([l]) => l)
@@ -127,6 +160,7 @@ export default function useGraphUtils(graph: Graph) {
 			y: number,
 			getLabel: (node: T) => string,
 			getParentId: (node: T) => string | undefined,
+			getDetails?: (node: T) => string | undefined,
 		) => {
 			let addedX = x;
 			if (nodes.length === 1) {
@@ -138,6 +172,7 @@ export default function useGraphUtils(graph: Graph) {
 					useWeightedNodes ? 5 + (nodes[0].number_children ?? 0) : 5,
 					addedX + Math.round(fullNodeSize / 2),
 					y - layerLevel * 50,
+					getDetails?.(nodes[0]),
 				);
 				const parentId = getParentId(nodes[0]);
 				if (parentId) {
@@ -157,6 +192,7 @@ export default function useGraphUtils(graph: Graph) {
 						c1Size,
 						addedX + Math.round(fullN1Size / 2),
 						y - layerLevel * 50,
+						getDetails?.(n1),
 					);
 					const n1ParentId = getParentId(n1);
 					if (n1ParentId) {
@@ -172,6 +208,7 @@ export default function useGraphUtils(graph: Graph) {
 					c2Size,
 					addedX + Math.round(fullN2Size / 2),
 					y - layerLevel * 50,
+					getDetails?.(n2),
 				);
 				addEdge(n1.id, n2.id);
 				const n2ParentId = getParentId(n2);
@@ -273,9 +310,10 @@ export default function useGraphUtils(graph: Graph) {
 						3,
 						x,
 						y,
-						(m) => `${m.algoFamily} | ${m.algoName}`,
+						(m) => attributesLabel(m.attributes, ALGO_NODE_ATTRIBUTE_KEYS),
 						// parent = prefixed step node
 						(m) => prefixId(m.step_id),
+						(m) => attributesDetails(m.attributes),
 					),
 				);
 			}
@@ -290,11 +328,12 @@ export default function useGraphUtils(graph: Graph) {
 						4,
 						x,
 						y,
-						(m) => `${m.library} | ${m.function}`,
+						(m) => attributesLabel(m.attributes, LIBRARY_NODE_ATTRIBUTE_KEYS),
 						// m.id here is already `${prefixId(origId)}${libfuncSuffix}`;
 						// strip the suffix and add algoSuffix to get the parent algo node id
 						(m) =>
 							`${m.id.replace(libraryFunctionNodeSuffix, "")}${algoNodeSuffix}`,
+						(m) => attributesDetails(m.attributes),
 					),
 				);
 			}

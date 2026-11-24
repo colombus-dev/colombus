@@ -2,7 +2,7 @@ import uuid
 from typing import Any, Optional
 
 from sqlalchemy import Index, text
-from sqlalchemy.dialects import mysql
+from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy.orm import relationship
 from sqlmodel import (
     JSON,
@@ -26,6 +26,7 @@ ProfileIdFk = Field(
     default=None, foreign_key="profile.id", ondelete="CASCADE", index=True
 )
 LongString = String().with_variant(mysql.LONGTEXT(), "mysql", "mariadb")
+JsonDict = JSON().with_variant(postgresql.JSONB(), "postgresql")
 
 
 # "app management"-related tables
@@ -115,10 +116,9 @@ class CellOutput(SQLModel, table=True):
 
 
 class MetaInstructionBase(SQLModel):
-    algoFamily: str | None = None
-    algoName: str | None = None
-    library: str | None = None
-    function: str | None = None
+    attributes: dict[str, Any] = Field(
+        default_factory=dict, sa_column=Column(JsonDict, nullable=False)
+    )
     position: int
     # number of children is cached and used to compute graph nodes size
     number_children: int
@@ -181,30 +181,57 @@ engine = create_engine(
 
 FLINK_STEP_WITH_PROJECT_VIEW = "flink_step_with_project"
 
+# Attribute keys exposed as array columns by the flink step view.
+# Bridge for the current flink table definition, to remove once flink reads attributes directly.
+FLINK_VIEW_ATTRIBUTE_KEYS = (
+    "algoFamily",
+    "algoName",
+    "library",
+    "function",
+    "action",
+    "metrics",
+)
+
+
+def flink_view_sql() -> str:
+    keys_array = ", ".join(f"'{key}'" for key in FLINK_VIEW_ATTRIBUTE_KEYS)
+    key_columns = ",\n".join(
+        "COALESCE(array_agg(DISTINCT mi_value.value) "
+        f"FILTER (WHERE mi_value.key = '{key}'), ARRAY[]::text[]) AS {key.lower()}"
+        for key in FLINK_VIEW_ATTRIBUTE_KEYS
+    )
+    return f"""
+        CREATE VIEW {FLINK_STEP_WITH_PROJECT_VIEW} AS
+        SELECT
+            step.id::text AS step_id,
+            step.profile_id::text AS profile_id,
+            step.position,
+            step.name,
+            profile.project_id::text AS project_id,
+            MAX(step.position) OVER (
+                PARTITION BY step.profile_id::text, profile.project_id::text
+            ) AS max_position,
+            {key_columns}
+        FROM step
+        JOIN profile ON profile.id = step.profile_id
+        LEFT JOIN metainstruction ON metainstruction.step_id = step.id
+        LEFT JOIN LATERAL (
+            SELECT wanted.key, element.value
+            FROM unnest(ARRAY[{keys_array}]) AS wanted(key)
+            CROSS JOIN LATERAL jsonb_array_elements_text(
+                CASE jsonb_typeof(metainstruction.attributes -> wanted.key)
+                    WHEN 'array' THEN metainstruction.attributes -> wanted.key
+                    WHEN 'string' THEN jsonb_build_array(metainstruction.attributes -> wanted.key)
+                    ELSE '[]'::jsonb
+                END
+            ) AS element(value)
+        ) AS mi_value ON TRUE
+        GROUP BY step.id, step.profile_id, step.position, step.name, profile.project_id
+    """
+
 
 def initialize():
     SQLModel.metadata.create_all(engine)
     with engine.begin() as connection:
         connection.execute(text(f"DROP VIEW IF EXISTS {FLINK_STEP_WITH_PROJECT_VIEW}"))
-        connection.execute(
-            text(f"""
-                CREATE VIEW {FLINK_STEP_WITH_PROJECT_VIEW} AS
-                SELECT
-                    step.id::text AS step_id,
-                    step.profile_id::text AS profile_id,
-                    step.position,
-                    step.name,
-                    profile.project_id::text AS project_id,
-                    MAX(step.position) OVER (
-                        PARTITION BY step.profile_id::text, profile.project_id::text
-                    ) AS max_position,
-                    array_remove(array_agg(DISTINCT metainstruction."algoFamily"), NULL) AS algofamily,
-                    array_remove(array_agg(DISTINCT metainstruction."algoName"), NULL) AS algoname,
-                    array_remove(array_agg(DISTINCT metainstruction.library), NULL) AS library,
-                    array_remove(array_agg(DISTINCT metainstruction.function), NULL) AS function
-                FROM step
-                JOIN profile ON profile.id = step.profile_id
-                LEFT JOIN metainstruction ON metainstruction.step_id = step.id
-                GROUP BY step.id, step.profile_id, step.position, step.name, profile.project_id
-            """)
-        )
+        connection.execute(text(flink_view_sql()))

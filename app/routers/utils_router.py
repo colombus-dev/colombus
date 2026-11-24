@@ -9,6 +9,7 @@ from app.models.api_model import PatternGroup, RegexCompatibleProfileElement
 from app.models.api_model import Profile as JsonProfile
 from app.models.sql_model import CellOutput
 from app.utils.convert_ppm_to_regex import convert_pattern_to_regex
+from app.utils.save_notebook_sql import instruction_attributes
 
 router = APIRouter()
 
@@ -35,13 +36,14 @@ async def generate_profile_regex(
     profile: JsonProfile,
 ) -> list[RegexCompatibleProfileElement]:
     return [
-        RegexCompatibleProfileElement(
-            step=se["name"],
-            algoFamily=mi["algoFamily"],
-            algoName=mi["algoName"],
-            library=mi["library"],
-            function=mi["function"],
-        )
+        {
+            "step": se["name"],
+            **{
+                key: ", ".join(value) if isinstance(value, list) else value
+                for key, value in sorted(instruction_attributes(mi).items())
+                if isinstance(value, (str, list))
+            },
+        }
         for se in profile.source
         for mi in se["tasks"]
     ]

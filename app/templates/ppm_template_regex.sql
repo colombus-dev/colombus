@@ -38,18 +38,10 @@ FROM filtered_profiles AS p
         {% for mi in group.meta_instructions %}
             INNER JOIN metainstruction AS mi_{{ grouploop.index0 }}_{{ loop.index0 }} ON mi_{{ grouploop.index0 }}_{{ loop.index0 }}."profile_id" = s{{ grouploop.index0 }}."profile_id"
                 AND mi_{{ grouploop.index0 }}_{{ loop.index0 }}."step_id" = s{{ grouploop.index0 }}."id"
-                {% if mi.algoFamily %}
-                    AND mi_{{ grouploop.index0 }}_{{ loop.index0 }}."algoFamily" = '{{ mi.algoFamily }}'
-                {% endif %}
-                {% if mi.algoName %}
-                    AND mi_{{ grouploop.index0 }}_{{ loop.index0 }}."algoName" = '{{ mi.algoName }}'
-                {% endif %}
-                {% if mi.library %}
-                    AND mi_{{ grouploop.index0 }}_{{ loop.index0 }}."library" = '{{ mi.library }}'
-                {% endif %}
-                {% if mi.function %}
-                    AND mi_{{ grouploop.index0 }}_{{ loop.index0 }}."function" = '{{ mi.function }}'
-                {% endif %}
+                {% set mi_loop = loop %}
+                {% for key, value in mi.items() %}
+                    AND mi_{{ grouploop.index0 }}_{{ mi_loop.index0 }}."attributes" -> {{ key|sql_literal }} @> to_jsonb({{ value|sql_literal }}::text)
+                {% endfor %}
                 {% if prev_mi_i != None %}
                     AND mi_{{ grouploop.index0 }}_{{ loop.index0 }}."position" > mi_{{ grouploop.index0 }}_{{ prev_mi_i }}."position"
                 {% endif %}

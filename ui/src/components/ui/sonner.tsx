@@ -6,7 +6,7 @@ export function Toaster() {
 	return (
 		<Sonner
 			theme={theme}
-			position="bottom-right"
+			position="top-right"
 			richColors
 			closeButton
 			toastOptions={{ classNames: { icon: "hidden!" } }}
