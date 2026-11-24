@@ -19,6 +19,7 @@ export const supportedSteps = [
 	"Model Deployment",
 	"Model Evaluation",
 	"Save Results",
+	"Others",
 ];
 
 // graph styling configuration
@@ -42,6 +43,7 @@ export const stepsColorsMapping: { [stepName: string]: string } = {
 	"Model Deployment": "#80b1d3",
 	"Model Evaluation": "#af8d00",
 	"Save Results": "#8dd3c7",
+	Others: "#b3b3b3",
 };
 
 const stepsIcons: { [stepName: string]: LucideIcon } = {

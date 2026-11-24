@@ -12,4 +12,5 @@ __TMP_ENCODING_MAPPING = {
     "Model Deployment": "g",
     "Model Evaluation": "h",
     "Save Results": "l",
+    "Others": "o",
 }
