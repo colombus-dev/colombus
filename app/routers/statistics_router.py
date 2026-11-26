@@ -1,19 +1,15 @@
-import uuid
-from difflib import SequenceMatcher
-from io import BytesIO
-from itertools import groupby
+from collections import Counter
 from textwrap import wrap
-from typing import Any, Sequence
+from typing import Sequence
 
 from fastapi import APIRouter
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import Response
 from plotly import express as px
 from pydantic import BaseModel
 from sqlmodel import col, func, select
 
-from app.constants import __TMP_ENCODING_MAPPING
 from app.dependencies import DatabaseSession
-from app.models.sql_model import Profile, Step
+from app.models.sql_model import MetaInstruction, Profile
 from app.utils.diff_stats_exploration import get_frequent_patterns_matrix
 
 router = APIRouter()
@@ -33,65 +29,30 @@ ROCKET_COLOR_SCALE = [
 ]
 
 
-@router.get("/api/projects/{project_id}/stats")
-async def get_project_stats(project_id: uuid.UUID, session: DatabaseSession):
-    # TODO: seems duplicated with get_frequent_patterns_matrix
-
-    profiles_content = session.exec(
-        select(Profile.name, Step.id, Step.name)
-        .join(Step)
-        .where(Profile.project_id == project_id)
-        .order_by(Profile.name)
-    ).all()
-
-    def get_grouped_profiles_content():
-        return groupby(profiles_content, lambda e: e[0])
-
-    # TODO: replace with DiffResult
-    results: list[dict[str, Any]] = []
-
-    # retrieving matching groups for each profile compared to each
-    # other profile
-
-    for profile_id_1, profile_steps_1_iter in get_grouped_profiles_content():
-        profile_steps_1 = list(profile_steps_1_iter)
-        for (
-            profile_id_2,
-            profile_steps_2_iter,
-        ) in get_grouped_profiles_content():
-            if profile_id_1 == profile_id_2:
-                continue
-            profile_steps_2 = list(profile_steps_2_iter)
-            elem_a = "".join(__TMP_ENCODING_MAPPING[pe[2]] for pe in profile_steps_1)
-            elem_b = "".join(__TMP_ENCODING_MAPPING[pe[2]] for pe in profile_steps_2)
-            seq_match = SequenceMatcher(None, elem_a, elem_b, autojunk=False)
-            results.append(
-                {
-                    "profile_name": f"{profile_id_1}_-TO-_{profile_id_2}",
-                    "results": [
-                        [
-                            (e[2], block)
-                            for e in profile_steps_2[block.b : block.b + block.size]
-                        ]
-                        for block in seq_match.get_matching_blocks()[:-1]
-                    ],
-                    "ratio": seq_match.ratio(),
-                }
-            )
-
-    def ratio_sort_key(r: dict[str, Any]) -> int:
-        return r["ratio"]
-
-    return sorted(results, key=ratio_sort_key, reverse=True)
+def get_steps_by_profile_name(
+    session: DatabaseSession, project_id: int, profile_ids: list[int] | None = None
+) -> list[tuple[str, str]]:
+    if profile_ids is not None and len(profile_ids) == 0:
+        profile_ids = None
+    profile_names = dict(
+        session.exec(
+            select(Profile.id, Profile.name).where(Profile.project_id == project_id)
+        ).all()
+    )
+    step_starts = MetaInstruction.get_step_starts(session, project_id, profile_ids)
+    ordered_steps = sorted(
+        step_starts, key=lambda step: (profile_names[step.profile_id], step.id)
+    )
+    return [(profile_names[step.profile_id], step.name) for step in ordered_steps]
 
 
 class PostStatsProfilesFilterPayload(BaseModel):
-    profile_ids: list[uuid.UUID] | None = None
+    profile_ids: list[int] | None = None
 
 
 @router.post("/api/projects/{project_id}/stats/patterns")
 async def post_project_stats_patterns(
-    project_id: uuid.UUID,
+    project_id: int,
     payload: PostStatsProfilesFilterPayload,
     session: DatabaseSession,
 ):
@@ -100,15 +61,9 @@ async def post_project_stats_patterns(
     else:
         nb_profiles = session.exec(select(func.count(col(Profile.id)))).one()
 
-    query = (
-        select(Profile.name, Step.id, Step.name)
-        .join(Step)
-        .where(Profile.project_id == project_id)
+    profiles_content = get_steps_by_profile_name(
+        session, project_id, payload.profile_ids
     )
-    if payload.profile_ids:
-        query = query.where(col(Profile.id).in_(payload.profile_ids))
-    query = query.order_by(Profile.name, col(Step.position))
-    profiles_content = session.exec(query).all()
 
     freq_patterns_matrix = get_frequent_patterns_matrix(profiles_content)
 
@@ -152,16 +107,9 @@ async def post_project_stats_patterns(
 
 @router.post("/api/projects/{project_id}/stats/steps/frequency")
 async def post_steps_frequency(
-    project_id: uuid.UUID,
+    project_id: int,
     payload: PostStatsProfilesFilterPayload,
     session: DatabaseSession,
 ) -> Sequence[tuple[str, int]]:
-    query = (
-        select(Step.name, func.count(col(Step.id)))
-        .join(Profile)
-        .where(Profile.project_id == project_id)
-    )
-    if payload.profile_ids:
-        query = query.where(col(Profile.id).in_(payload.profile_ids))
-    query = query.group_by(Step.name)
-    return session.exec(query).all()
+    steps = get_steps_by_profile_name(session, project_id, payload.profile_ids)
+    return list(Counter(step_name for _, step_name in steps).items())

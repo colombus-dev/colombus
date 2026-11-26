@@ -2,7 +2,6 @@ import logging
 import re
 import tempfile
 import traceback
-import uuid
 from pathlib import Path
 from typing import Any
 
@@ -96,7 +95,7 @@ def download_kaggle_notebooks(
 
 
 async def pull_kaggle_notebooks(
-    project_id: uuid.UUID,
+    project_id: int,
     session: Session,
     slugs: list[str],
     scores: dict[str, float] | None = None,

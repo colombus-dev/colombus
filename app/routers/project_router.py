@@ -1,4 +1,3 @@
-import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, status
@@ -7,6 +6,7 @@ from sqlmodel import col, select
 
 from app.dependencies import DatabaseSession
 from app.exceptions import ElementNotFoundException
+from app.models.api_model import IdStr
 from app.models.sql_model import Profile, Project
 from app.service import project_service
 from app.utils import natural_key
@@ -22,7 +22,7 @@ class ProjectNamePayload(BaseModel):
 async def create_new_project(
     payload: ProjectNamePayload,
     session: DatabaseSession,
-) -> uuid.UUID:
+) -> IdStr:
     new_project = Project(name=payload.name)
     session.add(new_project)
     session.commit()
@@ -30,26 +30,25 @@ async def create_new_project(
 
 
 class ProfileSummary(BaseModel):
-    id: uuid.UUID
+    id: IdStr
     name: str
     score: float | None
 
 
 class ProjectDetails(BaseModel):
-    id: uuid.UUID
+    id: IdStr
     name: str
     profiles: list[ProfileSummary]
 
 
 @router.get("/api/projects/{project_id}")
-def get_project(project_id: uuid.UUID, session: DatabaseSession) -> ProjectDetails:
+def get_project(project_id: int, session: DatabaseSession) -> ProjectDetails:
     project = session.get(Project, project_id)
     if project is None:
         raise ElementNotFoundException("project")
-    score = col(Profile.json_profile)["score"].as_float()
     rows = sorted(
         session.exec(
-            select(Profile.id, Profile.name, score).where(
+            select(Profile.id, Profile.name, Profile.score).where(
                 col(Profile.project_id) == project_id
             )
         ).all(),
@@ -67,7 +66,7 @@ def get_project(project_id: uuid.UUID, session: DatabaseSession) -> ProjectDetai
 
 @router.patch("/api/projects/{project_id}")
 def rename_project(
-    project_id: uuid.UUID,
+    project_id: int,
     payload: ProjectNamePayload,
     session: DatabaseSession,
 ) -> str:
@@ -81,14 +80,14 @@ def rename_project(
 
 
 @router.delete("/api/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_project(project_id: uuid.UUID, session: DatabaseSession) -> None:
+def delete_project(project_id: int, session: DatabaseSession) -> None:
     if project_service.delete_project(session, project_id) == 0:
         raise ElementNotFoundException("project")
     session.commit()
 
 
 class ProjectResponse(BaseModel):
-    id: uuid.UUID
+    id: IdStr
     name: str
 
 
