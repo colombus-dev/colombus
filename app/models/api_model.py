@@ -1,39 +1,38 @@
-import uuid
 from datetime import datetime
-from typing import Any, Literal, Optional
+from typing import Annotated, Any, Literal, Optional
 
-from pydantic import BaseModel, Field, field_serializer
+from pydantic import BaseModel, Field, PlainSerializer, field_serializer
 
-from app.models.sql_model import (
-    CodeBase,
-    MetaInstructionBase,
-    ProfileBase,
-    StepBase,
-)
+IdStr = Annotated[int, PlainSerializer(str, return_type=str, when_used="json")]
 
 # Profile Graph
 
 
-class StepNode(StepBase):
-    id: uuid.UUID
+class CodeNode(BaseModel):
+    id: int
+    content: str
 
 
-class MetaInstructionNode(MetaInstructionBase):
-    id: uuid.UUID
-    step_id: uuid.UUID
+class MetaInstructionNode(BaseModel):
+    id: int
+    library: str | None
+    function: str | None
+    algorithm_family: str | None
+    algorithm_name: str | None
+    metric: str | None
+    action: str | None
+    codes: list[CodeNode]
 
 
-class CodeNode(CodeBase):
-    id: uuid.UUID
-    meta_instruction_id: uuid.UUID
+class StepNode(BaseModel):
+    name: str
+    meta_instructions: list[MetaInstructionNode]
 
 
-class ProfileNodes(ProfileBase):
-    id: uuid.UUID
+class ProfileNodes(BaseModel):
+    id: IdStr
     name: str
     steps: list[StepNode]
-    meta_instructions: list[MetaInstructionNode]
-    codes: list[CodeNode]
 
 
 # Profile JSON
@@ -48,7 +47,7 @@ class ProfileMetadata(BaseModel):
         return str(generation_date)
 
 
-class Profile(ProfileBase):
+class Profile(BaseModel):
     name: str
     profile_metadata: ProfileMetadata = Field(
         alias="metadata"
@@ -62,9 +61,9 @@ class Profile(ProfileBase):
 
 
 class PpmResult(BaseModel):
-    profile_id: uuid.UUID
+    profile_id: IdStr
     profile_name: str
-    results: list[list[uuid.UUID]]
+    results: list[list[str]]
 
 
 class Pattern(BaseModel):
@@ -77,7 +76,7 @@ class PatternWithDSLApi(Pattern):
 
 
 class SavedPattern(PatternWithDSLApi):
-    id: uuid.UUID
+    id: IdStr
 
 
 class PatternMetaCharacters(BaseModel):

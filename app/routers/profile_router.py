@@ -1,17 +1,20 @@
 import logging
-import uuid
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
-from pydantic import BaseModel
-from sqlalchemy.orm import selectinload
-from sqlmodel import col, select
+from sqlalchemy.orm import joinedload
+from sqlmodel import select
 
 from app.constants import NOTEBOOK_FILE_EXTENSION, PROFILE_FILE_EXTENSION
 from app.dependencies import DatabaseSession
-from app.exceptions import UnsupportedTaxonomyException
+from app.exceptions import ElementNotFoundException, UnsupportedTaxonomyException
+from app.models.api_model import (
+    CodeNode,
+    MetaInstructionNode,
+    ProfileNodes,
+    StepNode,
+)
 from app.models.api_model import Profile as JsonProfile
-from app.models.api_model import ProfileNodes
-from app.models.sql_model import Profile
+from app.models.sql_model import MetaInstruction, Profile
 from app.service.notebook import convert_to_profiles
 from app.settings import get_settings
 from app.utils.file_helper import check_files, get_file_contents
@@ -33,43 +36,55 @@ from app.service.kaggle_service import (
 )
 
 
-class ProfileNodesPayload(BaseModel):
-    ids: list[uuid.UUID]
+def build_profile_nodes(profile: Profile) -> ProfileNodes:
+    steps: list[StepNode] = []
+    for instruction in profile.meta_instructions:
+        meta_instruction = MetaInstructionNode(
+            id=instruction.id,
+            library=instruction.library,
+            function=instruction.function,
+            algorithm_family=instruction.algorithm_family,
+            algorithm_name=instruction.algorithm_name,
+            metric=instruction.metric,
+            action=instruction.action,
+            codes=[
+                CodeNode(id=code.id, content=code.content) for code in instruction.codes
+            ],
+        )
+        if len(steps) > 0 and steps[-1].name == instruction.step:
+            steps[-1].meta_instructions.append(meta_instruction)
+        else:
+            steps.append(
+                StepNode(name=instruction.step, meta_instructions=[meta_instruction])
+            )
+    return ProfileNodes(id=profile.id, name=profile.name, steps=steps)
 
 
-@router.post(
-    "/api/projects/{project_id}/profiles/nodes",
-    response_model=list[ProfileNodes],
-)
-def get_profiles_nodes(
-    project_id: uuid.UUID,
-    payload: ProfileNodesPayload,
+@router.get("/api/projects/{project_id}/profiles/{profile_id}/nodes")
+def get_profile_nodes(
+    project_id: int,
+    profile_id: int,
     session: DatabaseSession,
-) -> list[ProfileNodes]:
-    results = session.exec(
-        select(Profile)
-        .where(Profile.project_id == project_id, col(Profile.id).in_(payload.ids))
-        .options(
-            selectinload(Profile.steps),  # pyright: ignore[reportArgumentType]
-            selectinload(Profile.meta_instructions),  # pyright: ignore[reportArgumentType]
-            selectinload(Profile.codes),  # pyright: ignore[reportArgumentType]
+) -> ProfileNodes:
+    profile = (
+        session.exec(
+            select(Profile)
+            .where(Profile.id == profile_id, Profile.project_id == project_id)
+            .options(
+                joinedload(Profile.meta_instructions).joinedload(MetaInstruction.codes)
+            )
         )
-    ).all()
-    return [
-        ProfileNodes(
-            id=profile.id,
-            name=profile.name,
-            steps=profile.steps,  # pyright: ignore[reportArgumentType]
-            meta_instructions=profile.meta_instructions,  # pyright: ignore[reportArgumentType]
-            codes=profile.codes,  # pyright: ignore[reportArgumentType]
-        )
-        for profile in results
-    ]
+        .unique()
+        .one_or_none()
+    )
+    if profile is None:
+        raise ElementNotFoundException("profile")
+    return build_profile_nodes(profile)
 
 
 @router.post("/api/projects/{project_id}/profiles")
 async def import_multiple_profile(
-    project_id: uuid.UUID,
+    project_id: int,
     session: DatabaseSession,
     profile_files: list[UploadFile] = File([]),
     notebook_files: list[UploadFile] = File([]),
@@ -100,7 +115,7 @@ def get_kaggle_status():
 
 @router.get("/api/projects/{project_id}/kaggle/competitions")
 async def search_kaggle_competitions(
-    project_id: uuid.UUID,
+    project_id: int,
     search: str,
 ):
     if not search:
@@ -147,7 +162,7 @@ async def search_kaggle_competitions(
 
 @router.get("/api/projects/{project_id}/kaggle/notebooks")
 async def list_kaggle_competition(
-    project_id: uuid.UUID,
+    project_id: int,
     competition: str,
     page_token: str | None = None,
 ):
@@ -158,7 +173,7 @@ async def list_kaggle_competition(
 
 @router.post("/api/projects/{project_id}/profiles/kaggle")
 async def import_kaggle_competition(
-    project_id: uuid.UUID,
+    project_id: int,
     payload: ImportKagglePayload,
     session: DatabaseSession,
 ):

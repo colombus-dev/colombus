@@ -91,7 +91,7 @@ class MetaInstruction(Base, kw_only=True):
 
     id: Pk = primary_key()
     project_id: Fk = foreign_key("project.id")
-    profile_id: Fk = foreign_key("profile.id", init=False)
+    profile_id: Fk = foreign_key("profile.id", index=True, init=False)
     step: Str
     library: OptionalStr = indexed(default=None)
     function: OptionalStr = indexed(default=None)
