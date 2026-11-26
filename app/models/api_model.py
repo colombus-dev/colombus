@@ -100,11 +100,3 @@ class PatternGroup(BaseModel):
     metaInstructions: Optional[list[PatternMetaInstruction]] = Field(default=None)
     metaCharacters: PatternMetaCharacters
     subpattern: Optional["Pattern"] = Field(default=None)
-
-
-class RegexCompatibleProfileElement(BaseModel):
-    step: str
-    algoFamily: str
-    algoName: str
-    library: str
-    function: str

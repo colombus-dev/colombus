@@ -16,12 +16,9 @@ from app.models.api_model import (
 )
 from app.models.sql_model import Pattern
 from app.service.ppm_flink import run_ppm_flink
-from app.service.ppm_sql import run_ppm_sql, run_saved_ppm_sql
-from app.settings import get_settings
 from app.utils import natural_key
 from app.utils.convert_canopus_to_legacy import convert_pattern_to_legacy
 
-settings = get_settings()
 router = APIRouter()
 
 # TODO: support multiple (sub)-patterns
@@ -86,10 +83,7 @@ async def execute_ppm(
     pattern: list[PatternGroup],
     session: DatabaseSession,
 ) -> list[PpmResult]:
-    if settings.ppm_engine == "sql":
-        results = run_ppm_sql(project_id, pattern, session)
-    else:
-        results = await run_ppm_flink(project_id, pattern, session)
+    results = await run_ppm_flink(project_id, pattern, session)
     return _sort_by_profile_name(results)
 
 
@@ -103,10 +97,7 @@ async def execute_saved_ppm(
         )
     ).one()
     groups = PatternApi(**ppm).groups or []
-    if settings.ppm_engine == "sql":
-        results = run_saved_ppm_sql(project_id, groups, session)
-    else:
-        results = await run_ppm_flink(project_id, groups, session)
+    results = await run_ppm_flink(project_id, groups, session)
     return _sort_by_profile_name(results)
 
 

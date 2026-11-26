@@ -15,7 +15,6 @@ from app.routers import (
     profile_router,
     project_router,
     statistics_router,
-    utils_router,
 )
 from app.settings import get_settings
 
@@ -72,9 +71,6 @@ def create_app() -> FastAPI:
     )
     application.include_router(
         statistics_router.router, tags=["statistics"], dependencies=[APIKeyDeps]
-    )
-    application.include_router(
-        utils_router.router, tags=["utils"], dependencies=[APIKeyDeps]
     )
     return application
 

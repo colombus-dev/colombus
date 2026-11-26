@@ -8,8 +8,6 @@ settings = get_settings()
 
 
 async def execute_pattern(project_id: str, pattern: list[PatternGroup]) -> dict:
-    if settings.flink_gateway_api_url_prefix is None:
-        raise RuntimeError("FLINK_GATEWAY_API_URL_PREFIX is not set")
     async with httpx.AsyncClient(
         base_url=settings.flink_gateway_api_url_prefix
     ) as client:

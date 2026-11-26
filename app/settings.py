@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -31,8 +31,7 @@ class Settings(BaseSettings):
     db_password: str = Field()
     db_name: str = Field()
 
-    ppm_engine: Literal["flink", "sql"] = "flink"
-    flink_gateway_api_url_prefix: str | None = None
+    flink_gateway_api_url_prefix: str = Field(min_length=1)
     ml_profiler_api_url_prefix: str = Field()
     google_client_id: str = Field()
 
@@ -58,21 +57,6 @@ class Settings(BaseSettings):
     @property
     def is_kaggle_token_set(self) -> bool:
         return bool(self.kaggle_username and self.kaggle_key)
-
-    @field_validator("flink_gateway_api_url_prefix", mode="before")
-    @classmethod
-    def empty_url_to_none(cls, value: str | None) -> str | None:
-        if value == "":
-            return None
-        return value
-
-    @model_validator(mode="after")
-    def check_ppm_engine(self) -> "Settings":
-        if self.ppm_engine == "flink" and self.flink_gateway_api_url_prefix is None:
-            raise ValueError(
-                "FLINK_GATEWAY_API_URL_PREFIX is required when PPM_ENGINE is flink"
-            )
-        return self
 
     @model_validator(mode="after")
     def set_allowed_origins(self) -> "Settings":
