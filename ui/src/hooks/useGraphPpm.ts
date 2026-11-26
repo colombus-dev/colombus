@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router";
 import type Sigma from "sigma";
 import {
 	algoNodeSuffix,
@@ -46,8 +45,6 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 	const [hoveredNeighbors, setHoveredNeighbors] = useState<
 		Set<string> | undefined
 	>();
-	// TODO: should we useParams or useProject ?
-	const { projectId } = useParams<{ projectId: string }>();
 
 	const getHoveredTopTree = useCallback(
 		(parentNodeId: string): string[] => {
@@ -149,49 +146,6 @@ export default function useGraphPpm(graphRenderer?: Sigma) {
 		hoveredNode,
 		hoveredNeighbors,
 	]);
-
-	useEffect(() => {
-		const graph = graphRenderer?.getGraph();
-		if (!graph || !projectId) {
-			return;
-		}
-		const hoveredNodeLayerLevel = hoveredNode
-			? graph.getNodeAttribute(hoveredNode, "layerLevel")
-			: undefined;
-		let i = 0;
-		while (graph.hasNode(`cell_output_${i}`)) {
-			graph.dropNode(`cell_output_${i}`);
-			i++;
-		}
-		if (
-			!hoveredNode ||
-			hoveredNodeLayerLevel === undefined ||
-			hoveredNodeLayerLevel > 2
-		) {
-			return;
-		}
-		// TODO: temporary disabled
-		// getOutputImagesForStep(projectId, hoveredNode).then((d) => {
-		// 	if (d.length === 0) {
-		// 		return;
-		// 	}
-		// 	const totalImagesWidth = 55 * d.length;
-		// 	for (const [i, imageData] of d.entries()) {
-		// 		graph.addNode(`cell_output_${i}`, {
-		// 			x:
-		// 				graph.getNodeAttribute(hoveredNode, "x") +
-		// 				55 * i -
-		// 				Math.round(totalImagesWidth / 4),
-		// 			y: graph.getNodeAttribute(hoveredNode, "y") + 25,
-		// 			size: 50,
-		// 			type: "image",
-		// 			label: "output",
-		// 			image: `data:image/png;base64,${imageData}`,
-		// 			color: "white",
-		// 		});
-		// 	}
-		// });
-	}, [graphRenderer, projectId, hoveredNode]);
 
 	useEffect(() => {
 		graphRenderer?.on("enterNode", ({ node }) => {

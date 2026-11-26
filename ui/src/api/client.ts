@@ -235,15 +235,6 @@ export async function deletePpm(projectId: string, patternId: string) {
 	);
 }
 
-export async function getOutputImagesForStep(
-	projectId: string,
-	stepId: string,
-) {
-	return await axiosInstance
-		.get<string[]>(`/projects/${projectId}/steps/${stepId}/outputs`)
-		.then(({ data }) => data);
-}
-
 export async function postFrequentPatternsMatrixPlotly(
 	projectId: string,
 	profileIds?: string[],
