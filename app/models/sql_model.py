@@ -25,11 +25,12 @@ def primary_key():
     return sqlalchemy.orm.mapped_column(init=False)
 
 
-def foreign_key(target: str, index: bool = False):
+def foreign_key(target: str, index: bool = False, init: bool = True):
     return sqlalchemy.orm.mapped_column(
         sqlalchemy.BigInteger,
         sqlalchemy.ForeignKey(target, ondelete="CASCADE"),
         index=index,
+        init=init,
     )
 
 
@@ -90,7 +91,7 @@ class MetaInstruction(Base, kw_only=True):
 
     id: Pk = primary_key()
     project_id: Fk = foreign_key("project.id")
-    profile_id: Fk = foreign_key("profile.id")
+    profile_id: Fk = foreign_key("profile.id", init=False)
     step: Str
     library: OptionalStr = indexed(default=None)
     function: OptionalStr = indexed(default=None)
@@ -131,7 +132,7 @@ class Code(Base, kw_only=True):
     __tablename__ = "code"
 
     id: Pk = primary_key()
-    meta_instruction_id: Fk = foreign_key("meta_instruction.id", index=True)
+    meta_instruction_id: Fk = foreign_key("meta_instruction.id", index=True, init=False)
     content: Str = sqlalchemy.orm.mapped_column(sqlalchemy.Text)
 
 
