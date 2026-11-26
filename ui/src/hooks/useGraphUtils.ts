@@ -273,7 +273,7 @@ export default function useGraphUtils(graph: Graph) {
 						3,
 						x,
 						y,
-						(m) => `${m.algoFamily} | ${m.algoName}`,
+						(m) => `${m.algorithm_family} | ${m.algorithm_name}`,
 						// parent = prefixed step node
 						(m) => prefixId(m.step_id),
 					),

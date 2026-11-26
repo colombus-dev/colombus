@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import type { GraphDefinition } from "@/api/client";
@@ -59,7 +59,6 @@ function ExplorerProjectIdPage() {
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [isNodesLoading, setIsNodesLoading] = useState<boolean>(false);
 	const [nodesError, setNodesError] = useState<string | null>(null);
-	const nodesCache = useRef(new Map<string, GraphDefinition>());
 	const [backendError, setBackendError] = useState<string | null>(null);
 	const [isImporting, setIsImporting] = useState<boolean>(false);
 
@@ -111,11 +110,6 @@ function ExplorerProjectIdPage() {
 			navigate(PATH.HOME);
 		}
 	}, [projectValidity, navigate]);
-
-	// biome-ignore lint/correctness/useExhaustiveDependencies: imported notebooks may replace cached details
-	useEffect(() => {
-		nodesCache.current.clear();
-	}, [postedProfiles]);
 
 	useEffect(() => {
 		if (
@@ -193,28 +187,13 @@ function ExplorerProjectIdPage() {
 		if (projectId === undefined) {
 			return;
 		}
-		const cache = nodesCache.current;
-		const selectedNodes = () =>
-			filteredProfileIds.flatMap((id) => {
-				const nodes = cache.get(id);
-				return nodes === undefined ? [] : [nodes];
-			});
-		const missing = filteredProfileIds.filter((id) => !cache.has(id));
-		setNodesError(null);
-		if (missing.length === 0) {
-			setIsNodesLoading(false);
-			setFilteredWorkflowsNodes(selectedNodes());
-			return;
-		}
 		let cancelled = false;
+		setNodesError(null);
 		setIsNodesLoading(true);
-		getGraphNodes(projectId, missing)
+		Promise.all(filteredProfileIds.map((id) => getGraphNodes(projectId, id)))
 			.then((nodes) => {
-				for (const node of nodes) {
-					cache.set(node.id, node);
-				}
 				if (!cancelled) {
-					setFilteredWorkflowsNodes(selectedNodes());
+					setFilteredWorkflowsNodes(nodes);
 				}
 			})
 			.catch((error) => {

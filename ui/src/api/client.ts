@@ -6,24 +6,21 @@ import { useColombusStore } from "@/store";
 export type StepNode = {
 	id: string;
 	name: string;
-	position: number;
 	number_children: number;
 };
 export type MetaInstructionNode = {
 	id: string;
 	step_id: string;
-	algoFamily: string;
-	algoName: string;
-	library: string;
-	function: string;
-	position: number;
+	algorithm_family: string | null;
+	algorithm_name: string | null;
+	library: string | null;
+	function: string | null;
 	number_children: number;
 };
 export type CodeNode = {
 	id: string;
 	meta_instruction_id: string;
 	content: string;
-	position: number;
 };
 export type GraphDefinition = {
 	id: string;
@@ -31,6 +28,21 @@ export type GraphDefinition = {
 	steps: StepNode[];
 	meta_instructions: MetaInstructionNode[];
 	codes: CodeNode[];
+};
+
+type ProfileNodesResponse = {
+	id: string;
+	name: string;
+	steps: {
+		name: string;
+		meta_instructions: (Omit<
+			MetaInstructionNode,
+			"id" | "step_id" | "number_children"
+		> & {
+			id: number;
+			codes: { id: number; content: string }[];
+		})[];
+	}[];
 };
 export const ProfileFileExtension = ".json";
 export const NotebookFileExtension = ".ipynb";
@@ -105,15 +117,47 @@ export async function deleteProject(projectId: string) {
 	await axiosInstance.delete(`/projects/${projectId}`);
 }
 
-export async function getGraphNodes(projectId: string, profileIds: string[]) {
-	if (profileIds.length === 0) {
-		return Promise.resolve<GraphDefinition[]>([]);
+function toGraphDefinition(profile: ProfileNodesResponse): GraphDefinition {
+	const graph: GraphDefinition = {
+		id: profile.id,
+		name: profile.name,
+		steps: [],
+		meta_instructions: [],
+		codes: [],
+	};
+	for (const [stepIndex, step] of profile.steps.entries()) {
+		const stepId = `step_${stepIndex}`;
+		graph.steps.push({
+			id: stepId,
+			name: step.name,
+			number_children: step.meta_instructions.length,
+		});
+		for (const { id, codes, ...labels } of step.meta_instructions) {
+			const metaInstructionId = `meta_instruction_${id}`;
+			graph.meta_instructions.push({
+				...labels,
+				id: metaInstructionId,
+				step_id: stepId,
+				number_children: codes.length,
+			});
+			for (const code of codes) {
+				graph.codes.push({
+					id: `code_${code.id}`,
+					meta_instruction_id: metaInstructionId,
+					content: code.content,
+				});
+			}
+		}
 	}
+	return graph;
+}
+
+export async function getGraphNodes(projectId: string, profileId: string) {
 	return await axiosInstance
-		.post<GraphDefinition[]>(`/projects/${projectId}/profiles/nodes`, {
-			ids: profileIds,
-		})
-		.then(({ data }) => data);
+		.get<ProfileNodesResponse>(
+			`/projects/${projectId}/profiles/${profileId}/nodes`,
+		)
+		.then(({ data }) => toGraphDefinition(data));
 }
 
 export type ProfileSummary = {
