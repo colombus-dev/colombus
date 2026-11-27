@@ -1,177 +1,154 @@
-import uuid
-from typing import Any, Optional
+import typing
 
-from sqlalchemy import Index, text
-from sqlalchemy.dialects import mysql
-from sqlalchemy.orm import relationship
-from sqlmodel import (
-    JSON,
-    Column,
-    Field,
-    Relationship,
-    SQLModel,
-    String,
-    create_engine,
-)
+import sqlalchemy
+import sqlalchemy.orm
 
 from app.constants import QUERY_TIMEOUT_SECONDS
 from app.settings import get_settings
 
 settings = get_settings()
 
-ProjectIdFk = Field(
-    default=None, foreign_key="project.id", ondelete="CASCADE", index=True
-)
-ProfileIdFk = Field(
-    default=None, foreign_key="profile.id", ondelete="CASCADE", index=True
-)
-LongString = String().with_variant(mysql.LONGTEXT(), "mysql", "mariadb")
+Pk = sqlalchemy.orm.Mapped[
+    typing.Annotated[
+        int,
+        sqlalchemy.orm.mapped_column(
+            sqlalchemy.BigInteger, sqlalchemy.Identity(), primary_key=True
+        ),
+    ]
+]
+Fk = sqlalchemy.orm.Mapped[int]
+Str = sqlalchemy.orm.Mapped[str]
+OptionalStr = sqlalchemy.orm.Mapped[str | None]
 
 
-# "app management"-related tables
+def primary_key():
+    return sqlalchemy.orm.mapped_column(init=False)
 
 
-class Project(SQLModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    name: str
-
-    profiles: list["Profile"] = Relationship(
-        back_populates="project",
-        sa_relationship=relationship(order_by="asc(Profile.name)"),
-    )
-    patterns: list["Pattern"] = Relationship(
-        back_populates="project",
-        sa_relationship=relationship(order_by="asc(Pattern.name)"),
-    )
-
-
-# Profile-related tables
-
-
-class ProfileBase(SQLModel):
-    name: str
-
-
-class Profile(ProfileBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    project_id: uuid.UUID = ProjectIdFk
-    json_profile: dict[str, Any] = Field(sa_type=JSON)
-    encoded_profile: str
-
-    steps: list["Step"] = Relationship(
-        back_populates="profile",
-        sa_relationship=relationship(order_by="asc(Step.position)"),
-    )
-    meta_instructions: list["MetaInstruction"] = Relationship(
-        back_populates="profile",
-        sa_relationship=relationship(order_by="asc(MetaInstruction.position)"),
-    )
-    codes: list["Code"] = Relationship(
-        back_populates="profile",
-        sa_relationship=relationship(order_by="asc(Code.position)"),
-    )
-    project: Project = Relationship(back_populates="profiles")
-
-
-class StepBase(SQLModel):
-    name: str
-    position: int
-    # number of children is cached and used to compute graph nodes size
-    number_children: int
-
-
-class Step(StepBase, table=True):
-    __table_args__ = (Index("ix_step_profile_id_position", "profile_id", "position"),)
-
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    name: str = Field(index=True)
-
-    previous_step_id: uuid.UUID | None = Field(
-        default=None, foreign_key="step.id", ondelete="CASCADE", index=True
-    )
-    previous_step: Optional["Step"] = Relationship(
-        back_populates="next_step",
-        sa_relationship_kwargs={"remote_side": "Step.id", "uselist": False},
+def foreign_key(target: str, index: bool = False, init: bool = True):
+    return sqlalchemy.orm.mapped_column(
+        sqlalchemy.BigInteger,
+        sqlalchemy.ForeignKey(target, ondelete="CASCADE"),
+        index=index,
+        init=init,
     )
 
-    next_step: Optional["Step"] = Relationship(back_populates="previous_step")
 
-    profile_id: uuid.UUID | None = ProfileIdFk
-    profile: Profile = Relationship(back_populates="steps")
-
-    meta_instructions: list["MetaInstruction"] = Relationship(back_populates="step")
-
-    cell_outputs: list["CellOutput"] = Relationship(back_populates="step")
+def indexed(**kwargs: typing.Any):
+    return sqlalchemy.orm.mapped_column(index=True, **kwargs)
 
 
-class CellOutput(SQLModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    image: str
-
-    step_id: uuid.UUID | None = Field(
-        default=None, foreign_key="step.id", ondelete="CASCADE", index=True
+def children(order_by: str):
+    return sqlalchemy.orm.relationship(
+        default_factory=list, passive_deletes=True, order_by=order_by, init=False
     )
-    step: Step = Relationship(back_populates="cell_outputs")
 
 
-class MetaInstructionBase(SQLModel):
-    algoFamily: str | None = None
-    algoName: str | None = None
-    library: str | None = None
-    function: str | None = None
-    position: int
-    # number of children is cached and used to compute graph nodes size
-    number_children: int
+class Base(
+    sqlalchemy.orm.MappedAsDataclass, sqlalchemy.orm.DeclarativeBase, kw_only=True
+):
+    @staticmethod
+    def group_by[T](
+        items: typing.Iterable[T], column: str
+    ) -> dict[typing.Any, list[T]]:
+        groups: dict[typing.Any, list[T]] = {}
+        for item in items:
+            groups.setdefault(getattr(item, column), []).append(item)
+        return groups
 
 
-class MetaInstruction(MetaInstructionBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+class Project(Base, kw_only=True):
+    __tablename__ = "project"
 
-    profile_id: uuid.UUID | None = ProfileIdFk
-    profile: Profile = Relationship(back_populates="meta_instructions")
+    id: Pk = primary_key()
+    name: Str = sqlalchemy.orm.mapped_column(unique=True)
 
-    step_id: uuid.UUID | None = Field(
-        default=None, foreign_key="step.id", ondelete="CASCADE", index=True
+    profiles: sqlalchemy.orm.Mapped[list["Profile"]] = children("Profile.id")
+
+
+class Profile(Base, kw_only=True):
+    __tablename__ = "profile"
+    __table_args__ = (sqlalchemy.UniqueConstraint("project_id", "name"),)
+
+    id: Pk = primary_key()
+    project_id: Fk = foreign_key("project.id")
+    name: Str
+    score: sqlalchemy.orm.Mapped[float | None] = sqlalchemy.orm.mapped_column(
+        default=None
     )
-    step: Step = Relationship(back_populates="meta_instructions")
 
-    codes: list["Code"] = Relationship(back_populates="meta_instruction")
-
-
-class CodeBase(SQLModel):
-    content: str = Field(sa_column=Column(LongString))
-    position: int
-
-
-class Code(CodeBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-
-    profile_id: uuid.UUID | None = ProfileIdFk
-    profile: Profile = Relationship(back_populates="codes")
-
-    meta_instruction_id: uuid.UUID | None = Field(
-        default=None,
-        foreign_key="metainstruction.id",
-        ondelete="CASCADE",
-        index=True,
+    meta_instructions: sqlalchemy.orm.Mapped[list["MetaInstruction"]] = children(
+        "MetaInstruction.id"
     )
-    meta_instruction: MetaInstruction = Relationship(back_populates="codes")
 
 
-# PPM-related tables
+class MetaInstruction(Base, kw_only=True):
+    __tablename__ = "meta_instruction"
+    __table_args__ = (
+        sqlalchemy.Index("ix_meta_instruction_scan", "project_id", "profile_id", "id"),
+        sqlalchemy.Index("ix_meta_instruction_project_step", "project_id", "step"),
+    )
+
+    id: Pk = primary_key()
+    project_id: Fk = foreign_key("project.id")
+    profile_id: Fk = foreign_key("profile.id", index=True, init=False)
+    step: Str
+    library: OptionalStr = indexed(default=None)
+    function: OptionalStr = indexed(default=None)
+    algorithm_family: OptionalStr = indexed(default=None)
+    algorithm_name: OptionalStr = indexed(default=None)
+    metric: OptionalStr = indexed(default=None)
+    action: OptionalStr = indexed(default=None)
+
+    codes: sqlalchemy.orm.Mapped[list["Code"]] = children("Code.id")
+
+    @staticmethod
+    def get_step_starts(
+        session: sqlalchemy.orm.Session,
+        project_id: int,
+        profile_ids: list[int] | None = None,
+    ) -> typing.Sequence[sqlalchemy.Row]:
+        profile_filter = (
+            "" if profile_ids is None else "AND profile_id = ANY(:profile_ids)"
+        )
+        query = f"""
+            SELECT profile_id, id, step AS name
+            FROM (
+                SELECT id, profile_id, step,
+                       LAG(step) OVER (PARTITION BY profile_id ORDER BY id) AS previous_step
+                FROM meta_instruction
+                WHERE project_id = :project_id {profile_filter}
+            ) AS instructions
+            WHERE previous_step IS DISTINCT FROM step
+            ORDER BY profile_id, id
+        """
+        parameters: dict[str, typing.Any] = {"project_id": project_id}
+        if profile_ids is not None:
+            parameters["profile_ids"] = profile_ids
+        return session.execute(sqlalchemy.text(query), parameters).all()
 
 
-class Pattern(SQLModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    project_id: uuid.UUID = ProjectIdFk
-    name: str
-    json_pattern: dict[str, Any] = Field(sa_type=JSON)
-    dsl_content: str
+class Code(Base, kw_only=True):
+    __tablename__ = "code"
 
-    project: Project = Relationship(back_populates="patterns")
+    id: Pk = primary_key()
+    meta_instruction_id: Fk = foreign_key("meta_instruction.id", index=True, init=False)
+    content: Str = sqlalchemy.orm.mapped_column(sqlalchemy.Text)
 
 
-engine = create_engine(
+class Pattern(Base, kw_only=True):
+    __tablename__ = "pattern"
+
+    id: Pk = primary_key()
+    project_id: Fk = foreign_key("project.id", index=True)
+    name: Str
+    json_pattern: sqlalchemy.orm.Mapped[dict[str, typing.Any]] = (
+        sqlalchemy.orm.mapped_column(sqlalchemy.JSON)
+    )
+    dsl_content: Str
+
+
+engine = sqlalchemy.create_engine(
     settings.database_url,
     echo=False,
     pool_pre_ping=True,
@@ -179,32 +156,5 @@ engine = create_engine(
 )
 
 
-FLINK_STEP_WITH_PROJECT_VIEW = "flink_step_with_project"
-
-
 def initialize():
-    SQLModel.metadata.create_all(engine)
-    with engine.begin() as connection:
-        connection.execute(text(f"DROP VIEW IF EXISTS {FLINK_STEP_WITH_PROJECT_VIEW}"))
-        connection.execute(
-            text(f"""
-                CREATE VIEW {FLINK_STEP_WITH_PROJECT_VIEW} AS
-                SELECT
-                    step.id::text AS step_id,
-                    step.profile_id::text AS profile_id,
-                    step.position,
-                    step.name,
-                    profile.project_id::text AS project_id,
-                    MAX(step.position) OVER (
-                        PARTITION BY step.profile_id::text, profile.project_id::text
-                    ) AS max_position,
-                    array_remove(array_agg(DISTINCT metainstruction."algoFamily"), NULL) AS algofamily,
-                    array_remove(array_agg(DISTINCT metainstruction."algoName"), NULL) AS algoname,
-                    array_remove(array_agg(DISTINCT metainstruction.library), NULL) AS library,
-                    array_remove(array_agg(DISTINCT metainstruction.function), NULL) AS function
-                FROM step
-                JOIN profile ON profile.id = step.profile_id
-                LEFT JOIN metainstruction ON metainstruction.step_id = step.id
-                GROUP BY step.id, step.profile_id, step.position, step.name, profile.project_id
-            """)
-        )
+    Base.metadata.create_all(engine)

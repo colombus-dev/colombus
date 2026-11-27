@@ -37,8 +37,7 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
-      PPM_ENGINE: ${PPM_ENGINE:-flink}
-      FLINK_GATEWAY_API_URL_PREFIX: ${FLINK_GATEWAY_API_URL_PREFIX:-}
+      FLINK_GATEWAY_API_URL_PREFIX: ${FLINK_GATEWAY_API_URL_PREFIX}
       ML_PROFILER_API_URL_PREFIX: ${ML_PROFILER_API_URL_PREFIX}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       ALLOWED_GOOGLE_EMAILS: ${ALLOWED_GOOGLE_EMAILS}
@@ -60,15 +59,11 @@ services:
         condition: service_healthy
         required: false
   colombus_postgresql:
-    build:
-      context: .
-      dockerfile: Dockerfile.postgres
+    image: postgres:17.4
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-      FLINK_DB_USERNAME: ${FLINK_DB_USERNAME:-}
-      FLINK_DB_PASSWORD: ${FLINK_DB_PASSWORD:-}
     ports:
       - 5433:5432
     networks:

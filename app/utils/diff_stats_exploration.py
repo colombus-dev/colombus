@@ -1,12 +1,11 @@
 from difflib import Match, SequenceMatcher
 from itertools import groupby
 from typing import Sequence
-from uuid import UUID
 
 import pandas as pd
 from pydantic import BaseModel
 
-from app.utils import __TMP_ENCODING_MAPPING
+from app.constants import __TMP_ENCODING_MAPPING
 
 
 class ResultMatch(BaseModel):
@@ -23,7 +22,7 @@ class Result(BaseModel):
 
 
 def get_frequent_patterns_matrix(
-    profiles_content: Sequence[tuple[str, UUID, str]],
+    profiles_content: Sequence[tuple[str, str]],
 ) -> pd.DataFrame:
     def get_grouped_profiles_content():
         return groupby(profiles_content, lambda e: e[0])
@@ -39,8 +38,8 @@ def get_frequent_patterns_matrix(
             if profile_id_1 == profile_id_2:
                 continue
             profile_steps_2 = list(profile_steps_2_iter)
-            elem_a = "".join(__TMP_ENCODING_MAPPING[pe[2]] for pe in profile_steps_1)
-            elem_b = "".join(__TMP_ENCODING_MAPPING[pe[2]] for pe in profile_steps_2)
+            elem_a = "".join(__TMP_ENCODING_MAPPING[pe[1]] for pe in profile_steps_1)
+            elem_b = "".join(__TMP_ENCODING_MAPPING[pe[1]] for pe in profile_steps_2)
             seq_match = SequenceMatcher(None, elem_a, elem_b, autojunk=False)
             all_comb_results.append(
                 Result(
@@ -50,7 +49,7 @@ def get_frequent_patterns_matrix(
                     results=[
                         ResultMatch(
                             letters=[
-                                e[2]
+                                e[1]
                                 for e in profile_steps_2[block.b : block.b + block.size]
                             ],
                             match=block,
@@ -117,6 +116,6 @@ def get_frequent_patterns_matrix(
     print("errors=", errors)
 
     df = pd.DataFrame(matrix, index=pd.Index(columns_matches))
-    df.columns = [f"{i*PERCENTAGE_TICK}%" for i in range(num_buckets)]
+    df.columns = [f"{i * PERCENTAGE_TICK}%" for i in range(num_buckets)]
 
     return df.reindex(df.iloc[:, :-1].max(1).sort_values(ascending=False).index)
